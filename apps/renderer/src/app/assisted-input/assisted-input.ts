@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-assisted-input',
@@ -11,13 +11,14 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
         data-testid="assisted-textarea"
         rows="3"
         spellcheck="false"
-        placeholder="Scrivi un comando o una richiesta…"
+        placeholder="Invio invia · Shift+Invio va a capo"
         aria-label="Input assistito"
         [value]="draft()"
         [disabled]="disabled()"
         (input)="draftChange.emit($any($event.target).value)"
+        (keydown)="onKeydown($event)"
       ></textarea>
-      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Invia" disabled>⏎</button>
+      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Invia" [disabled]="!canSend()" (click)="send()">⏎</button>
       <div class="voice">
         <button type="button" class="icon" data-testid="assisted-mic" aria-label="Microfono" disabled>🎤</button>
         <span class="voice-label">Voice ready</span>
@@ -42,7 +43,23 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 })
 export class AssistedInput {
   readonly draft = input('');
+  /** Sessione attiva assente o non running: editing e invio bloccati. */
   readonly disabled = input(false);
   readonly draftChange = output<string>();
   readonly submitted = output<string>();
+  protected readonly canSend = computed(() => !this.disabled() && this.draft().trim().length > 0);
+
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) {
+      return;
+    }
+    event.preventDefault();
+    this.send();
+  }
+
+  protected send(): void {
+    if (this.canSend()) {
+      this.submitted.emit(this.draft());
+    }
+  }
 }

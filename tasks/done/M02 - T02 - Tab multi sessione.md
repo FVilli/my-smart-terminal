@@ -1,3 +1,4 @@
+<!-- gsynchro:v1 id=46583df2-55bb-4886-9080-d00100647de7 registered=2026-10-23T08:24:09.118Z -->
 
 ## Esito
 - 2026-10-23: completato.

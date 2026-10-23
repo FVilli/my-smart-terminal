@@ -4,6 +4,7 @@ import type {
   TerminalDataEvent,
   TerminalExitEvent,
 } from '@smart-terminal/contracts';
+import { TERMINAL_MAX_WRITE_BYTES } from '@smart-terminal/contracts';
 import type { TerminalSessionView } from './session.model';
 
 const MAX_BUFFERED_CHARS = 1_000_000;
@@ -99,6 +100,27 @@ export class SessionsStore {
 
   setDraft(id: string, text: string): void {
     this.draftsState.update((drafts) => new Map(drafts).set(id, text));
+  }
+
+  /** Invia la bozza alla sessione attiva (aggiunge `\r` se manca); svuota la bozza solo a invio riuscito. */
+  async sendActive(text: string): Promise<boolean> {
+    const session = this.activeSession();
+    if (session === null || session.status !== 'running' || text.length === 0) {
+      return false;
+    }
+    const data = text.endsWith('\r') || text.endsWith('\n') ? text : `${text}\r`;
+    if (new TextEncoder().encode(data).length > TERMINAL_MAX_WRITE_BYTES) {
+      return false;
+    }
+    try {
+      await this.api.writeTerminal({ sessionId: session.id, data });
+    } catch {
+      return false;
+    }
+    if (this.sessionsState().some((s) => s.id === session.id)) {
+      this.setDraft(session.id, '');
+    }
+    return true;
   }
 
   markExited(id: string, exitCode: number | null): void {

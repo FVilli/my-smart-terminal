@@ -11,9 +11,12 @@ const METRICS_SCRIPT = `(() => {
   const clientWidth = root.clientWidth;
   const sidebarLeft = rect ? rect.left : 0;
   const sidebarWidth = rect ? rect.width : 0;
-  const overflow = scrollWidth > clientWidth || document.body.scrollWidth > document.body.clientWidth ||
+  const panel = document.querySelector('app-sidebar-panel');
+  const sidebarOverflow = !!sidebar && (sidebar.scrollWidth > sidebar.clientWidth ||
+    (!!panel && (panel.scrollWidth > panel.clientWidth || panel.scrollHeight > panel.clientHeight)));
+  const overflow = sidebarOverflow || scrollWidth > clientWidth || document.body.scrollWidth > document.body.clientWidth ||
     root.scrollHeight > root.clientHeight || !rect;
-  return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth,
+  return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth, sidebarOverflow,
     ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow };
 })()`;
 

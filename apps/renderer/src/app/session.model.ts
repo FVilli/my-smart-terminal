@@ -13,3 +13,10 @@ export interface TerminalSessionView {
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'error';
 export type SidebarTab = 'clipboard' | 'history';
+
+export const SYNC_LABELS: Record<SyncState, string> = {
+  synced: 'GitHub synced',
+  syncing: 'GitHub syncing…',
+  offline: 'GitHub offline',
+  error: 'GitHub sync error',
+};

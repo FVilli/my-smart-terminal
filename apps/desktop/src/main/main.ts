@@ -5,7 +5,7 @@ import { TEST_IPC_ARGUMENT } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { readWindowSize, runCapture } from './capture';
-import { runSmoke, runTabsSmoke } from './smoke';
+import { runEditorSmoke, runSidebarSmoke, runSmoke, runTabsSmoke } from './smoke';
 import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
@@ -27,6 +27,8 @@ const devServerUrl = process.env['SMART_TERMINAL_DEV_SERVER_URL'];
 const smokeTest = process.env['SMART_TERMINAL_SMOKE'] === '1';
 const ptySmokeTest = process.env['SMART_TERMINAL_PTY_SMOKE'] === '1';
 const tabsSmokeTest = process.env['SMART_TERMINAL_TABS_SMOKE'] === '1';
+const editorSmokeTest = process.env['SMART_TERMINAL_EDITOR_SMOKE'] === '1';
+const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 const terminalHost = new TerminalHost(new NodePtyAdapter());
@@ -94,6 +96,14 @@ function createWindow(): BrowserWindow {
 
   if (tabsSmokeTest) {
     runTabsSmoke(window);
+  }
+
+  if (editorSmokeTest) {
+    runEditorSmoke(window);
+  }
+
+  if (sidebarSmokeTest) {
+    runSidebarSmoke(window);
   }
 
   if (smokeTest || ptySmokeTest) {

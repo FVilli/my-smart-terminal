@@ -28,8 +28,8 @@ import type { SidebarTab } from '../session.model';
       </button>
     </div>
     <div class="filters">
-      <input type="search" data-testid="sidebar-search" placeholder="Cerca…" aria-label="Cerca" disabled />
-      <select data-testid="sidebar-machine-filter" aria-label="Filtro macchina" disabled>
+      <input type="search" data-testid="sidebar-search" [placeholder]="activeTab() === 'clipboard' ? 'Cerca nella clipboard…' : 'Cerca nella cronologia…'" aria-label="Cerca" />
+      <select data-testid="sidebar-machine-filter" aria-label="Filtro macchina">
         <option>Tutte le macchine</option>
       </select>
     </div>

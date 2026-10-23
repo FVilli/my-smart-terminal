@@ -1,12 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import type { SyncState } from '../session.model';
-
-const SYNC_LABELS: Record<SyncState, string> = {
-  synced: 'GitHub synced',
-  syncing: 'GitHub syncing…',
-  offline: 'GitHub offline',
-  error: 'GitHub sync error',
-};
+import { SYNC_LABELS, type SyncState } from '../session.model';
 
 @Component({
   selector: 'app-status-footer',

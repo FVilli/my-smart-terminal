@@ -50,6 +50,16 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test:pty-smoke` | rebuild nativo + shell reale: output, input, resize, list, exit |
 | `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` | smoke UI/IPC equivalente |
 | `SMART_TERMINAL_PTY_SMOKE=1 npx electron apps/desktop` | smoke PTY (richiede rebuild nativo) |
+| `npm run test:layout` | screenshot 1440x900 e 1024x700, ratio 75/25, nessun overflow (main+sidebar) |
+| `npm run test:tabs-smoke` | due tab, switch senza kill, chiusura |
+| `npm run test:editor-smoke` | Invio/Shift+Invio, marker eseguito, bozza svuotata, bozze per tab |
+| `npm run test:sidebar-smoke` | cambio Clipboard/History, placeholder, footer sync/primary |
+
+## Editor assistito
+- Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.
+- L'invio aggiunge `\r` se assente, non supera 64 KiB UTF-8, svuota la bozza solo in caso di successo.
+- Il key handler è solo sulla textarea: xterm/TUI non vengono intercettati e non esistono listener globali.
+- AI correction e microfono restano disabilitati fino a M05.
 
 ## Debito noto
 - Il protocollo `smart-terminal://` e `will-navigate` saranno oggetto di hardening in M06 (origin esatta, path traversal, null byte).

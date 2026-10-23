@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { AssistedInput } from './assisted-input/assisted-input';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
+import type { SidebarTab } from './session.model';
 import { SessionsStore } from './sessions-store';
 import { SidebarPanel } from './sidebar-panel/sidebar-panel';
 import { StatusFooter } from './status-footer/status-footer';
@@ -19,6 +20,8 @@ export class App {
   protected readonly store = inject(SessionsStore);
   /** Tab attivo in attesa di conferma di chiusura (dialogo inline, non bloccante). */
   protected readonly pendingCloseId = signal<string | null>(null);
+
+  protected readonly sidebarTab = signal<SidebarTab>('clipboard');
 
   constructor() {
     void this.store.createLocal();
@@ -50,6 +53,10 @@ export class App {
 
   protected createLocal(): void {
     void this.store.createLocal();
+  }
+
+  protected send(text: string): void {
+    void this.store.sendActive(text);
   }
 
   protected setDraft(text: string): void {

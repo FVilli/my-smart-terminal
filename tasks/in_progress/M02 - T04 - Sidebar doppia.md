@@ -26,3 +26,9 @@ Cambio tabs e placeholder status corretti.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `sidebarTab` signal, cambio Clipboard/History con aria-selected, ricerca/filtro macchina abilitati (dati statici), placeholder distinti, footer con label dei quattro stati e indicatore primary, test layout esteso a overflow sidebar.
+- Verifica: smoke sidebar con defaultClipboard, historySelected, clipboardSelected, placeholdersDiffer, controlsEnabled, syncLabel, primaryIndicator, noSidebarOverflow; layout 0.75 senza overflow a due viewport.
+- Nota: dati reali della sidebar e stato sync/primary dinamico arrivano in M03/M04.

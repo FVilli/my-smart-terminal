@@ -26,3 +26,9 @@ Bozze per tab, editor non intercetta TUI in modalità native.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: Invio/Shift+Invio/IME, pulsante invio condizionato, hint, `SessionsStore.sendActive` con limite 64 KiB UTF-8 e `\r`, bozza svuotata solo su successo, bozze per tab, smoke `test:editor-smoke`.
+- Verifica: 52 test Vitest, lint, typecheck, build, smoke editor con marker eseguito, draft cleared, shift-enter non gestito, bozze isolate.
+- Deviazione minore: `sendActive` asincrona perché `writeTerminal` è asincrona.

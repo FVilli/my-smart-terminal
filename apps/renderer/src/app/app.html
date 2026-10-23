@@ -34,12 +34,13 @@
     </app-terminal-workarea>
     <app-assisted-input
       [draft]="store.activeDraft()"
-      [disabled]="store.activeSession() === null"
+      [disabled]="store.activeSession()?.status !== 'running'"
       (draftChange)="setDraft($event)"
+      (submitted)="send($event)"
     />
-    <app-status-footer />
+    <app-status-footer [syncState]="'synced'" [primary]="true" />
   </section>
   <aside class="sidebar" data-testid="sidebar">
-    <app-sidebar-panel />
+    <app-sidebar-panel [activeTab]="sidebarTab()" (tabChange)="sidebarTab.set($event)" />
   </aside>
 </main>
