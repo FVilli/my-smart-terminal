@@ -60,6 +60,10 @@ When the assisted input is active:
 - Native shell history stays native to the shell/PTY.
 - There is no third history assembled by intercepting or mirroring terminal keystrokes.
 
+## Amendment 2026-10-23: application zoom shortcuts
+
+The user requires working application zoom. As a narrow exception to the PTY ownership rule, the app may intercept **only** `Ctrl/Cmd+-`, `Ctrl/Cmd++` (including `Ctrl+=`, `Ctrl+Shift+=` and numpad plus) and `Ctrl/Cmd+0` for zoom out/in/reset, even while xterm has focus. All other Ctrl keys remain PTY-owned. This is not a general key-interception layer. Applications that themselves use those combinations lose those specific keys; this limitation must be documented in the zoom help/UI.
+
 ## Rejected alternatives
 
 ### Option A — remove assisted input and intercept terminal Enter
