@@ -22,7 +22,7 @@ Pinned multiline input, send button, and Voice ready; explicit send to the activ
 Drafts for each tab; the editor does not intercept TUI in native mode.
 
 ## Riferimenti
-`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+`docs/01 - Architecture.md`; `docs/02 - UI and sessions.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI, voice and security.md`.
 
 ## Do not
 Do not introduce a database, additional remote services, or architectural choices not specified.

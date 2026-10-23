@@ -22,7 +22,7 @@ Prepare a standalone Angular workspace, Electron main/preload, and shared TypeSc
 Launch an Electron window with Angular; typecheck and lint without errors.
 
 ## Riferimenti
-`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+`docs/01 - Architecture.md`; `docs/02 - UI and sessions.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI, voice and security.md`.
 
 ## Do not
 Do not introduce a database, additional remote services, or architectural choices not specified.
@@ -31,4 +31,4 @@ Do not introduce a database, additional remote services, or architectural choice
 - 2026-10-23: completed.
 - Implemented: npm workspaces, Angular 22.2.3 (application builder), Electron 45, esbuild bundle for main/preload, shared IPC contracts, custom `smart-terminal://` protocol for the production renderer, smoke mode.
 - Verification: `npm run lint`, `npx tsc -p tsconfig.json --noEmit`, `npm run build`, `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` with `hasApi: true` and rendered Angular UI.
-- Deviations: build tooling (esbuild, concurrently, wait-on, cross-env) and runtime details recorded in `docs/10 - Config locale, coordinatore e sicurezza runtime.md`. No database or remote service added.
+- Deviations: build tooling (esbuild, concurrently, wait-on, cross-env) and runtime details recorded in `docs/10 - Local config, coordinator and runtime security.md`. No database or remote service added.

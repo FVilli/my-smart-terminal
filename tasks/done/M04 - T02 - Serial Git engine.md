@@ -22,7 +22,7 @@ Clone/init repository, session-scoped commits, fetch/rebase/push with mutex/back
 No force push; recovery from two concurrent commits and offline operation.
 
 ## References
-`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+`docs/01 - Architecture.md`; `docs/02 - UI and sessions.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI, voice and security.md`.
 
 ## Do not
 Do not introduce databases, additional remote services, or architectural choices not specified.

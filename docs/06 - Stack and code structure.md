@@ -40,4 +40,4 @@ The renderer accesses the filesystem, processes, Git, and credentials only throu
 Linux, macOS, and Windows desktop; implementation and testing of the different PTYs and packages must be performed in the respective OS pipeline. The terminal must also work without Git, AI, or network.
 
 ## Implementation decisions
-npm workspaces monorepo, `dist/apps/renderer/browser` output, local Markdown configuration, coordinator over socket/named pipe, `safeStorage`, and test toolchain: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.
+npm workspaces monorepo, `dist/apps/renderer/browser` output, local Markdown configuration, coordinator over socket/named pipe, `safeStorage`, and test toolchain: `docs/10 - Local config, coordinator and runtime security.md`.

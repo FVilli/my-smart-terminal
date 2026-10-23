@@ -9,7 +9,7 @@ created: 2026-10-22
 # UI and sessions
 
 ## Visual baseline
-Immutable reference: `mockups/Smart Terminal - mock definitivo.png` (image supplied by the user). 75% terminal / 25% sidebar layout, dark theme, terminal and input in a monospace font.
+Immutable reference: `mockups/Smart Terminal - final mock.png` (image supplied by the user). 75% terminal / 25% sidebar layout, dark theme, terminal and input in a monospace font.
 
 ## Behavior
 Top tabs for local and SSH sessions; `+` opens a Local/alias choice from `~/.ssh/config`. Active PTYs remain active even when their tab is not focused. Sidebar with alternative Clipboard/History tabs, search, and machine filter. History includes all synchronized machines.

@@ -24,4 +24,4 @@ The persistent source is the Markdown filesystem in the Git clone. Search indexe
 PTYs are independent of the network; the coordinator can be restarted; locks support recovery; Git operations are serialized and never use `push --force`.
 
 ## Implementation decisions
-Local IPC transport, lock/heartbeat, local configuration, and keychain policy: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.
+Local IPC transport, lock/heartbeat, local configuration, and keychain policy: `docs/10 - Local config, coordinator and runtime security.md`.

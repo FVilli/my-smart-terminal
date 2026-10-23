@@ -34,11 +34,11 @@ describe('AI provider adapters', () => {
       expect(headers.get('anthropic-version')).toBe('2023-06-01');
       const body = JSON.parse(String(init?.body)) as { model: string; messages: { content: string }[] };
       expect(body.model).toBe('claude-test');
-      expect(body.messages[0]?.content).toContain('--- INIZIO TESTO ---');
-      return new Response(JSON.stringify({ content: [{ text: 'corretto /tmp/a --flag' }] }), { status: 200 });
+      expect(body.messages[0]?.content).toContain('--- BEGIN TEXT ---');
+      return new Response(JSON.stringify({ content: [{ text: 'corrected /tmp/a --flag' }] }), { status: 200 });
     });
     const result = await correctText({ provider: 'anthropic', token: 'anthropic-token', model: 'claude-test', text: 'fix typos', fetch: fetcher as typeof fetch });
-    expect(result.corrected).toBe('corretto /tmp/a --flag');
+    expect(result.corrected).toBe('corrected /tmp/a --flag');
   });
 
   it('sends OpenAI headers/body with temperature 0', async () => {

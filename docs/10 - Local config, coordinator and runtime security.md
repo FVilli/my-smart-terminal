@@ -54,4 +54,4 @@ Needed: initial configuration before a data clone exists, multiple independent E
 - Portability tests require the corresponding OS pipeline for `node-pty` and packaging.
 
 ## References
-`docs/01 - Architettura.md`, `docs/03 - Markdown schema.md`, `docs/04 - Sync Git.md`, `docs/05 - AI Voice Sicurezza.md`, `docs/06 - Stack e struttura codice.md`, `docs/07 - Logica runtime.md`.
+`docs/01 - Architecture.md`, `docs/03 - Markdown schema.md`, `docs/04 - Sync Git.md`, `docs/05 - AI, voice and security.md`, `docs/06 - Stack and code structure.md`, `docs/07 - Runtime logic.md`.

@@ -18,4 +18,4 @@ Remove Italian from the data repository, document the real product with coherent
 All M07 tasks are done and verified; the public release page exposes Linux, macOS and Windows artifacts plus SHA-256 checksums; README and manual contain working download links and no Italian text or file paths remain in the repository.
 
 ## References
-`docs/WORKFLOW.md`, `docs/09 - Build e rilascio.md`, `docs/12 - Manuale utente.md`, `docs/13 - Security checklist.md`.
+`docs/WORKFLOW.md`, `docs/09 - Build and release.md`, `docs/12 - User manual.md`, `docs/13 - Security checklist.md`.

@@ -22,7 +22,7 @@ Configure the repository, machine name, and AI provider; verify connectivity and
 Persist setup in non-secret Markdown and use the keychain for credentials.
 
 ## References
-`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+`docs/01 - Architecture.md`; `docs/02 - UI and sessions.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI, voice and security.md`.
 
 ## Do not
 Do not introduce databases, additional remote services, or architectural choices not specified.

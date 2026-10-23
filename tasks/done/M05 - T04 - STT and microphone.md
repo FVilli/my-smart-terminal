@@ -22,7 +22,7 @@ Cloud/local STT adapter with permissions and push-to-talk in the editor.
 Permission/deny tests; editable result; no persisted audio.
 
 ## References
-`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+`docs/01 - Architecture.md`; `docs/02 - UI and sessions.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI, voice and security.md`.
 
 ## Do not
 Do not introduce databases, additional remote services, or architectural choices not specified.

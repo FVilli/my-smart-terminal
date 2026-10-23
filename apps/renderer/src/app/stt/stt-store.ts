@@ -38,7 +38,7 @@ export type SttVoiceError = 'denied' | 'unavailable' | 'unconfigured';
 
 /** Safety limit: recording stops automatically after 60 seconds. */
 export const MAX_RECORDING_MS = 60_000;
-/** `MediaRecorder` emits a chunk every 250 ms, so even a brief push-to-talk produces audio.
+/** `MediaRecorder` emits a chunk every 250 ms, so even a brief push-to-talk produces audio. */
 export const RECORDER_TIMESLICE_MS = 250;
 export const FALLBACK_AUDIO_MIME = 'audio/webm';
 

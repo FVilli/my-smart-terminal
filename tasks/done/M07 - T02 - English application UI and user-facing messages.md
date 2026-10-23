@@ -22,7 +22,7 @@ Cover Angular templates/components, placeholders, buttons, aria labels, notices,
 The application contains no Italian user-facing text; lint, typecheck, build and all smoke tests pass with updated English assertions; onboarding and error states are readable in English.
 
 ## References
-docs/08 - UX e interazioni.md; docs/12 - Manuale utente.md; apps/renderer.
+docs/08 - UX and interactions.md; docs/12 - User manual.md; apps/renderer.
 
 ## Do not
 Do not translate code identifiers or change functionality in this task.

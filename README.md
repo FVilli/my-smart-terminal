@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="mockups/Smart%20Terminal%20-%20mock%20definitivo.png" alt="Smart Terminal interface" width="880" />
+  <img src="mockups/Smart%20Terminal%20-%20final%20mock.png" alt="Smart Terminal interface" width="880" />
 </p>
 
 ---
@@ -152,11 +152,11 @@ packages/ai/        AI and STT providers
 
 ## Documentation
 
-- [User manual](docs/12%20-%20Manuale%20utente.md)
+- [User manual](docs/12%20-%20User%20manual.md)
 - [Release notes](RELEASE_NOTES.md)
 - [Agent workflow](docs/WORKFLOW.md)
-- [Build and release](docs/09%20-%20Build%20e%20rilascio.md)
-- [IPC contracts](docs/11%20-%20Contratti%20IPC%20e%20verifica%20runtime.md)
+- [Build and release](docs/09%20-%20Build%20and%20release.md)
+- [IPC contracts](docs/11%20-%20IPC%20contracts%20and%20runtime%20verification.md)
 - [Security checklist](docs/13%20-%20Security%20checklist.md)
 
 ## Status and known limitations

@@ -9,7 +9,7 @@ created: 2026-10-22
 # UX and interactions
 
 ## Reference
-Approved mockup: `mockups/Smart Terminal - mock definitivo.png`. Do not change its hierarchy without an explicit decision: header; session tabs; output area; assisted input at the bottom; right history/clipboard bar.
+Approved mockup: `mockups/Smart Terminal - final mock.png`. Do not change its hierarchy without an explicit decision: header; session tabs; output area; assisted input at the bottom; right history/clipboard bar.
 
 ## Layout
 Terminal 75%, sidebar 25%, both columns `min-width:0`; on narrow windows, handle content overflow without changing the default ratio. Dark theme. xterm output and input editor **monospace** (`JetBrains Mono`, `Cascadia Code`, `monospace`); the surrounding UI may use sans-serif.
