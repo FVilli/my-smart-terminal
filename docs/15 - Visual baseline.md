@@ -4,6 +4,7 @@ type: design
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=48047092-9568-4980-b4ac-ff3206eeaf26 registered=2026-10-23T13:00:27.388Z -->
 
 # Visual baseline and mock measurements
 

@@ -5,6 +5,7 @@ project: smart-terminal
 version: 1
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=d50dd87a-28b6-4a43-823c-cb6cc7067cd1 registered=2026-10-23T13:00:27.388Z -->
 
 # ADR - Instance registration and setup verification
 

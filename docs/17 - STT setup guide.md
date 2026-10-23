@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=cf4671d0-54be-499f-800e-7dd16b28bec4 registered=2026-10-23T13:00:27.389Z -->
 
 # STT setup guide
 

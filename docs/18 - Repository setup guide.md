@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=f78f9f2f-50b0-4367-873b-66827aaf7caa registered=2026-10-23T13:00:27.389Z -->
 
 # Repository setup guide
 

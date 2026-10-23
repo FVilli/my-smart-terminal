@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=cf2920b2-88e0-4939-a886-48bccc6095e8 registered=2026-10-23T13:00:27.389Z -->
 
 # AI provider setup guide
 
