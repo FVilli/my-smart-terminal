@@ -22,3 +22,6 @@ La sorgente persistente è il filesystem Markdown nel clone Git. Indici di ricer
 
 ## Failure mode
 PTY indipendenti dalla rete; coordinatore riavviabile; lock con recovery; operazioni Git serializzate e mai `push --force`.
+
+## Decisioni attuative
+Trasporto IPC locale, lock/heartbeat, config locale e policy keychain: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.

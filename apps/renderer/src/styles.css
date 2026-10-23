@@ -1,0 +1,38 @@
+:root {
+  --bg: #0b0f14;
+  --surface: #111820;
+  --surface-raised: #17212b;
+  --border: #24313d;
+  --text: #e6edf3;
+  --text-muted: #8b9bab;
+  --accent: #4cc2a5;
+  --danger: #f07067;
+  --font-ui: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}

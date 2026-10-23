@@ -1,0 +1,16 @@
+<main class="scaffold">
+  <header class="topbar">
+    <span class="brand">{{ title() }}</span>
+    <span class="badge" [class.badge--on]="ipcReady()">
+      {{ ipcReady() ? 'IPC attivo' : 'IPC non disponibile' }}
+    </span>
+  </header>
+
+  <section class="card">
+    <h1>{{ title() }}</h1>
+    <p>Scaffold M01 pronto: Angular standalone, Electron main/preload e contratti IPC condivisi.</p>
+    @if (appVersion(); as version) {
+      <p class="meta">Versione {{ version }}</p>
+    }
+  </section>
+</main>

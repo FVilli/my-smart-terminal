@@ -34,3 +34,6 @@ Il renderer accede a filesystem, processi, Git e credenziali solo tramite API pr
 
 ## Target
 Desktop Linux, macOS, Windows; implementazione e test dei diversi PTY e pacchetti vanno effettuati nella relativa pipeline OS. Il terminale deve funzionare anche senza Git, AI o rete.
+
+## Decisioni attuative
+Monorepo npm workspaces, output `dist/apps/renderer/browser`, config Markdown locale, coordinatore su socket/named pipe, `safeStorage` e toolchain di test: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.

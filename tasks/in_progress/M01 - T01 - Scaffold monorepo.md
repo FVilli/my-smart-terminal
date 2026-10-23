@@ -26,3 +26,9 @@ Avvio finestra Electron con Angular; typecheck e lint senza errori.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: npm workspaces, Angular 22.2.3 (application builder), Electron 45, bundle esbuild per main/preload, contratti IPC condivisi, protocollo custom `smart-terminal://` per il renderer in produzione, smoke mode.
+- Verifica: `npm run lint`, `npx tsc -p tsconfig.json --noEmit`, `npm run build`, `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` con esito `hasApi: true` e UI Angular renderizzata.
+- Deviazioni: tooling di build (esbuild, concurrently, wait-on, cross-env) e dettagli runtime registrati in `docs/10 - Config locale, coordinatore e sicurezza runtime.md`. Nessun database o servizio remoto aggiunto.

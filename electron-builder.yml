@@ -1,0 +1,26 @@
+appId: com.smartterminal.app
+productName: Smart Terminal
+directories:
+  output: release
+  buildResources: apps/desktop/build
+files:
+  - dist/apps/desktop/**/*
+  - dist/apps/renderer/browser/**/*
+  - package.json
+extraMetadata:
+  main: dist/apps/desktop/main.js
+asar: true
+asarUnpack:
+  - node_modules/node-pty/**/*
+npmRebuild: true
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+mac:
+  target:
+    - dmg
+win:
+  target:
+    - nsis

@@ -1,21 +1,57 @@
 {
   "name": "my-smart-terminal",
-  "version": "1.0.0",
-  "description": "",
-  "homepage": "https://github.com/FVilli/my-smart-terminal#readme",
-  "bugs": {
-    "url": "https://github.com/FVilli/my-smart-terminal/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/FVilli/my-smart-terminal.git"
-  },
-  "type": "commonjs",
-  "main": "index.js",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Terminale desktop multi-istanza con sessioni Markdown e sync Git",
+  "workspaces": [
+    "apps/desktop",
+    "apps/renderer",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently -k -n renderer,main,electron -c blue,yellow,green \"npm:dev:renderer\" \"npm:dev:main\" \"npm:dev:electron\"",
+    "dev:renderer": "ng serve renderer --port 4200 --host 127.0.0.1",
+    "dev:main": "node scripts/build-desktop.mjs --watch",
+    "dev:electron": "wait-on http://127.0.0.1:4200 dist/apps/desktop/main.js dist/apps/desktop/preload.js && cross-env SMART_TERMINAL_DEV_SERVER_URL=http://127.0.0.1:4200 electron apps/desktop",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "node scripts/build-desktop.mjs",
+    "build:renderer": "ng build renderer --configuration production",
+    "start": "npm run build && electron apps/desktop",
+    "typecheck": "tsc -p tsconfig.json --noEmit && ng build renderer --configuration development",
+    "typecheck:node": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "ng test renderer",
+    "rebuild:native": "electron-rebuild -f -w node-pty",
+    "package": "npm run build && electron-builder --config electron-builder.yml"
   },
-  "dependencies": {
-    "gsynchro": "^0.3.7"
+  "devDependencies": {
+    "@angular-eslint/eslint-plugin": "22.6.0",
+    "@angular-eslint/eslint-plugin-template": "22.6.0",
+    "@angular-eslint/template-parser": "22.6.0",
+    "@angular/build": "22.2.4",
+    "@angular/cli": "22.2.4",
+    "@angular/compiler-cli": "22.2.3",
+    "@electron/rebuild": "4.2.1",
+    "@types/node": "24.19.2",
+    "concurrently": "10.0.6",
+    "cross-env": "10.1.0",
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "eslint": "10.13.0",
+    "jsdom": "30.0.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5",
+    "wait-on": "9.5.1"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true,
+    "esbuild@0.28.2": true,
+    "@parcel/watcher@2.6.0": true,
+    "lmdb@3.5.6": true
   }
 }

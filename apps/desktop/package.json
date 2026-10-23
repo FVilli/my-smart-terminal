@@ -1,0 +1,15 @@
+{
+  "name": "@smart-terminal/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron main process for Smart Terminal",
+  "main": "../../dist/apps/desktop/main.js",
+  "dependencies": {
+    "@smart-terminal/ai": "*",
+    "@smart-terminal/contracts": "*",
+    "@smart-terminal/data": "*",
+    "@smart-terminal/sync": "*",
+    "@smart-terminal/terminal": "*",
+    "node-pty": "1.1.0"
+  }
+}

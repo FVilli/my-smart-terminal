@@ -1,0 +1,17 @@
+{
+  "name": "@smart-terminal/renderer",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@angular/common": "22.2.3",
+    "@angular/compiler": "22.2.3",
+    "@angular/core": "22.2.3",
+    "@angular/forms": "22.2.3",
+    "@angular/platform-browser": "22.2.3",
+    "@smart-terminal/contracts": "*",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  }
+}

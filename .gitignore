@@ -1,1 +1,11 @@
-/node_modules
+node_modules/
+node_modules
+dist/
+.angular/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.gsynchro/gsynchro.local.yml
+release/
+apps/desktop/build/
+*.log

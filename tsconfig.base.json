@@ -1,0 +1,35 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "target": "ES2022",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "importHelpers": true,
+    "paths": {
+      "@smart-terminal/contracts": [
+        "./packages/contracts/src/index.ts"
+      ],
+      "@smart-terminal/terminal": [
+        "./packages/terminal/src/index.ts"
+      ],
+      "@smart-terminal/data": [
+        "./packages/data/src/index.ts"
+      ],
+      "@smart-terminal/sync": [
+        "./packages/sync/src/index.ts"
+      ],
+      "@smart-terminal/ai": [
+        "./packages/ai/src/index.ts"
+      ]
+    }
+  }
+}
