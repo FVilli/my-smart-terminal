@@ -158,6 +158,17 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   }
                   <button type="button" data-testid="onboarding-mic-check" (click)="checkMicrophone()">Check microphone</button>
                   <p class="hint" data-testid="onboarding-mic-status" role="status">{{ micMessage() }}</p>
+                  @if (config().sttProvider !== 'none') {
+                    <div class="test-row">
+                      <button type="button" data-testid="onboarding-test-stt" [disabled]="busy() || testingStt()" (click)="testSttProvider()">
+                        {{ testingStt() ? 'Recording…' : 'Test transcription' }}
+                      </button>
+                      <span class="hint">Records up to 3 seconds, transcribes, and discards the audio.</span>
+                    </div>
+                    @if (sttTestResult(); as result) {
+                      <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
+                    }
+                  }
                 </div>
               }
             }
@@ -238,6 +249,8 @@ export class OnboardingWizard {
   protected readonly remoteResult = signal<RemoteSetupResult | null>(null);
   protected readonly testingAi = signal(false);
   protected readonly aiTestResult = signal<SetupTestAiResult | null>(null);
+  protected readonly testingStt = signal(false);
+  protected readonly sttTestResult = signal<string | null>(null);
   private initialSnapshot = '';
 
   constructor() {
@@ -337,6 +350,56 @@ export class OnboardingWizard {
     }
     if ('aiProvider' in change || 'aiBaseUrl' in change || 'aiModel' in change) {
       this.aiTestResult.set(null);
+    }
+    if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change) {
+      this.sttTestResult.set(null);
+    }
+  }
+
+  protected async testSttProvider(): Promise<void> {
+    this.testingStt.set(true);
+    this.sttTestResult.set(null);
+    let stopTimer: ReturnType<typeof setTimeout> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const text = await new Promise<string | null>((resolve) => {
+        let settled = false;
+        const off = this.stt.onTranscript((value) => {
+          if (settled) return;
+          settled = true;
+          if (stopTimer !== undefined) clearTimeout(stopTimer);
+          if (timeout !== undefined) clearTimeout(timeout);
+          off();
+          resolve(value);
+        });
+        timeout = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          off();
+          resolve(null);
+        }, 12000);
+        void this.stt.start().then(() => {
+          if (this.stt.error() !== null) {
+            if (settled) return;
+            settled = true;
+            if (timeout !== undefined) clearTimeout(timeout);
+            off();
+            resolve(null);
+            return;
+          }
+          stopTimer = setTimeout(() => void this.stt.stop(), 2200);
+        });
+      });
+      if (text !== null && text.trim().length > 0) {
+        this.sttTestResult.set(`Recognized: “${text.trim()}”`);
+      } else {
+        this.sttTestResult.set(this.stt.notice() ?? 'No transcription result. Check the STT provider and microphone permission.');
+      }
+    } finally {
+      if (stopTimer !== undefined) clearTimeout(stopTimer);
+      if (timeout !== undefined) clearTimeout(timeout);
+      void this.stt.load();
+      this.testingStt.set(false);
     }
   }
 

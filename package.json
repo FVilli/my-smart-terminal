@@ -53,7 +53,8 @@
     "test:package-linux": "node scripts/verify-linux-package.mjs",
     "test:settings-smoke": "npm run build && node scripts/settings-smoke.mjs",
     "test:remote-setup-smoke": "npm run build && node scripts/remote-setup-smoke.mjs",
-    "test:ai-setup-smoke": "npm run build && node scripts/ai-setup-smoke.mjs"
+    "test:ai-setup-smoke": "npm run build && node scripts/ai-setup-smoke.mjs",
+    "test:stt-setup-smoke": "npm run build && node scripts/stt-setup-smoke.mjs"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",

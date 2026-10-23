@@ -26,3 +26,8 @@ docs/05; docs/14; packages/ai/src/stt.ts; apps/renderer/src/app/stt.
 
 ## Do not
 Do not persist audio or send commands automatically.
+
+## Outcome
+- Added “Test transcription” in the STT step: records up to 2.2 s, shows editable recognized text, uses the existing STT service, discards audio, handles deny/unavailable/provider errors, no automatic send.
+- Added `test:stt-setup-smoke` with a synthetic MediaRecorder stream and `SMART_TERMINAL_STT_TEST_MODE=1`; verified recognized output, no auto-send, no audio artifacts.
+- Added `docs/17 - STT setup guide.md` (permissions, local absolute stdin command, cloud token/keyring, privacy, troubleshooting) and linked it from README, manual and onboarding guide.

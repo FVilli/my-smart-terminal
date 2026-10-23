@@ -711,6 +711,46 @@ export function runAiSetupSmoke(window: BrowserWindow): void {
   runUiSmoke(window, AI_SETUP_SCRIPT, 'SMART_TERMINAL_AI_SETUP_SMOKE_RESULT');
 }
 
+
+const STT_SETUP_SCRIPT = `(async () => {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs = 20000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(100); }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
+  const result = {};
+  result.settings = await waitFor(() => !!q('settings-open'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  click('onboarding-next');
+  await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  click('onboarding-next');
+  result.step3 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
+  result.button = await waitFor(() => !!q('onboarding-test-stt'));
+  const context = new AudioContext();
+  const destination = context.createMediaStreamDestination();
+  const oscillator = context.createOscillator();
+  oscillator.connect(destination);
+  oscillator.start();
+  navigator.mediaDevices.getUserMedia = async () => destination.stream;
+  click('onboarding-test-stt');
+  result.resultVisible = await waitFor(() => !!q('onboarding-stt-result'), 20000);
+  result.recognized = await waitFor(() => (q('onboarding-stt-result')?.textContent ?? '').includes('test transcript'), 20000);
+  result.notSent = (await window.smartTerminal.search({ query: 'test transcript' })).entries.length === 0;
+  try { oscillator.stop(); void context.close(); } catch {}
+  return result;
+})()`;
+
+/** STT setup smoke, enabled by SMART_TERMINAL_STT_SETUP_SMOKE=1. */
+export function runSttSetupSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, STT_SETUP_SCRIPT, 'SMART_TERMINAL_STT_SETUP_SMOKE_RESULT', async () => ({
+    noAudioFileInUserData: hasNoAudioArtifacts(app.getPath('userData')),
+  }));
+}
+
 export function runRemoteSetupSmoke(window: BrowserWindow): void {
   runUiSmoke(window, REMOTE_SETUP_SCRIPT, 'SMART_TERMINAL_REMOTE_SETUP_SMOKE_RESULT', async () => {
     const bare = process.env['SMART_TERMINAL_REMOTE_SETUP_BARE'] ?? '';

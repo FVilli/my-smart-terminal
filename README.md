@@ -173,6 +173,7 @@ packages/ai/        AI and STT providers
 
 - [Post-install onboarding](docs/14%20-%20Post-install%20onboarding.md)
 - [User manual](docs/12%20-%20User%20manual.md)
+- [STT setup guide](docs/17%20-%20STT%20setup%20guide.md)
 - [Release notes](RELEASE_NOTES.md)
 - [Agent workflow](docs/WORKFLOW.md)
 - [Build and release](docs/09%20-%20Build%20and%20release.md)
