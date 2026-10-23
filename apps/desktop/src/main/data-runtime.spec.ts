@@ -57,4 +57,12 @@ describe('DataRuntime', () => {
     expect(runtime.endSession(a.allocation.sessionId)).toBe(false);
     expect(parseSessionDocument(fs.readFileSync(b.allocation.sessionFile, 'utf8')).meta.ended_at).toBeUndefined();
   });
+
+  it('creates ssh sessions with ssh_alias in session.md', async () => {
+    const runtime = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: { SMART_TERMINAL_DATA_REPO: path.join(root, 'repo'), SMART_TERMINAL_MACHINE: 'host' } });
+    const { allocation } = await runtime.createSession('w', { kind: 'ssh', sshAlias: 'prod-1', cwd: '/home/u' });
+    const { meta } = parseSessionDocument(fs.readFileSync(allocation.sessionFile, 'utf8'));
+    expect(meta).toMatchObject({ kind: 'ssh', ssh_alias: 'prod-1' });
+    expect(allocation.relativeDir).toContain('prod-1');
+  });
 });

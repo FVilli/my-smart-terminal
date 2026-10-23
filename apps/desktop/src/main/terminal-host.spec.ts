@@ -101,4 +101,16 @@ describe('TerminalHost', () => {
     await expect(host.create(1, { kind: 'local', cols: 0 })).rejects.toThrow('TERMINAL_INVALID_DIMENSIONS');
     expect(fs.readdirSync(path.join(root, 'repo', 'sessions'))).toEqual([]);
   });
+
+  it('creates ssh sessions: session.md carries ssh_alias and info exposes kind/target; a failed ssh does not block local tabs', async () => {
+    const ssh = await host.create(1, { kind: 'ssh', sshAlias: 'prod-1' });
+    expect(ssh).toMatchObject({ kind: 'ssh', target: 'prod-1', label: 'S1' });
+    const sessionFile = path.join(root, 'repo', ssh.sessionDirectory, 'session.md');
+    expect(parseSessionDocument(fs.readFileSync(sessionFile, 'utf8')).meta).toMatchObject({ kind: 'ssh', ssh_alias: 'prod-1' });
+    adapter.failNext = true;
+    await expect(host.create(1, { kind: 'ssh', sshAlias: 'broken' })).rejects.toThrow('TERMINAL_SPAWN_FAILED');
+    const local = await host.create(1, { kind: 'local' });
+    expect(local).toMatchObject({ kind: 'local', target: 'local' });
+    expect(host.list(1).map((info) => info.target)).toEqual(['prod-1', 'local']);
+  });
 });

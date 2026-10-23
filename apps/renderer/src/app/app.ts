@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import { AssistedInput } from './assisted-input/assisted-input';
+import { OnboardingWizard } from './onboarding/onboarding-wizard';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
 import { SearchStore } from './search/search-store';
@@ -13,7 +14,7 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 
 @Component({
   selector: 'app-root',
-  imports: [AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter],
+  imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,9 +29,11 @@ export class App {
   protected readonly clipboardCapture = inject(ClipboardCaptureStore);
   /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
   protected readonly isPrimary = signal(false);
+  protected readonly sshAliases = signal<readonly string[]>([]);
 
   constructor() {
     void this.store.createLocal();
+    this.loadSshAliases();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
     // Un nuovo `lastSyncAt` (anche letto dal primary via RPC) significa che un pull puo' aver portato dati nuovi.
     effect(() => {
@@ -82,6 +85,21 @@ export class App {
 
   protected createLocal(): void {
     void this.store.createLocal();
+  }
+
+  protected createSsh(alias: string): void {
+    void this.store.createSsh(alias);
+  }
+
+  protected retryCreate(): void {
+    void this.store.retryCreate();
+  }
+
+  protected loadSshAliases(): void {
+    window.smartTerminal.sshAliases().then(
+      (aliases) => this.sshAliases.set(aliases),
+      () => this.sshAliases.set([]),
+    );
   }
 
   protected send(text: string): void {

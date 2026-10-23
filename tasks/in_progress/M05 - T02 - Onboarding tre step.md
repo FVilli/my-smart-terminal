@@ -26,3 +26,9 @@ Setup persistito in Markdown non segreto e keychain per credenziali.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: config Markdown validata con backup/quarantena, precedenza env>config>default, SecretStore safeStorage con policy basic_text→memoria, wizard 3 step (repo/machine, AI, STT con verifica microfono e skip), salvataggio token solo keychain, restartRequired, `SMART_TERMINAL_USER_DATA`.
+- Verifica: smoke onboarding su tre avvii (wizard, restart senza wizard, skip), config.md senza token, repo/machine applicati; 319 test.
+- Deviazioni: il wizard non appare se `SMART_TERMINAL_DATA_REPO` è impostata (smoke/dev); `restartRequired` anche per cambio remote; safeStorage sync deprecato in Electron 45.

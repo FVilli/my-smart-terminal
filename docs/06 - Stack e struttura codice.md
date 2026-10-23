@@ -32,6 +32,10 @@ packages/ai/        # providers, correction, STT
 ## Contratti
 Il renderer accede a filesystem, processi, Git e credenziali solo tramite API preload esplicite e tipizzate. `contextIsolation=true`, `nodeIntegration=false`; validare tutte le richieste IPC. Versioni esatte delle dipendenze sono fissate nel lockfile durante M01, senza aggiornamenti automatici da parte dei task successivi.
 
+## SSH
+- Parser read-only di `~/.ssh/config` (override `SMART_TERMINAL_SSH_CONFIG`) con `Host`, `Include` e glob, ricorsione limitata e alias concreti; `Match`/wildcard ignorati.
+- Esecuzione tramite binario OpenSSH (`ssh <alias>`) come file+args, mai stringa shell; alias validato, ambiente ereditato (incluso `SSH_AUTH_SOCK`), nessuna chiave letta o copiata.
+
 ## Target
 Desktop Linux, macOS, Windows; implementazione e test dei diversi PTY e pacchetti vanno effettuati nella relativa pipeline OS. Il terminale deve funzionare anche senza Git, AI o rete.
 

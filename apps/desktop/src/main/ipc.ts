@@ -21,6 +21,13 @@ import {
   type HistoryRecordRequest,
   type HistoryRecordResult,
   type IpcChannel,
+  type OnboardingSaveRequest,
+  type OnboardingSaveResult,
+  type OnboardingState,
+  type OnboardingValidateRequest,
+  type OnboardingValidationResult,
+  type SecretsLogoutRequest,
+  type SecretsStatus,
   type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchQueryResult,
@@ -31,7 +38,7 @@ import {
   type TerminalSessionInfo,
   type TerminalWriteRequest,
 } from '@smart-terminal/contracts';
-import { TerminalError } from '@smart-terminal/terminal';
+import { TerminalError, isValidSshAlias } from '@smart-terminal/terminal';
 
 export const MAX_PAYLOAD_BYTES = 128 * 1024;
 
@@ -117,7 +124,28 @@ export interface ClipboardTextWriter {
   writeText(text: string): void;
 }
 
+export interface SshGateway {
+  aliases(): string[] | Promise<string[]>;
+}
+
+export interface OnboardingGateway {
+  state(): OnboardingState;
+  validate(config: unknown): OnboardingValidationResult;
+  save(request: OnboardingSaveRequest): OnboardingSaveResult;
+  skip(): OnboardingSaveResult;
+  secretsStatus(): SecretsStatus;
+  logout(key: string): SecretsStatus;
+}
+
+/** Riavvio dell'app (`app.relaunch()` + `app.exit()`). */
+export interface AppController {
+  relaunch(): void;
+}
+
 export interface IpcServices {
+  ssh: SshGateway;
+  onboarding: OnboardingGateway;
+  app: AppController;
   search: SearchGateway;
   history: HistoryGateway;
   clipboard: ClipboardGateway;
@@ -151,10 +179,12 @@ function singleRequest<T>(check: (value: Record<string, unknown>) => boolean) {
   return (args: unknown[]): args is [T] => args.length === 1 && isPlainRecord(args[0]) && check(args[0]);
 }
 
+const isSshAlias = (value: unknown): boolean => isValidSshAlias(value);
+
 export const validateTerminalCreate = singleRequest<TerminalCreateRequest>(
   (v) =>
-    hasExactKeys(v, ['kind'], ['cwd', 'cols', 'rows']) &&
-    v['kind'] === 'local' &&
+    hasExactKeys(v, ['kind'], ['sshAlias', 'cwd', 'cols', 'rows']) &&
+    (v['kind'] === 'local' ? v['sshAlias'] === undefined : v['kind'] === 'ssh' && v['cwd'] === undefined && isSshAlias(v['sshAlias'])) &&
     (v['cwd'] === undefined || (typeof v['cwd'] === 'string' && v['cwd'].length > 0 && v['cwd'].length <= 4096)) &&
     (v['cols'] === undefined || isDimension(v['cols'])) &&
     (v['rows'] === undefined || isDimension(v['rows'])),
@@ -217,6 +247,18 @@ export const validateSearchQuery = singleRequest<SearchQueryRequest>(
     (v['kind'] === undefined || v['kind'] === 'history' || v['kind'] === 'clipboard'),
 );
 
+export const validateOnboardingValidate = singleRequest<OnboardingValidateRequest>((v) => hasExactKeys(v, ['config']) && isPlainRecord(v['config']));
+
+export const validateOnboardingSave = singleRequest<OnboardingSaveRequest>(
+  (v) =>
+    hasExactKeys(v, ['config'], ['aiToken', 'sttToken']) &&
+    isPlainRecord(v['config']) &&
+    (v['aiToken'] === undefined || typeof v['aiToken'] === 'string') &&
+    (v['sttToken'] === undefined || typeof v['sttToken'] === 'string'),
+);
+
+export const validateSecretsLogout = singleRequest<SecretsLogoutRequest>((v) => hasExactKeys(v, ['key']) && typeof v['key'] === 'string' && v['key'].length <= 64);
+
 export interface IpcChannelMap {
   [IPC_CHANNELS.appPing]: ChannelDefinition<[], AppPingResult>;
   [IPC_CHANNELS.appRuntimeInfo]: ChannelDefinition<[], AppRuntimeInfo>;
@@ -234,6 +276,14 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.searchQuery]: ChannelDefinition<[SearchQueryRequest], SearchQueryResult>;
   [IPC_CHANNELS.searchFacets]: ChannelDefinition<[], SearchFacetsResult>;
   [IPC_CHANNELS.syncStatus]: ChannelDefinition<[], SyncStatusEvent>;
+  [IPC_CHANNELS.sshAliases]: ChannelDefinition<[], string[]>;
+  [IPC_CHANNELS.onboardingState]: ChannelDefinition<[], OnboardingState>;
+  [IPC_CHANNELS.onboardingValidate]: ChannelDefinition<[OnboardingValidateRequest], OnboardingValidationResult>;
+  [IPC_CHANNELS.onboardingSave]: ChannelDefinition<[OnboardingSaveRequest], OnboardingSaveResult>;
+  [IPC_CHANNELS.onboardingSkip]: ChannelDefinition<[], OnboardingSaveResult>;
+  [IPC_CHANNELS.secretsStatus]: ChannelDefinition<[], SecretsStatus>;
+  [IPC_CHANNELS.secretsLogout]: ChannelDefinition<[SecretsLogoutRequest], SecretsStatus>;
+  [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
 }
 
 export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
@@ -301,6 +351,38 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.syncStatus]: {
       validate: noArguments,
       handle: () => services.sync.status(),
+    },
+    [IPC_CHANNELS.sshAliases]: {
+      validate: noArguments,
+      handle: () => services.ssh.aliases(),
+    },
+    [IPC_CHANNELS.onboardingState]: {
+      validate: noArguments,
+      handle: () => services.onboarding.state(),
+    },
+    [IPC_CHANNELS.onboardingValidate]: {
+      validate: validateOnboardingValidate,
+      handle: (_sender, { config }) => services.onboarding.validate(config),
+    },
+    [IPC_CHANNELS.onboardingSave]: {
+      validate: validateOnboardingSave,
+      handle: (_sender, request) => services.onboarding.save(request),
+    },
+    [IPC_CHANNELS.onboardingSkip]: {
+      validate: noArguments,
+      handle: () => services.onboarding.skip(),
+    },
+    [IPC_CHANNELS.secretsStatus]: {
+      validate: noArguments,
+      handle: () => services.onboarding.secretsStatus(),
+    },
+    [IPC_CHANNELS.secretsLogout]: {
+      validate: validateSecretsLogout,
+      handle: (_sender, { key }) => services.onboarding.logout(key),
+    },
+    [IPC_CHANNELS.appRelaunch]: {
+      validate: noArguments,
+      handle: () => services.app.relaunch(),
     },
   };
 }

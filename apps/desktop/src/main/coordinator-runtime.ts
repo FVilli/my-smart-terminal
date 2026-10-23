@@ -26,6 +26,7 @@ import {
 } from '@smart-terminal/sync';
 import type { ClipboardBackend } from './clipboard-gateway';
 import { ClipboardService } from './clipboard-service';
+import type { AppConfig } from './app-config';
 import { resolveDataPaths, type DataPaths } from './data-runtime';
 import { SearchService } from './search-service';
 
@@ -33,6 +34,8 @@ export interface CoordinatorRuntimeOptions {
   userDataPath: string;
   env?: NodeJS.ProcessEnv;
   hostname?: () => string;
+  /** Config letta da `config.md`: precedenza env > config > default. */
+  config?: AppConfig | undefined;
   /** Sorgente testo della clipboard di sistema: letta solo dal primary. */
   clipboardSource: ClipboardTextSource;
   /** Solo test: intervallo di polling clipboard. */
@@ -55,6 +58,20 @@ export function resolveSyncTiming(env: NodeJS.ProcessEnv): { debounceMs?: number
     ...(debounceMs !== undefined && { debounceMs }),
     ...(maxWaitMs !== undefined && { maxWaitMs }),
     ...(fetchIntervalMs !== undefined && { fetchIntervalMs }),
+  };
+}
+
+/** Remote Git: `SMART_TERMINAL_GIT_REMOTE` > `config.md`. */
+export function resolveGitRemote(env: NodeJS.ProcessEnv, config: AppConfig | undefined): string | undefined {
+  const fromEnv = env['SMART_TERMINAL_GIT_REMOTE'];
+  return fromEnv !== undefined && fromEnv.length > 0 ? fromEnv : config?.dataRepoRemote;
+}
+
+function configSyncTiming(config: AppConfig | undefined): { debounceMs?: number; maxWaitMs?: number; fetchIntervalMs?: number } {
+  return {
+    ...(config?.syncDebounceMs !== undefined && { debounceMs: config.syncDebounceMs }),
+    ...(config?.syncMaxWaitMs !== undefined && { maxWaitMs: config.syncMaxWaitMs }),
+    ...(config?.syncFetchIntervalMs !== undefined && { fetchIntervalMs: config.syncFetchIntervalMs }),
   };
 }
 
@@ -113,8 +130,13 @@ export class CoordinatorRuntime implements ClipboardBackend {
 
   constructor(private readonly options: CoordinatorRuntimeOptions) {
     const env = options.env ?? process.env;
-    this.paths = resolveDataPaths(options.userDataPath, env, options.hostname);
-    this.clipboardIntent = { enabled: env['SMART_TERMINAL_CLIPBOARD'] === '1', paused: false, activeDirectory: null };
+    this.paths = resolveDataPaths(options.userDataPath, env, options.hostname, options.config);
+    const clipboardEnv = env['SMART_TERMINAL_CLIPBOARD'];
+    this.clipboardIntent = {
+      enabled: clipboardEnv !== undefined && clipboardEnv.length > 0 ? clipboardEnv === '1' : (options.config?.clipboardEnabled ?? false),
+      paused: false,
+      activeDirectory: null,
+    };
     this.fileAllocator = new FileSessionIdAllocator({
       dataRepoPath: this.paths.dataRepoPath,
       machine: this.paths.machine,
@@ -294,8 +316,9 @@ export class CoordinatorRuntime implements ClipboardBackend {
     const git = new GitSyncManager({
       repoPath: this.paths.dataRepoPath,
       machine: this.paths.machine,
-      remote: env['SMART_TERMINAL_GIT_REMOTE'],
+      remote: resolveGitRemote(env, this.options.config),
       branch: env['SMART_TERMINAL_GIT_BRANCH'] || undefined,
+      ...configSyncTiming(this.options.config),
       ...resolveSyncTiming(env),
       // `search.refresh()` e' idempotente: restituisce true una sola volta per cambiamento, quindi niente doppio evento.
       onRemoteIntegrated: () => notifyRefreshed(),

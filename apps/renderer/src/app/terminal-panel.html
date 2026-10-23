@@ -2,3 +2,8 @@
 @if (session()?.status === 'exited') {
   <p class="terminal-status" role="status" data-testid="terminal-exited">Sessione terminata. L'input è disabilitato.</p>
 }
+@if (session(); as current) {
+  @if (current.kind === 'ssh') {
+    <p class="terminal-badge" data-testid="terminal-target">{{ current.label }} · {{ current.target }}</p>
+  }
+}

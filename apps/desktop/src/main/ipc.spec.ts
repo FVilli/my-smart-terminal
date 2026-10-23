@@ -20,6 +20,7 @@ const gateway = {
       sessionId: 'S1',
       label: 'S1',
       kind: request.kind,
+      target: request.kind === 'ssh' ? request.sshAlias : 'local',
       pid: 1,
       cwd: '/tmp',
       machine: 'host',
@@ -42,6 +43,16 @@ const services: IpcServices = {
   },
   sync: { status: vi.fn(() => Promise.resolve({ state: 'synced' as const, remoteConfigured: false })) },
   clipboardWriter: { writeText: vi.fn() },
+  ssh: { aliases: vi.fn(() => ['prod', 'staging']) },
+  onboarding: {
+    state: vi.fn(() => ({ required: false, reason: 'valid' as const, config: { machineName: 'host', dataRepoPath: '/data', aiProvider: 'none' as const, sttProvider: 'none' as const }, secureStorage: true, storedSecrets: [] })),
+    validate: vi.fn(() => ({ ok: true, errors: {} })),
+    save: vi.fn(() => ({ ok: true, errors: {}, restartRequired: false, warnings: [] })),
+    skip: vi.fn(() => ({ ok: true, errors: {}, restartRequired: false, warnings: [] })),
+    secretsStatus: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
+    logout: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
+  },
+  app: { relaunch: vi.fn() },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };
@@ -210,5 +221,43 @@ describe('M04-T04 channels', () => {
     for (const payload of [{}, { text: '' }, { text: 1 }, { text: 'x', extra: 1 }, { text: 'a'.repeat(32 * 1024 + 1) }]) {
       await expect(run(IPC_CHANNELS.clipboardWrite, payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
     }
+  });
+});
+
+describe('M05 channels', () => {
+  const run = (channel: (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS], ...args: unknown[]) =>
+    dispatchIpc(channels[channel as keyof typeof channels], sender, policy, args);
+
+  it('accepts ssh create requests only with a safe alias and no cwd', async () => {
+    await expect(run(IPC_CHANNELS.terminalCreate, { kind: 'ssh', sshAlias: 'prod-1.example', cols: 80, rows: 24 })).resolves.toMatchObject({ kind: 'ssh', target: 'prod-1.example' });
+    for (const bad of [
+      { kind: 'ssh', sshAlias: '-oProxyCommand=x' },
+      { kind: 'ssh', sshAlias: 'a b' },
+      { kind: 'ssh', sshAlias: 'a;b' },
+      { kind: 'ssh', sshAlias: 'prod', cwd: '/tmp' },
+      { kind: 'local', sshAlias: 'prod' },
+      { kind: 'ssh', sshAlias: 5 },
+    ]) {
+      await expect(run(IPC_CHANNELS.terminalCreate, bad)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
+  });
+
+  it('lists ssh aliases and validates onboarding payloads', async () => {
+    await expect(run(IPC_CHANNELS.sshAliases)).resolves.toEqual(['prod', 'staging']);
+    await expect(run(IPC_CHANNELS.sshAliases, 1)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run(IPC_CHANNELS.onboardingState)).resolves.toMatchObject({ required: false });
+    await expect(run(IPC_CHANNELS.onboardingSave, { config: { machineName: 'a' }, aiToken: 't' })).resolves.toMatchObject({ ok: true });
+    await expect(run(IPC_CHANNELS.onboardingSave, { config: {}, extra: 1 })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run(IPC_CHANNELS.onboardingSave, { config: {}, aiToken: 1 })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run(IPC_CHANNELS.onboardingValidate, { config: 'x' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run(IPC_CHANNELS.onboardingSkip)).resolves.toMatchObject({ ok: true });
+    await expect(run(IPC_CHANNELS.secretsLogout, { key: 'ai:openai' })).resolves.toMatchObject({ secureStorage: true });
+    await expect(run(IPC_CHANNELS.secretsLogout, {})).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it('relaunches the app only without arguments', async () => {
+    await run(IPC_CHANNELS.appRelaunch);
+    expect(services.app.relaunch).toHaveBeenCalledTimes(1);
+    await expect(run(IPC_CHANNELS.appRelaunch, 1)).rejects.toThrow('IPC_INVALID_PAYLOAD');
   });
 });

@@ -37,13 +37,13 @@ export class TerminalHost implements TerminalGateway {
     const { cwd } = state.manager.prepare(request);
     let created;
     try {
-      created = await this.dataRuntime.createSession(state.windowId, { kind: 'local', cwd });
+      created = await this.dataRuntime.createSession(state.windowId, request.kind === 'ssh' && request.sshAlias !== undefined ? { kind: 'ssh', sshAlias: request.sshAlias, cwd } : { kind: 'local', cwd });
     } catch {
       throw new TerminalError('TERMINAL_SESSION_ALLOCATION_FAILED');
     }
     const { allocation, machine } = created;
     try {
-      const info = state.manager.create({ ...request, cwd }, allocation.sessionId);
+      const info = state.manager.create(request.kind === 'ssh' ? request : { ...request, cwd }, allocation.sessionId);
       const extras: SessionExtras = {
         label: allocation.label,
         machine,

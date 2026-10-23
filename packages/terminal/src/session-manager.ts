@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { PtyAdapter, PtyExitInfo, PtyProcessLike } from './pty';
 import { buildLocalShellCommand } from './shell';
+import { buildSshCommand, isValidSshAlias } from './ssh-config';
 
 export const MAX_WRITE_BYTES = 64 * 1024;
 export const MIN_DIMENSION = 1;
@@ -13,6 +14,7 @@ const DEFAULT_ROWS = 24;
 export type TerminalErrorCode =
   | 'TERMINAL_INVALID_CWD'
   | 'TERMINAL_INVALID_DIMENSIONS'
+  | 'TERMINAL_INVALID_SSH_ALIAS'
   | 'TERMINAL_DATA_TOO_LARGE'
   | 'TERMINAL_UNKNOWN_SESSION'
   | 'TERMINAL_SPAWN_FAILED'
@@ -27,7 +29,9 @@ export class TerminalError extends Error {
 }
 
 export interface CreateSessionRequest {
-  kind: 'local';
+  kind: 'local' | 'ssh';
+  /** Obbligatorio (e ammesso solo) con `kind: 'ssh'`. */
+  sshAlias?: string;
   cwd?: string;
   cols?: number;
   rows?: number;
@@ -35,7 +39,9 @@ export interface CreateSessionRequest {
 
 export interface SessionInfo {
   sessionId: string;
-  kind: 'local';
+  kind: 'local' | 'ssh';
+  /** Alias SSH oppure `local`. */
+  target: string;
   pid: number;
   cwd: string;
 }
@@ -52,6 +58,8 @@ export interface SessionManagerOptions {
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
   homeDirectory?: () => string;
+  /** Binario ssh (default: `SMART_TERMINAL_SSH_BINARY` oppure `ssh`). */
+  sshBinary?: string;
 }
 
 interface Session {
@@ -76,6 +84,7 @@ export class SessionManager {
   private readonly env: NodeJS.ProcessEnv;
   private readonly platform: NodeJS.Platform;
   private readonly homeDirectory: () => string;
+  private readonly sshBinary: string | undefined;
 
   constructor(options: SessionManagerOptions) {
     this.adapter = options.adapter;
@@ -84,6 +93,7 @@ export class SessionManager {
     this.env = options.env ?? process.env;
     this.platform = options.platform ?? process.platform;
     this.homeDirectory = options.homeDirectory ?? os.homedir;
+    this.sshBinary = options.sshBinary;
   }
 
   on<K extends keyof SessionManagerEvents>(event: K, listener: SessionManagerEvents[K]): () => void {
@@ -94,6 +104,13 @@ export class SessionManager {
 
   /** Valida la richiesta e risolve i default senza avviare nulla. */
   prepare(request: CreateSessionRequest): { cwd: string; cols: number; rows: number } {
+    if (request.kind === 'ssh') {
+      if (!isValidSshAlias(request.sshAlias) || request.cwd !== undefined) {
+        throw new TerminalError('TERMINAL_INVALID_SSH_ALIAS');
+      }
+    } else if (request.kind !== 'local' || request.sshAlias !== undefined) {
+      throw new TerminalError('TERMINAL_INVALID_SSH_ALIAS');
+    }
     const cwd = this.resolveCwd(request.cwd);
     const cols = request.cols ?? DEFAULT_COLS;
     const rows = request.rows ?? DEFAULT_ROWS;
@@ -110,7 +127,10 @@ export class SessionManager {
       throw new TerminalError('TERMINAL_SPAWN_FAILED');
     }
 
-    const command = buildLocalShellCommand(this.env, this.platform);
+    const command =
+      request.kind === 'ssh' && request.sshAlias !== undefined
+        ? buildSshCommand(request.sshAlias, this.env, this.sshBinary)
+        : buildLocalShellCommand(this.env, this.platform);
     let process: PtyProcessLike;
     try {
       process = this.adapter.spawn({ ...command, cwd, cols, rows });
@@ -120,7 +140,7 @@ export class SessionManager {
 
     const id = sessionId ?? this.generateId();
     const session: Session = {
-      info: { sessionId: id, kind: 'local', pid: process.pid, cwd },
+      info: { sessionId: id, kind: request.kind, target: request.kind === 'ssh' ? (request.sshAlias as string) : 'local', pid: process.pid, cwd },
       process,
       createdAt: this.clock(),
     };

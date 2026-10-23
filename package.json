@@ -30,6 +30,8 @@
     "test:clipboard-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_CLIPBOARD_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:search-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SEARCH_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:sync-ui-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SYNC_UI_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
+    "test:ssh-smoke": "npm run build && node scripts/ssh-smoke.mjs",
+    "test:onboarding-smoke": "npm run build && node scripts/onboarding-smoke.mjs",
     "test:ipc-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:pty-smoke": "npm run rebuild:native && npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_PTY_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:watch": "vitest",

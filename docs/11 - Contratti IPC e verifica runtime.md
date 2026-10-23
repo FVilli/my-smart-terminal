@@ -106,6 +106,13 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - Refresh: evento `sync:status`/`search:refreshed`, focus finestra, polling 5 s dello stato e 15 s della lista; errori non bloccano il PTY.
 - Il fetch periodico integra i commit remoti quando il working tree tracked è pulito; i prompt di un'altra macchina diventano visibili senza scritture locali.
 
+## SSH e onboarding (M05)
+- `ssh:aliases` legge `~/.ssh/config` (Include/glob); `createTerminal` accetta `{kind:'local'|'ssh', sshAlias?}`. Errori SSH non bloccano altre sessioni.
+- Config: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`) con i campi di `docs/10`; onboarding `onboarding:state|validate|save|skip`, `secrets:status|logout`, `app:relaunch`.
+- Secret: `safeStorage`, file `0600`; su Linux backend `basic_text`/sconosciuto o cifratura assente → solo memoria per la sessione, warning esplicito, mai plaintext.
+- Env: `SMART_TERMINAL_SSH_CONFIG`, `SMART_TERMINAL_SSH_BINARY`, `SMART_TERMINAL_CONFIG_PATH`, `SMART_TERMINAL_USER_DATA`.
+- Smoke: `test:ssh-smoke`, `test:onboarding-smoke`.
+
 ## Editor assistito
 - Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.
 - L'invio aggiunge `\r` se assente, non supera 64 KiB UTF-8, svuota la bozza solo in caso di successo.

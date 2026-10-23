@@ -11,6 +11,7 @@ import {
   type AllocatedSession,
   type SessionIdAllocator,
 } from '@smart-terminal/data';
+import type { AppConfig } from './app-config';
 
 export interface DataRuntimeOptions {
   /** `app.getPath('userData')`. */
@@ -18,14 +19,13 @@ export interface DataRuntimeOptions {
   env?: NodeJS.ProcessEnv;
   hostname?: () => string;
   clock?: () => Date;
+  /** Config letta da `config.md`: precedenza env > config > default. */
+  config?: AppConfig | undefined;
   /** Solo test: sostituisce l'allocatore su file. */
   allocator?: SessionIdAllocator;
 }
 
-export interface SessionDestination {
-  kind: 'local';
-  cwd: string;
-}
+export type SessionDestination = { kind: 'local'; cwd: string } | { kind: 'ssh'; sshAlias: string; cwd: string };
 
 export interface CreatedSession {
   allocation: AllocatedSession;
@@ -38,13 +38,24 @@ export interface DataPaths {
   lockDir: string;
 }
 
-/** Percorsi e machine del repo dati: override da env (`SMART_TERMINAL_DATA_REPO`, `SMART_TERMINAL_MACHINE`) o `userData`. */
-export function resolveDataPaths(userDataPath: string, env: NodeJS.ProcessEnv = process.env, hostname: () => string = os.hostname): DataPaths {
+/**
+ * Percorsi e machine del repo dati. Precedenza: env (`SMART_TERMINAL_DATA_REPO`, `SMART_TERMINAL_MACHINE`) >
+ * `config.md` > default (`userData/data`, hostname). `process.env` non viene mai modificato.
+ */
+export function resolveDataPaths(
+  userDataPath: string,
+  env: NodeJS.ProcessEnv = process.env,
+  hostname: () => string = os.hostname,
+  config?: AppConfig,
+): DataPaths {
   const repoOverride = env['SMART_TERMINAL_DATA_REPO'];
   const machineOverride = env['SMART_TERMINAL_MACHINE'];
+  const repo =
+    repoOverride !== undefined && repoOverride.length > 0 ? repoOverride : (config?.dataRepoPath ?? path.join(userDataPath, 'data'));
+  const machine = machineOverride !== undefined && machineOverride.length > 0 ? machineOverride : (config?.machineName ?? hostname());
   return {
-    dataRepoPath: path.resolve(repoOverride !== undefined && repoOverride.length > 0 ? repoOverride : path.join(userDataPath, 'data')),
-    machine: normalizeMachine(machineOverride !== undefined && machineOverride.length > 0 ? machineOverride : hostname()),
+    dataRepoPath: path.resolve(repo),
+    machine: normalizeMachine(machine),
     lockDir: path.join(userDataPath, 'coordinator', 'locks'),
   };
 }
@@ -63,7 +74,7 @@ export class DataRuntime {
   private sessionEndedListener: ((sessionDirectory: string) => void) | undefined;
 
   constructor(options: DataRuntimeOptions) {
-    const paths = resolveDataPaths(options.userDataPath, options.env, options.hostname);
+    const paths = resolveDataPaths(options.userDataPath, options.env, options.hostname, options.config);
     this.dataRepoPath = paths.dataRepoPath;
     this.machine = paths.machine;
     this.lockDir = paths.lockDir;
@@ -88,6 +99,7 @@ export class DataRuntime {
     const allocation = await this.allocator.allocate({
       windowId,
       kind: destination.kind,
+      ...(destination.kind === 'ssh' ? { sshAlias: destination.sshAlias } : {}),
       cwdInitial: destination.cwd,
     });
     this.sessions.set(allocation.sessionId, allocation);

@@ -7,6 +7,7 @@ import {
   createSessionDocuments,
   hashClipboardText,
   parseClipboardDocument,
+  parseFrontmatter,
   parseHistoryDocument,
   parseSessionDocument,
   writeFileAtomic,
@@ -41,6 +42,7 @@ const IPC_SCRIPT = `(async () => {
 })()`;
 
 const EXPECTED_KEYS = [
+  'appRelaunch',
   'clipboardClear',
   'clipboardConfigure',
   'clipboardSetActive',
@@ -54,12 +56,19 @@ const EXPECTED_KEYS = [
   'onSyncStatus',
   'onTerminalData',
   'onTerminalExit',
+  'onboardingSave',
+  'onboardingSkip',
+  'onboardingState',
+  'onboardingValidate',
   'ping',
   'recordHistory',
   'resizeTerminal',
   'runtimeInfo',
   'search',
   'searchFacets',
+  'secretsLogout',
+  'secretsStatus',
+  'sshAliases',
   'syncStatus',
   'writeTerminal',
 ].join(',');
@@ -696,5 +705,207 @@ export function runSyncUiSmoke(window: BrowserWindow): void {
         app.exit(1);
       });
     }, 1200);
+  });
+}
+
+const SSH_UI_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => Array.from(document.querySelectorAll('[data-testid="' + id + '"]'));
+  const rejects = async (fn) => { try { await fn(); return false; } catch { return true; } };
+  let output = '';
+  const off = api.onTerminalData((e) => { output += e.data; });
+  const result = {};
+  try {
+    result.initialSession = await waitFor(async () => q('session-tab').length === 1, 8000);
+    q('session-plus')[0].click();
+    result.menuListsAliases = await waitFor(() => q('session-new-ssh').length === 3, 4000);
+    const aliases = q('session-new-ssh').map((b) => b.getAttribute('data-alias'));
+    result.aliasesFromConfigAndInclude = aliases.join(',') === 'smoke-included,smoke-host,smoke-fail';
+    result.menuItemsEnabled = q('session-new-ssh').every((b) => !b.disabled);
+    q('session-new-ssh').find((b) => b.getAttribute('data-alias') === 'smoke-host').click();
+    result.sshTabCreated = await waitFor(() => q('session-tab').length === 2, 8000);
+    result.tabShowsLabelAndAlias = await waitFor(() => { const t = q('session-tab')[1]; return !!t && t.textContent.includes('S2') && t.textContent.includes('smoke-host'); }, 4000);
+    result.markerSeen = await waitFor(() => output.includes('SSH_FAKE_OK smoke-host'), 8000);
+    result.agentEnvPresent = output.includes('auth=present');
+    result.panelBadge = await waitFor(() => q('terminal-target').some((b) => b.textContent.includes('S2') && b.textContent.includes('smoke-host')), 4000);
+    const sshInfo = (await api.listTerminals()).find((s) => s.target === 'smoke-host');
+    result.infoKindTarget = !!sshInfo && sshInfo.kind === 'ssh';
+    result.invalidAliasRejected =
+      (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: '-oProxyCommand=evil' }))) &&
+      (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: 'a b' }))) &&
+      (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: 'a;b' })));
+    // Un ssh che fallisce non deve toccare le altre tab.
+    q('session-plus')[0].click();
+    await sleep(100);
+    q('session-new-ssh').find((b) => b.getAttribute('data-alias') === 'smoke-fail').click();
+    result.failedSshExits = await waitFor(() => output.includes('SSH_FAKE_FAIL'), 8000);
+    await sleep(500);
+    const list = await api.listTerminals();
+    result.otherSessionsAlive = list.some((s) => s.label === 'S1') && list.some((s) => s.target === 'smoke-host');
+    result.localStillWorks = await (async () => {
+      await api.writeTerminal({ sessionId: 'S1', data: "printf 'LOCAL_%s\\\\n' STILL_OK\\r" });
+      return waitFor(() => output.includes('LOCAL_STILL_OK'), 8000);
+    })();
+  } finally {
+    off();
+  }
+  return result;
+})()`;
+
+function fileContainsMarker(file: string, marker: string): boolean {
+  try {
+    return fs.readFileSync(file, 'utf8').includes(marker);
+  } catch {
+    return false;
+  }
+}
+
+function anyFileContains(directory: string, marker: string): boolean {
+  try {
+    return fs
+      .readdirSync(directory, { recursive: true, withFileTypes: true })
+      .some((entry) => entry.isFile() && fileContainsMarker(path.join(entry.parentPath, entry.name), marker));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Smoke attivo con SMART_TERMINAL_SSH_SMOKE=1 (preparato da scripts/ssh-smoke.mjs: config SSH, fake ssh e chiave decoy).
+ * Il fake ssh scrive su SMART_TERMINAL_SSH_SMOKE_LOG gli argomenti ricevuti.
+ */
+export function runSshSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, SSH_UI_SCRIPT, 'SMART_TERMINAL_SSH_SMOKE_RESULT', async () => {
+    const log = process.env['SMART_TERMINAL_SSH_SMOKE_LOG'] ?? '';
+    const decoyMarker = process.env['SMART_TERMINAL_SSH_SMOKE_DECOY_MARKER'] ?? 'missing-marker';
+    const lines = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').split('\n').filter((line) => line.length > 0) : [];
+    const argLines = lines.filter((line) => line.startsWith('ARGS='));
+    const repo = process.env['SMART_TERMINAL_DATA_REPO'] ?? '';
+    const sshSessions = sessionDirectories();
+    let sshMetaOk = false;
+    for (const dir of sshSessions) {
+      try {
+        const meta = parseSessionDocument(fs.readFileSync(path.join(dir, 'session.md'), 'utf8')).meta;
+        sshMetaOk ||= meta.kind === 'ssh' && meta.ssh_alias === 'smoke-host';
+      } catch {
+        // directory non sessione
+      }
+    }
+    return {
+      fakeReceivedOnlyAlias: argLines.includes('ARGS=smoke-host') && argLines.every((line) => /^ARGS=[A-Za-z0-9._-]+$/.test(line)),
+      fakeReceivedAgentEnv: lines.filter((line) => line.startsWith('AUTH=')).every((line) => line === 'AUTH=present') && lines.some((line) => line === 'AUTH=present'),
+      noKeyMaterialCopied: !anyFileContains(repo, decoyMarker) && !anyFileContains(app.getPath('userData'), decoyMarker),
+      sessionMdHasSshAlias: sshMetaOk,
+    };
+  });
+}
+
+const ONBOARDING_PHASE_SCRIPT = (phase: string, repo: string, machine: string): string => `(async () => {
+  const api = window.smartTerminal;
+  const phase = ${JSON.stringify(phase)};
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const setValue = (id, value) => {
+    const el = q(id);
+    el.value = value;
+    el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+  };
+  const click = (id) => q(id).click();
+  const result = {};
+  await sleep(600);
+  result.terminalNotBroken = await waitFor(async () => (await api.listTerminals()).length >= 1, 8000);
+  if (phase === 'second') {
+    result.wizardHiddenOnSecondRun = !q('onboarding-overlay');
+    const state = await api.onboardingState();
+    result.stateValid = state.required === false && state.reason === 'valid' && state.config.machineName === ${JSON.stringify(machine)} && state.config.dataRepoPath === ${JSON.stringify(repo)};
+    return result;
+  }
+  result.wizardVisible = await waitFor(() => !!q('onboarding-overlay'), 4000);
+  if (phase === 'skip') {
+    click('onboarding-defaults');
+    result.wizardClosedAfterDefaults = await waitFor(() => !q('onboarding-overlay'), 6000);
+    return result;
+  }
+  result.step1 = !!q('onboarding-step-1');
+  setValue('onboarding-machine', ${JSON.stringify(machine)});
+  setValue('onboarding-repo', 'relative/path');
+  click('onboarding-next');
+  result.invalidPathRejected = await waitFor(() => !!q('onboarding-error-repo') && !!q('onboarding-step-1'), 4000);
+  setValue('onboarding-repo', ${JSON.stringify(repo)});
+  click('onboarding-next');
+  result.step2 = await waitFor(() => !!q('onboarding-step-2'), 4000);
+  setValue('onboarding-ai-provider', 'anthropic');
+  await sleep(100);
+  setValue('onboarding-ai-url', 'ftp://bad');
+  click('onboarding-next');
+  result.invalidUrlRejected = await waitFor(() => !!q('onboarding-error-ai-url') && !!q('onboarding-step-2'), 4000);
+  setValue('onboarding-ai-url', 'https://api.example.com');
+  setValue('onboarding-ai-token', ${JSON.stringify(process.env['SMART_TERMINAL_ONBOARDING_SMOKE_TOKEN'] ?? 'smoke-token')});
+  const secure = (await api.secretsStatus()).secureStorage;
+  result.keychainWarningShownWhenInsecure = secure || !!q('onboarding-keychain-warning');
+  click('onboarding-next');
+  result.step3 = await waitFor(() => !!q('onboarding-step-3'), 4000);
+  setValue('onboarding-stt-provider', 'local');
+  click('onboarding-mic-check');
+  result.micHandled = await waitFor(() => q('onboarding-mic-status').textContent.trim().length > 0 && !q('onboarding-mic-status').textContent.includes('Richiesta'), 8000);
+  click('onboarding-save');
+  result.restartNoticeShown = await waitFor(() => !!q('onboarding-restart-notice') && !!q('onboarding-restart'), 6000);
+  result.warningShownWhenInsecure = secure || !!q('onboarding-warning');
+  const state = await api.onboardingState();
+  result.stateNowValid = state.required === false && state.reason === 'valid';
+  result.tokenNotReturned = !JSON.stringify(state).includes(${JSON.stringify(process.env['SMART_TERMINAL_ONBOARDING_SMOKE_TOKEN'] ?? 'smoke-token')});
+  return result;
+})()`;
+
+/** Smoke wizard (SMART_TERMINAL_ONBOARDING_SMOKE=1, fasi first/second/skip, orchestrato da scripts/onboarding-smoke.mjs). */
+export function runOnboardingSmoke(window: BrowserWindow): void {
+  const phase = process.env['SMART_TERMINAL_ONBOARDING_PHASE'] ?? 'first';
+  const repo = process.env['SMART_TERMINAL_ONBOARDING_REPO'] ?? '';
+  const machine = process.env['SMART_TERMINAL_ONBOARDING_MACHINE'] ?? '';
+  const token = process.env['SMART_TERMINAL_ONBOARDING_SMOKE_TOKEN'] ?? 'smoke-token';
+  const userData = app.getPath('userData');
+  runUiSmoke(window, ONBOARDING_PHASE_SCRIPT(phase, repo, machine), 'SMART_TERMINAL_ONBOARDING_SMOKE_RESULT', () => {
+    const configPath = path.join(userData, 'config', 'config.md');
+    const config = fs.existsSync(configPath) ? fs.readFileSync(configPath, 'utf8') : '';
+    const checks: Record<string, boolean> = {};
+    if (phase === 'first') {
+      const parsed = (() => {
+        try {
+          return parseFrontmatter(config).data;
+        } catch {
+          return {};
+        }
+      })();
+      checks['configWritten'] = parsed['schema_version'] === 1 && parsed['machine_name'] === machine && parsed['data_repo_path'] === repo && parsed['ai_provider'] === 'anthropic' && parsed['stt_provider'] === 'local';
+      checks['configHasNoToken'] = !config.includes(token);
+      checks['noPlaintextTokenAnywhere'] = !anyFileContains(userData, token);
+      checks['repoCreated'] = fs.existsSync(repo);
+      const secretsDir = path.join(userData, 'secrets');
+      const files = fs.existsSync(secretsDir) ? fs.readdirSync(secretsDir) : [];
+      checks['secretFilesPrivate'] = files.every((name) => (fs.statSync(path.join(secretsDir, name)).mode & 0o777) === 0o600);
+    } else if (phase === 'second') {
+      const machineDir = path.join(repo, 'sessions', machine.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+      checks['dataPathAndMachineApplied'] = fs.existsSync(path.join(machineDir, 'counter.md'));
+    } else {
+      checks['defaultConfigWritten'] = config.includes('ai_provider: none') && config.includes('stt_provider: none');
+    }
+    return Promise.resolve(checks);
   });
 }

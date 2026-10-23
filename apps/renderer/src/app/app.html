@@ -6,7 +6,10 @@
       [activeId]="store.activeId()"
       (selected)="store.select($event)"
       (closed)="requestClose($event)"
+      [sshAliases]="sshAliases()"
       (createLocal)="createLocal()"
+      (createSsh)="createSsh($event)"
+      (menuOpened)="loadSshAliases()"
     />
     @if (pendingCloseId(); as closingId) {
       <div class="notice" role="alertdialog" aria-label="Conferma chiusura" data-testid="close-confirm">
@@ -18,7 +21,7 @@
     @if (store.createError(); as error) {
       <div class="notice notice--error" role="alert" data-testid="create-error">
         <span>{{ error }}</span>
-        <button type="button" data-testid="create-retry" (click)="createLocal()">Riprova</button>
+        <button type="button" data-testid="create-retry" (click)="retryCreate()">Riprova</button>
       </div>
     }
     <app-terminal-workarea>
@@ -67,3 +70,4 @@
     />
   </aside>
 </main>
+<app-onboarding-wizard />

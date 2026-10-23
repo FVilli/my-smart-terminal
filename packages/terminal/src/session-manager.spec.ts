@@ -91,7 +91,7 @@ describe('SessionManager', () => {
     const onData = vi.fn();
     manager.on('data', onData);
     const info = manager.create({ kind: 'local' });
-    expect(info).toEqual({ sessionId: 's1', kind: 'local', pid: 100, cwd: os.tmpdir() });
+    expect(info).toEqual({ sessionId: 's1', kind: 'local', target: 'local', pid: 100, cwd: os.tmpdir() });
     expect(adapter.spawned[0]?.options).toMatchObject({ file: '/bin/bash', args: [], cols: 80, rows: 24 });
     adapter.spawned[0]?.pty.emitData('hello');
     expect(onData).toHaveBeenCalledWith({ sessionId: 's1', data: 'hello' });

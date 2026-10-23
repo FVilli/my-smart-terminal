@@ -1,12 +1,16 @@
-import { app, BrowserWindow, clipboard, net, protocol } from 'electron';
+import { app, BrowserWindow, clipboard, net, protocol, safeStorage, session } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
+import { listSshAliases } from '@smart-terminal/terminal';
 import { readWindowSize, runCapture } from './capture';
-import { runClipboardSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
-import { CoordinatorRuntime } from './coordinator-runtime';
+import { runClipboardSmoke, runOnboardingSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
+import { AppConfigStore, resolveConfigPath } from './app-config';
+import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
+import { OnboardingService } from './onboarding-service';
+import { SecretStore } from './secret-store';
 import { DataRuntime } from './data-runtime';
 import { ClipboardGatewayAdapter } from './clipboard-gateway';
 import { electronClipboardSource } from './electron-clipboard';
@@ -15,6 +19,12 @@ import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
 const APP_HOST = 'bundle';
+
+// Override test della directory utente: va impostato prima di qualunque `app.getPath('userData')`.
+const userDataOverride = process.env['SMART_TERMINAL_USER_DATA'];
+if (userDataOverride !== undefined && userDataOverride.length > 0) {
+  app.setPath('userData', path.resolve(userDataOverride));
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -37,6 +47,8 @@ const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
 const clipboardSmokeTest = process.env['SMART_TERMINAL_CLIPBOARD_SMOKE'] === '1';
 const searchSmokeTest = process.env['SMART_TERMINAL_SEARCH_SMOKE'] === '1';
 const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
+const sshSmokeTest = process.env['SMART_TERMINAL_SSH_SMOKE'] === '1';
+const onboardingSmokeTest = process.env['SMART_TERMINAL_ONBOARDING_SMOKE'] === '1';
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 let terminalHost: TerminalHost | undefined;
@@ -131,6 +143,14 @@ function createWindow(): BrowserWindow {
     runSyncUiSmoke(window);
   }
 
+  if (sshSmokeTest) {
+    runSshSmoke(window);
+  }
+
+  if (onboardingSmokeTest) {
+    runOnboardingSmoke(window);
+  }
+
   if (smokeTest || ptySmokeTest) {
     runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');
   }
@@ -140,7 +160,17 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath('userData');
-  const runtime = new CoordinatorRuntime({ userDataPath, clipboardSource: electronClipboardSource });
+  // Il microfono e' l'unico permesso concesso (verifica nel wizard); tutto il resto e' negato.
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+    const mediaTypes = (details as { mediaTypes?: string[] }).mediaTypes ?? [];
+    callback(permission === 'media' && mediaTypes.length > 0 && mediaTypes.every((type) => type === 'audio'));
+  });
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => permission === 'media');
+
+  const configStore = new AppConfigStore(resolveConfigPath(userDataPath));
+  const configLoad = configStore.load();
+  const config = configLoad.status === 'valid' ? configLoad.config : undefined;
+  const runtime = new CoordinatorRuntime({ userDataPath, clipboardSource: electronClipboardSource, config });
   if (syncUiSmokeTest) {
     seedSyncUiSmokeData(runtime.paths.dataRepoPath);
   }
@@ -165,7 +195,16 @@ app.whenReady().then(async () => {
     }
   });
 
-  const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator });
+  const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator, config });
+  const onboarding = new OnboardingService({
+    userDataPath,
+    env: process.env,
+    store: configStore,
+    secrets: new SecretStore(path.join(userDataPath, 'secrets'), safeStorage),
+    runningPaths: runtime.paths,
+    runningRemote: resolveGitRemote(process.env, config),
+    initialLoad: configLoad,
+  });
   const host = new TerminalHost(new NodePtyAdapter(), dataRuntime);
   terminalHost = host;
   const search = {
@@ -191,6 +230,15 @@ app.whenReady().then(async () => {
       search,
       sync: { status: () => runtime.syncStatus() },
       clipboardWriter: { writeText: (text) => clipboard.writeText(text) },
+      ssh: { aliases: () => listSshAliases() },
+      onboarding,
+      app: {
+        relaunch: () => {
+          terminalHost?.closeAll();
+          app.relaunch();
+          app.exit(0);
+        },
+      },
     },
     () => runtime.isPrimary,
   );

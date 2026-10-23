@@ -26,3 +26,8 @@ Scelta da + apre tab SSH e usa SSH agent; nessuna chiave copiata.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: parser SSH con Host multipli/Include/glob/quoting e limiti, lista alias, comando `ssh <alias>` file+args con alias validato e ambiente agent ereditato; contratti/kind/target estesi, menu `+` con alias, tab e session.md con ssh_alias, errori SSH isolati.
+- Verifica: smoke SSH con config+Include+wildcard, fake ssh (solo alias e SSH_AUTH_SOCK), chiave decoy non copiata, sessione fallita senza impatto sulle altre; 319 test.

@@ -19,6 +19,14 @@ export const IPC_CHANNELS = {
   searchQuery: 'search:query',
   searchFacets: 'search:facets',
   syncStatus: 'sync:get-status',
+  sshAliases: 'ssh:aliases',
+  onboardingState: 'onboarding:state',
+  onboardingValidate: 'onboarding:validate',
+  onboardingSave: 'onboarding:save',
+  onboardingSkip: 'onboarding:skip',
+  secretsStatus: 'secrets:status',
+  secretsLogout: 'secrets:logout',
+  appRelaunch: 'app:relaunch',
 } as const;
 
 /** Eventi main -> renderer (non invocabili dal renderer). */
@@ -70,8 +78,10 @@ export interface RoleChangedEvent {
   isPrimary: boolean;
 }
 
+/** `local`: `sshAlias` assente. `ssh`: `sshAlias` obbligatorio e `cwd` non ammesso. */
 export interface TerminalCreateRequest {
-  kind: 'local';
+  kind: 'local' | 'ssh';
+  sshAlias?: string;
   cwd?: string;
   cols?: number;
   rows?: number;
@@ -81,7 +91,9 @@ export interface TerminalSessionInfo {
   /** Coincide con `label` (`S<n>`, progressivo per macchina). */
   sessionId: string;
   label: string;
-  kind: 'local';
+  kind: 'local' | 'ssh';
+  /** Alias SSH oppure `local`. */
+  target: string;
   pid: number;
   cwd: string;
   machine: string;
@@ -185,6 +197,69 @@ export interface ClipboardWriteRequest {
   text: string;
 }
 
+export const AI_PROVIDERS = ['none', 'anthropic', 'openai', 'openai-compatible'] as const;
+export const STT_PROVIDERS = ['none', 'local', 'cloud'] as const;
+export type AiProvider = (typeof AI_PROVIDERS)[number];
+export type SttProvider = (typeof STT_PROVIDERS)[number];
+export const SECRET_TOKEN_MAX_LENGTH = 4096;
+
+/** Parte della configurazione modificabile dal wizard (nessun segreto). */
+export interface OnboardingConfig {
+  machineName: string;
+  dataRepoPath: string;
+  dataRepoRemote?: string;
+  aiProvider: AiProvider;
+  aiBaseUrl?: string;
+  aiModel?: string;
+  sttProvider: SttProvider;
+  sttModel?: string;
+}
+
+export interface OnboardingState {
+  /** Il wizard deve essere mostrato. */
+  required: boolean;
+  /** `env-override`: percorsi forzati da variabili d'ambiente (test), nessun wizard. */
+  reason: 'missing' | 'corrupt' | 'valid' | 'env-override';
+  /** Valori correnti (config valida) oppure predefiniti. */
+  config: OnboardingConfig;
+  /** La cifratura sicura del sistema (keychain) e' disponibile. */
+  secureStorage: boolean;
+  /** Chiavi segreto presenti (`ai:<provider>`, `stt:<provider>`); mai i token. */
+  storedSecrets: string[];
+}
+
+/** Token opzionali: restano nel main e non tornano mai al renderer. */
+export interface OnboardingSaveRequest {
+  config: OnboardingConfig;
+  aiToken?: string;
+  sttToken?: string;
+}
+
+export interface OnboardingValidateRequest {
+  config: OnboardingConfig;
+}
+
+export interface OnboardingValidationResult {
+  ok: boolean;
+  /** Campo (`machineName`, `dataRepoPath`, ...) -> messaggio fisso e sanificato. */
+  errors: Record<string, string>;
+}
+
+export interface OnboardingSaveResult extends OnboardingValidationResult {
+  /** Repo dati, machine o remote cambiati: serve riavviare l'app per applicarli. */
+  restartRequired: boolean;
+  warnings: string[];
+}
+
+export interface SecretsStatus {
+  secureStorage: boolean;
+  storedSecrets: string[];
+}
+
+export interface SecretsLogoutRequest {
+  key: string;
+}
+
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {
@@ -206,6 +281,18 @@ export interface SmartTerminalApi {
   searchFacets(): Promise<SearchFacetsResult>;
   /** Stato sync corrente: dal primary locale oppure via RPC se questa istanza e' secondary. */
   syncStatus(): Promise<SyncStatusEvent>;
+  /** Alias `Host` da `~/.ssh/config` (sola lettura). */
+  sshAliases(): Promise<string[]>;
+  onboardingState(): Promise<OnboardingState>;
+  onboardingValidate(request: OnboardingValidateRequest): Promise<OnboardingValidationResult>;
+  onboardingSave(request: OnboardingSaveRequest): Promise<OnboardingSaveResult>;
+  /** Salta il wizard salvando una configurazione con valori predefiniti. */
+  onboardingSkip(): Promise<OnboardingSaveResult>;
+  secretsStatus(): Promise<SecretsStatus>;
+  /** Revoca (cancella) il token della chiave. */
+  secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;
+  /** Riavvia l'app (relaunch + exit). */
+  appRelaunch(): Promise<void>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;

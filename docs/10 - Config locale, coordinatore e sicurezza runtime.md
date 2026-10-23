@@ -21,7 +21,8 @@ Servono: configurazione iniziale prima che esista un clone dati, più finestre E
 - La config non segreta è Markdown locale in `app.getPath('userData')/config/config.md`; **non** è sincronizzata e **non** vive nel clone dati.
 - Il clone dati contiene solo `sessions/`; il suo percorso è a sua volta config per-macchina. Prima dell'onboarding il default è `userData/data`, creato localmente con `sessions/`: shell e PTY funzionano senza rete/AI/Git. Override di test: `SMART_TERMINAL_DATA_REPO`.
 - Il contatore `S<n>` vive in `sessions/<machine>/counter.md` (metadata versionato), protetto dal lock del primary; dettagli in `docs/03`.
-- Schema minimo (`schema_version: 1`): `machine_name`, `data_repo_path`, `data_repo_remote`, `ai.provider` (`anthropic|openai|openai-compatible`), `ai.base_url`, `ai.model`, `stt.provider` (`local|cloud`), `sync.debounce_ms`, `sync.max_wait_ms`, `sync.fetch_interval_ms`, `clipboard.enabled`, preferenze UI. Nessun token, chiave o password.
+- Schema (`schema_version: 1`, frontmatter flat): `machine_name`, `data_repo_path`, `data_repo_remote?`, `ai_provider` (`none|anthropic|openai|openai-compatible`), `ai_base_url?`, `ai_model?`, `stt_provider` (`none|local|cloud`), `stt_model?`, `sync_debounce_ms?`, `sync_max_wait_ms?`, `sync_fetch_interval_ms?`, `clipboard_enabled?`. Nessun token, chiave o password.
+- Percorso: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`); backup `.bak` dell'ultima versione valida, quarantena `.corrupt`, ripristino solo se il backup è valido. Precedenza env > config > default (repo, machine, remote, tempi, clipboard) senza mutare `process.env`.
 - Scrittura atomica (file temporaneo nella stessa directory + rename) e parser validante con default sicuri. File illeggibile o schema ignoto: backup del file e ripristino dei default, senza bloccare il terminale.
 - La machine identity è `machine_name` normalizzata (niente slash); non deriva da hostname di rete e non viene condivisa.
 
@@ -37,7 +38,7 @@ Servono: configurazione iniziale prima che esista un clone dati, più finestre E
 - L'allocazione `S<n>` è incapsulata dietro un servizio: M03 usa il lock locale, M04 la espone dal primary via IPC locale senza creare un secondo lock incompatibile.
 
 ### D3 - Credenziali e keychain
-- I token AI/STT sono gestiti solo nel processo main con Electron `safeStorage`, mai nel renderer e mai in chiaro.
+- I token AI/STT sono gestiti solo nel processo main con Electron `safeStorage`, mai nel renderer e mai in chiaro. File cifrati `userData/secrets/<provider>.json` con permessi `0600` e scrittura atomica; il renderer vede solo l'elenco delle chiavi presenti.
 - Su Linux si considera il backend effettivo: se è `basic_text` o la cifratura non è disponibile, il token non viene persistito; è ammessa solo una credenziale in memoria per la sessione, con indicazione esplicita nella UI. Nessun fallback plaintext.
 - Logout/revoca eliminano il token dal keychain e dalla memoria.
 

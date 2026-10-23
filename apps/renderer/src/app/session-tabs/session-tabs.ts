@@ -41,7 +41,7 @@ import type { TerminalSessionView } from '../session.model';
           aria-label="Nuova sessione"
           aria-haspopup="menu"
           [attr.aria-expanded]="menuOpen()"
-          (click)="menuOpen.set(!menuOpen())"
+          (click)="toggleMenu()"
         >
           +
         </button>
@@ -55,9 +55,21 @@ import type { TerminalSessionView } from '../session.model';
             >
               Local
             </button>
-            <button type="button" role="menuitem" data-testid="session-new-ssh" disabled>
-              SSH <small>Disponibile in M05</small>
-            </button>
+            @for (alias of sshAliases(); track alias) {
+              <button
+                type="button"
+                role="menuitem"
+                data-testid="session-new-ssh"
+                [attr.data-alias]="alias"
+                (click)="menuOpen.set(false); createSsh.emit(alias)"
+              >
+                SSH <small>{{ alias }}</small>
+              </button>
+            } @empty {
+              <button type="button" role="menuitem" data-testid="session-new-ssh" disabled>
+                SSH <small>Nessun host in ~/.ssh/config</small>
+              </button>
+            }
           </div>
         }
       </div>
@@ -96,6 +108,19 @@ export class SessionTabs {
   readonly selected = output<string>();
   readonly closed = output<string>();
   readonly createLocal = output<void>();
+  readonly createSsh = output<string>();
+  /** Alias `Host` letti da `~/.ssh/config`. */
+  readonly sshAliases = input<readonly string[]>([]);
+  /** Il menu `+` e' stato aperto: il genitore rilegge gli alias. */
+  readonly menuOpened = output<void>();
 
   protected readonly menuOpen = signal(false);
+
+  protected toggleMenu(): void {
+    const opening = !this.menuOpen();
+    this.menuOpen.set(opening);
+    if (opening) {
+      this.menuOpened.emit();
+    }
+  }
 }

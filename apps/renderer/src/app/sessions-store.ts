@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type {
   SmartTerminalApi,
+  TerminalCreateRequest,
   TerminalDataEvent,
   TerminalExitEvent,
 } from '@smart-terminal/contracts';
@@ -43,19 +44,35 @@ export class SessionsStore {
     this.api.onTerminalExit((event) => this.handleExit(event));
   }
 
-  async createLocal(): Promise<string | null> {
+  createLocal(): Promise<string | null> {
+    return this.create({ kind: 'local', cols: 80, rows: 24 });
+  }
+
+  createSsh(alias: string): Promise<string | null> {
+    return this.create({ kind: 'ssh', sshAlias: alias, cols: 80, rows: 24 });
+  }
+
+  /** Ripete l'ultima creazione fallita (default: shell locale). */
+  retryCreate(): Promise<string | null> {
+    return this.create(this.lastRequest);
+  }
+
+  private lastRequest: TerminalCreateRequest = { kind: 'local', cols: 80, rows: 24 };
+
+  private async create(request: TerminalCreateRequest): Promise<string | null> {
+    this.lastRequest = request;
     this.creatingState.set(true);
     this.createErrorState.set(null);
     try {
-      const info = await this.api.createTerminal({ kind: 'local', cols: 80, rows: 24 });
+      const info = await this.api.createTerminal(request);
       const session: TerminalSessionView = {
         id: info.sessionId,
         label: info.label,
-        target: `${info.machine}/local`,
+        target: info.kind === 'ssh' ? info.target : `${info.machine}/local`,
         machine: info.machine,
         sessionDirectory: info.sessionDirectory,
         startedAt: info.startedAt,
-        kind: 'local',
+        kind: info.kind,
         status: 'running',
         pid: info.pid,
         exitCode: null,
@@ -64,7 +81,7 @@ export class SessionsStore {
       this.activeIdState.set(session.id);
       return session.id;
     } catch {
-      this.createErrorState.set('Impossibile avviare la shell locale.');
+      this.createErrorState.set(request.kind === 'ssh' ? 'Impossibile avviare la sessione SSH.' : 'Impossibile avviare la shell locale.');
       return null;
     } finally {
       this.creatingState.set(false);
