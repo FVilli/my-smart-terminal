@@ -54,6 +54,14 @@ For permissions, local commands, cloud tokens and troubleshooting, see the [STT 
 
 The exact fields are **STT provider**, **Model (optional)**, and, for cloud STT, **Token (optional, keychain only)**. Choose **none**, **local**, or **cloud**. A local provider additionally shows **Local STT command (absolute path)**; a cloud provider uses its keychain token. Select **Check microphone** and grant the operating system permission when prompted. The result may say **Microphone available. No recording is saved.**, **Microphone permission denied. You can continue without it.**, or **No microphone available. You can continue without it.** Use **Skip** to leave STT disabled; a denied or unavailable microphone does not affect terminal use.
 
+### Later launches: Settings
+
+The first run remains the three-step **Initial setup** wizard above. On later launches, select the gear button to open **Settings**. Settings uses tabs for **Repository**, **AI**, **STT**, and **Appearance**, so each area can be edited without rerunning onboarding.
+
+**Appearance** provides monospace terminal font presets: JetBrains Mono, Cascadia Code, Fira Code, Source Code Pro, Ubuntu Mono, and System monospace. If a selected font is not installed, its stack falls back to another installed monospace font. The terminal preview updates live; use the save action to persist the choice.
+
+The window title includes the application version. On Linux and Windows, the native **File**, **Edit**, **View**, and **Window** menus are removed. Application zoom uses **Ctrl/Cmd-minus**, **Ctrl/Cmd-plus** (including `Ctrl+=`), and **Ctrl/Cmd-0** to zoom out, in, and reset. This narrow shortcut exception is handled even when the terminal is focused; applications using those specific key combinations lose them, while other terminal Ctrl keys remain owned by the PTY. See the [keyboard behavior ADR](23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md).
+
 Voice input is push-to-talk. Audio is held in memory while recording and is not saved as a recording. The transcription is placed in the editable draft and is never submitted automatically.
 
 ### Configuration and secrets

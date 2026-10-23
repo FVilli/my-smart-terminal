@@ -36,7 +36,7 @@ At first launch, the wizard offers three steps:
 2. **AI provider and token** — choose Anthropic, OpenAI, or OpenAI-compatible, optionally set the base URL/model, and save the token in the system keychain. On Linux, if the backend is `basic_text` or unavailable, the token is kept in memory for the session only: it is never written in plaintext.
 3. **STT and microphone** — choose local or cloud STT, configure the absolute local command or cloud provider, check the microphone, and grant permission. This step can be skipped.
 
-Non-secret configuration is in `userData/config/config.md` (typically under `~/.config/...` on Linux, `~/Library/Application Support/...` on macOS, and `%APPDATA%/...` on Windows). It is not synchronized. Tokens are managed by main through `safeStorage`/keychain and are not placed in Markdown; without a secure keyring there is no plaintext fallback.
+Non-secret configuration is in `userData/config/config.md` (typically under `~/.config/...` on Linux, `~/Library/Application Support/...` on macOS, and `%APPDATA%/...` on Windows). It is not synchronized. Tokens are managed by main through `safeStorage`/keychain and are not placed in Markdown; without a secure keyring there is no plaintext fallback. After first-run onboarding, the gear opens Settings with **Repository**, **AI**, **STT**, and **Appearance** tabs; see the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md) for font, title, menu, and zoom behavior.
 
 Configuration uses `schema_version: 1`. If it is unreadable or unknown, the app keeps a `.bak` backup of the last valid configuration or quarantines the corrupt one as `.corrupt`, then restarts with safe defaults.
 
@@ -66,7 +66,7 @@ The sidebar alternates between **History** and **Clipboard**.
 - History: search text, filter by machine, copy, or insert into the draft. V1 records explicit assisted-editor submissions; native shell history is not recorded generally.
 - Clipboard: capture is opt-in. It can be paused, cleared, searched, copied, or inserted into the draft. Insertion never sends automatically.
 
-The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role.
+The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role. Application zoom is **Ctrl/Cmd-minus**, **Ctrl/Cmd-plus**, and **Ctrl/Cmd-0**; the narrow terminal shortcut limitation is documented in the [keyboard behavior ADR](23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md).
 
 ## 5. Data and synchronization
 

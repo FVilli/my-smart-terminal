@@ -38,7 +38,17 @@ Use the wrapper's absolute path in **Local STT command**, then click **Test tran
 
 Choose **cloud** and configure the provider model and token. The token is stored through the system keychain/Electron `safeStorage`, never in Markdown. On Linux, if the keyring backend is `basic_text` or encryption is unavailable, the token remains in memory for the session only; configure a secure keyring before relying on cloud STT after restart.
 
-Cloud transcription requires network access. The app sends a short audio sample only when you explicitly start a test or dictation; it never sends audio in the background.
+Cloud transcription requires network access. For a cloud or self-hosted OpenAI-compatible STT service, configure these fields:
+
+- **Base URL:** `https://unsloth.fvsg.mqu.it/v1`
+- **Model:** `audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF`
+- **Response format:** `verbose_json`
+- **Language:** `en`
+- **Bearer token:** enter the token in the token field; it is stored in the system keychain.
+
+The request endpoint is `<base>/audio/transcriptions`, so the `/v1` suffix must be included in the base URL. The app sends a short audio sample only when you explicitly start a test or dictation; it never sends audio in the background.
+
+**Test transcription** records up to three seconds, displays the recognized text, and never saves the audio.
 
 ## 4. Using dictation
 
