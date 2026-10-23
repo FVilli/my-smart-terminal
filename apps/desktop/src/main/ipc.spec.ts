@@ -13,7 +13,7 @@ import {
   type TerminalGateway,
 } from './ipc';
 
-const env = { appVersion: '1.2.3', platform: 'linux', isPackaged: false };
+const env = { appVersion: '1.2.3', platform: 'linux', isPackaged: false, isPrimary: () => true };
 const gateway = {
   create: vi.fn((_id, request) =>
     Promise.resolve({
@@ -72,7 +72,7 @@ describe('ipc dispatch', () => {
       appVersion: '1.2.3',
       platform: 'linux',
     });
-    await expect(dispatchIpc(channels[IPC_CHANNELS.appRuntimeInfo], sender, policy, [])).resolves.toEqual(env);
+    await expect(dispatchIpc(channels[IPC_CHANNELS.appRuntimeInfo], sender, policy, [])).resolves.toEqual({ appVersion: '1.2.3', platform: 'linux', isPackaged: false, isPrimary: true });
   });
 
   it.each([[{ a: 1 }], ['x'], [null], [undefined], [1, 2]])('rejects payload %j', async (...args) => {

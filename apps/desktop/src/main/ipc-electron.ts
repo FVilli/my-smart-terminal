@@ -13,12 +13,14 @@ export function registerIpcHandlers(
   appOrigin: string,
   terminals: TerminalHost,
   services: IpcServices,
+  isPrimary: () => boolean,
 ): void {
   const channels = createChannelMap(
     {
       appVersion: app.getVersion(),
       platform: process.platform,
       isPackaged: app.isPackaged,
+      isPrimary,
     },
     terminals,
     services,

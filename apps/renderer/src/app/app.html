@@ -38,7 +38,7 @@
       (draftChange)="setDraft($event)"
       (submitted)="send($event)"
     />
-    <app-status-footer [syncState]="'synced'" [primary]="true" />
+    <app-status-footer [syncState]="'synced'" [primary]="isPrimary()" />
   </section>
   <aside class="sidebar" data-testid="sidebar">
     <app-sidebar-panel [activeTab]="sidebarTab()" (tabChange)="sidebarTab.set($event)" />

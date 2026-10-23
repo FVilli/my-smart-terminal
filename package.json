@@ -22,6 +22,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:data": "vitest run packages/data apps/desktop/src/main/data-runtime.spec.ts apps/desktop/src/main/terminal-host.spec.ts",
+    "test:coordinator": "vitest run packages/sync apps/desktop/src/main/coordinator-runtime.spec.ts",
     "test:layout": "npm run build && node scripts/capture-layout.mjs",
     "test:tabs-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_TABS_SMOKE=1 electron apps/desktop",
     "test:editor-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_EDITOR_SMOKE=1 electron apps/desktop",

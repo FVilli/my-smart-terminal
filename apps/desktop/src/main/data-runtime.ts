@@ -32,6 +32,23 @@ export interface CreatedSession {
   machine: string;
 }
 
+export interface DataPaths {
+  dataRepoPath: string;
+  machine: string;
+  lockDir: string;
+}
+
+/** Percorsi e machine del repo dati: override da env (`SMART_TERMINAL_DATA_REPO`, `SMART_TERMINAL_MACHINE`) o `userData`. */
+export function resolveDataPaths(userDataPath: string, env: NodeJS.ProcessEnv = process.env, hostname: () => string = os.hostname): DataPaths {
+  const repoOverride = env['SMART_TERMINAL_DATA_REPO'];
+  const machineOverride = env['SMART_TERMINAL_MACHINE'];
+  return {
+    dataRepoPath: path.resolve(repoOverride !== undefined && repoOverride.length > 0 ? repoOverride : path.join(userDataPath, 'data')),
+    machine: normalizeMachine(machineOverride !== undefined && machineOverride.length > 0 ? machineOverride : hostname()),
+    lockDir: path.join(userDataPath, 'coordinator', 'locks'),
+  };
+}
+
 /**
  * Collega il main process al repo dati Markdown: risolve percorsi e machine,
  * alloca ID/file di sessione e ne finalizza `ended_at`.
@@ -46,16 +63,10 @@ export class DataRuntime {
   private sessionEndedListener: ((sessionDirectory: string) => void) | undefined;
 
   constructor(options: DataRuntimeOptions) {
-    const env = options.env ?? process.env;
-    const repoOverride = env['SMART_TERMINAL_DATA_REPO'];
-    this.dataRepoPath = path.resolve(
-      repoOverride !== undefined && repoOverride.length > 0 ? repoOverride : path.join(options.userDataPath, 'data'),
-    );
-    const machineOverride = env['SMART_TERMINAL_MACHINE'];
-    this.machine = normalizeMachine(
-      machineOverride !== undefined && machineOverride.length > 0 ? machineOverride : (options.hostname ?? os.hostname)(),
-    );
-    this.lockDir = path.join(options.userDataPath, 'coordinator', 'locks');
+    const paths = resolveDataPaths(options.userDataPath, options.env, options.hostname);
+    this.dataRepoPath = paths.dataRepoPath;
+    this.machine = paths.machine;
+    this.lockDir = paths.lockDir;
     this.clock = options.clock ?? (() => new Date());
     fs.mkdirSync(path.join(this.dataRepoPath, 'sessions'), { recursive: true });
     this.allocator =

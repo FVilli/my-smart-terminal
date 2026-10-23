@@ -74,6 +74,7 @@ export interface RuntimeEnvironment {
   appVersion: string;
   platform: string;
   isPackaged: boolean;
+  isPrimary(): boolean;
 }
 
 export const noArguments = (args: unknown[]): args is [] => args.length === 0;
@@ -99,7 +100,7 @@ export interface ClipboardGateway {
 }
 
 export interface SearchGateway {
-  query(request: SearchQueryRequest): SearchQueryResult;
+  query(request: SearchQueryRequest): SearchQueryResult | Promise<SearchQueryResult>;
 }
 
 export interface IpcServices {
@@ -216,7 +217,7 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     },
     [IPC_CHANNELS.appRuntimeInfo]: {
       validate: noArguments,
-      handle: () => ({ appVersion: env.appVersion, platform: env.platform, isPackaged: env.isPackaged }),
+      handle: () => ({ appVersion: env.appVersion, platform: env.platform, isPackaged: env.isPackaged, isPrimary: env.isPrimary() }),
     },
     [IPC_CHANNELS.terminalCreate]: {
       validate: validateTerminalCreate,

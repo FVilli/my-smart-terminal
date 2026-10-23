@@ -55,6 +55,13 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - Clipboard: opt-in, polling ~800 ms, hash SHA-256, limite 32 KiB, filtro segreti best-effort, pausa/cancellazione, associazione alla sessione attiva.
 - Indice ricerca: rebuild all'avvio, aggiornamento sulle scritture dell'app, refresh dopo Git; solo Markdown sotto `sessions/`, niente symlink, limiti di dimensione.
 
+## Coordinatore e Git (M04)
+- Lock `userData/coordinator/primary.lock` (mkdir atomico, owner.json, heartbeat 3 s, stale 10 s, recovery con nonce); un solo primary per macchina.
+- Socket Unix `userData/coordinator/coordinator.sock` (`0700`/`0600`) o named pipe Windows; token `0600`; protocollo JSON line-delimited max 1 MiB.
+- Metodi: `ping`, `session.allocate`, `search.query`, `search.upsert`, `search.refresh`, `sync.status`, `sync.dirty` (T04 aggiunge clipboard).
+- `AppRuntimeInfo.isPrimary` ed evento `app:role-changed`; footer dinamico.
+- Git: `GitEngine` seriale, stage solo `sessions/`, commit path-scoped, fetch/rebase/push senza force, conflitti con abort e file preservati, offline con commit locale. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
+
 ## PTY
 - `packages/terminal` contiene interfacce e `SessionManager` testabile; l'adapter nativo è nel subpath `@smart-terminal/terminal/node-pty` e va importato solo dal main.
 - File e args sono sempre separati (mai una stringa shell composta da IPC). `cwd` deve essere assoluto ed esistente.
@@ -67,6 +74,7 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npx tsc -p tsconfig.json --noEmit` | typecheck main/packages |
 | `npm run test` | unit test Vitest (IPC, SessionManager, data schema/allocatore, runtime) |
 | `npm run test:data` | test mirati del package data e del runtime dati |
+| `npm run test:coordinator` | elezione multi-processo, takeover, protocollo, Git con repo bare |
 | `npm run build` | bundle main/preload + Angular production |
 | `npm run test:ipc-smoke` | finestra Electron, API valida, rifiuto payload/canale, renderer senza Node |
 | `npm run test:pty-smoke` | rebuild nativo + shell reale: output, input, resize, list, exit |

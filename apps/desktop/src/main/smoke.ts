@@ -11,11 +11,14 @@ const IPC_SCRIPT = `(async () => {
   const hasApi = typeof api === 'object' && api !== null && typeof invoke === 'function';
   const ping = await api.ping();
   const info = await api.runtimeInfo();
+  await new Promise((resolve) => setTimeout(resolve, 300));
   return {
     ui,
     hasApi,
     pingOk: typeof ping.appVersion === 'string' && typeof ping.platform === 'string',
     runtimeInfoOk: typeof info.appVersion === 'string' && typeof info.isPackaged === 'boolean',
+    isPrimary: info.isPrimary === true,
+    primaryIndicator: !!document.querySelector('[data-testid="primary-indicator"]') && document.querySelector('[data-testid="primary-indicator"]').textContent.includes('Primary instance'),
     invalidPayloadRejected:
       (await rejects(() => invoke('app:ping', { a: 1 }))) &&
       (await rejects(() => invoke('app:ping', 'x'))) &&
@@ -36,6 +39,7 @@ const EXPECTED_KEYS = [
   'closeTerminal',
   'createTerminal',
   'listTerminals',
+  'onRoleChanged',
   'onTerminalData',
   'onTerminalExit',
   'ping',

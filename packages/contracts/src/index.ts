@@ -22,6 +22,7 @@ export const IPC_CHANNELS = {
 export const IPC_EVENTS = {
   terminalData: 'terminal:data',
   terminalExit: 'terminal:exit',
+  roleChanged: 'app:role-changed',
 } as const;
 
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
@@ -42,6 +43,12 @@ export interface AppRuntimeInfo {
   appVersion: string;
   platform: string;
   isPackaged: boolean;
+  /** Questa istanza e' il coordinator primary della macchina. */
+  isPrimary: boolean;
+}
+
+export interface RoleChangedEvent {
+  isPrimary: boolean;
 }
 
 export interface TerminalCreateRequest {
@@ -168,6 +175,7 @@ export interface SmartTerminalApi {
   search(request: SearchQueryRequest): Promise<SearchQueryResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
+  onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;
 }
 
 /** Argomento di avvio che abilita il seam di test `__testInvoke` nel preload. */

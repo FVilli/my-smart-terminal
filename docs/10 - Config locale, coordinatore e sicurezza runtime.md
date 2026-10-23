@@ -29,7 +29,10 @@ Servono: configurazione iniziale prima che esista un clone dati, più finestre E
 - Ogni finestra Electron avvia il proprio main; **nessun** single-instance lock globale.
 - Elezione: directory lock `userData/coordinator/lock/` creata atomicamente (`mkdir`) contenente `owner.json` con `pid`, `nonce`, `created_at`, `heartbeat_at`. Il lock non impedisce l'avvio di altre finestre.
 - Trasporto: Unix domain socket `userData/coordinator/coordinator.sock` con directory `0700` e socket `0600`; su Windows named pipe `\\.\pipe\smart-terminal-<hash(userData)>`, autenticazione a nonce. Protocollo JSON-RPC con metodi whitelisted, payload massimo 1 MiB, validazione dei parametri.
-- Heartbeat periodico. Takeover consentito solo se il lock è stale (heartbeat oltre 10 s), il PID non è più vivo o l'endpoint non risponde; l'acquisizione finale usa di nuovo `mkdir` atomico. I secondari restano client finché l'endpoint risponde.
+- Heartbeat ogni 3 s; takeover consentito solo se il lock è stale (heartbeat oltre 10 s) e il PID non è più vivo, o se l'endpoint non risponde; l'acquisizione finale usa di nuovo `mkdir` atomico. I secondari restano client finché l'endpoint risponde.
+- Protocollo JSON line-delimited (max 1 MiB) con token in `userData/coordinator/token` (`0600`, confronto constant-time) e metodi whitelisted; il client rilegge il token a ogni richiesta, così dopo un takeover raggiunge il nuovo primary.
+- Se il primary non è raggiungibile, l'allocazione secondaria ripiega sull'allocatore su file con lock condiviso (stesso `primary.lock`/lock allocatore): nessun blocco fino al takeover e nessun ID duplicato. Il ruolo resta `secondary` finché il takeover non riesce.
+- Limite noto: il path Unix socket ha un massimo di ~108 caratteri; userData molto profondi richiedono un path più corto (hardening M06).
 - Il coordinatore è l'unico proprietario di contatori macchina, scritture condivise, indice e Git. Il renderer non riceve privilegi dal ruolo primary.
 - L'allocazione `S<n>` è incapsulata dietro un servizio: M03 usa il lock locale, M04 la espone dal primary via IPC locale senza creare un secondo lock incompatibile.
 

@@ -26,3 +26,9 @@ Una sola primary per macchina e UI indicator corretto.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: elezione con lock/heartbeat/stale recovery, server Unix socket/named pipe con token e protocollo JSON whitelisted, client con token riletto, orchestratore primary/secondary con takeover, allocator remoto e switching, integrazione main, `isPrimary` + evento ruolo, footer dinamico.
+- Verifica: 203 test (multi-processo, 8 elezioni concorrenti, kill -9 con takeover, token/metodi/oversize, permessi), `test:coordinator`, tutti gli smoke; IPC smoke con `isPrimary:true` e primary indicator.
+- Deviazioni: fallback all'allocatore su file se il primary è irraggiungibile (lock condiviso, nessun blocco); rilascio sincrono del lock su `process.exit` per gli smoke; limite path socket ~108 char (M06).

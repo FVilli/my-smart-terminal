@@ -19,3 +19,10 @@ Scrittura Markdown immediata; debounce push 10 s dall'ultima modifica, max wait 
 
 ## Semantica
 Near-real-time, non realtime garantito. Nessun force push. Offline: file locali persistenti e coda implicita Git; non bloccare shell. Repo privato e sanitizzazione segreti prima della scrittura.
+
+## Implementazione (M04)
+- `GitEngine` usa `execFile('git')` con `GIT_TERMINAL_PROMPT=0`, senza shell e senza `--force`; le operazioni mutanti sono serializzate da un mutex.
+- Init: `git init -b <branch>` se assente, identità locale, `.gitignore` per temporanei; remote opzionale da `SMART_TERMINAL_GIT_REMOTE`, branch da `SMART_TERMINAL_GIT_BRANCH` (default `main`).
+- Stage/commit solo `sessions/`: `git add -- sessions`, `git commit -- sessions`, nessun commit a vuoto.
+- Fetch → rebase su `origin/<branch>`; conflitto: `rebase --abort`, file preservati, stato `error`. Push `HEAD:<branch>` con retry/backoff limitato su non-fast-forward.
+- Senza remote configurato: commit locali, nessun push; la UI deve mostrare "repo non configurato" e non bloccare il terminale.

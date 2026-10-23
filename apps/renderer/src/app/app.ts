@@ -23,6 +23,8 @@ export class App {
   protected readonly pendingCloseId = signal<string | null>(null);
 
   protected readonly sidebarTab = signal<SidebarTab>('clipboard');
+  /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
+  protected readonly isPrimary = signal(false);
 
   private readonly clipboardCapture = inject(ClipboardCaptureStore);
 
@@ -30,6 +32,9 @@ export class App {
     void this.store.createLocal();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
     window.addEventListener('focus', () => this.clipboardCapture.refresh());
+    const api = window.smartTerminal;
+    void api.runtimeInfo().then((info) => this.isPrimary.set(info.isPrimary));
+    api.onRoleChanged((event) => this.isPrimary.set(event.isPrimary));
   }
 
   protected requestClose(id: string): void {

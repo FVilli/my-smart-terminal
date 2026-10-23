@@ -26,3 +26,9 @@ Nessun force push; recupero due commit concorrenti e offline.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `GitEngine` con execFile, init/remote/branch, stage e commit limitati a `sessions/`, fetch/rebase/push con retry/backoff e mutex, conflitti con abort e file preservati, stati e sanitizzazione errori, nessun force; `GitSyncManager` con notifica dirty e sync esplicito.
+- Verifica: 14 test Git su repo bare e due macchine simulate (sync incrociato, commit concorrenti, push rifiutato, conflitto, offline, nessun commit vuoto, stage limitato, nessun `--force`).
+- Nota: senza remote i commit restano locali; la UI "repo non configurato" arriva in T04.

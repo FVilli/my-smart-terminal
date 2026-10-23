@@ -7,6 +7,7 @@ import {
   type AppRuntimeInfo,
   type ClipboardCaptureState,
   type HistoryRecordResult,
+  type RoleChangedEvent,
   type SearchQueryResult,
   type TerminalDataEvent,
   type TerminalExitEvent,
@@ -40,6 +41,7 @@ const api: SmartTerminalApi = {
   search: (request) => ipcRenderer.invoke(IPC_CHANNELS.searchQuery, request) as Promise<SearchQueryResult>,
   onTerminalData: (listener) => subscribe<TerminalDataEvent>(IPC_EVENTS.terminalData, listener),
   onTerminalExit: (listener) => subscribe<TerminalExitEvent>(IPC_EVENTS.terminalExit, listener),
+  onRoleChanged: (listener) => subscribe<RoleChangedEvent>(IPC_EVENTS.roleChanged, listener),
 };
 
 contextBridge.exposeInMainWorld('smartTerminal', api);

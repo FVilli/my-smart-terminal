@@ -30,3 +30,8 @@ Gli ID sono immutabili; non rinominare task completati. Un task deve essere eseg
 
 ## Priorità
 Seguire M01→M06; parallelizzare solo task senza dipendenze e senza modifiche concorrenti agli stessi file.
+
+## Sincronizzazione dei documenti
+- `gsynchro` può sincronizzare in entrambe le direzioni con la copia Drive. Dopo ogni spostamento di stato verificare che lo stesso `id` non esista in più cartelle.
+- Se compaiono duplicati, la copia canonica è quella nella cartella di stato più avanzata (`done` > `in_progress` > `todo`); rimuovere le copie stale anche dalla destinazione sincronizzata, non solo dal repo.
+- Evitare spostamenti multipli mentre il daemon sta riconciliando: fermarlo, riconciliare e riavviarlo a milestone conclusa. Frontmatter e corpo del task devono restare integri dopo la sincronizzazione.
