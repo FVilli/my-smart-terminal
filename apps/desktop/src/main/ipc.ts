@@ -10,6 +10,7 @@ import {
   HISTORY_MAX_TEXT_BYTES,
   IPC_CHANNELS,
   SEARCH_MAX_QUERY_LENGTH,
+  STT_MAX_AUDIO_BYTES,
   TERMINAL_MAX_DIMENSION,
   TERMINAL_MAX_WRITE_BYTES,
   TERMINAL_MIN_DIMENSION,
@@ -35,6 +36,9 @@ import {
   type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchQueryResult,
+  type SttStatus,
+  type SttTranscribeRequest,
+  type SttTranscribeResult,
   type SyncStatusEvent,
   type TerminalCloseRequest,
   type TerminalCreateRequest,
@@ -43,6 +47,7 @@ import {
   type TerminalWriteRequest,
 } from '@smart-terminal/contracts';
 import { TerminalError, isValidSshAlias } from '@smart-terminal/terminal';
+import { isAudioMimeType } from '@smart-terminal/ai';
 
 export const MAX_PAYLOAD_BYTES = 128 * 1024;
 
@@ -83,6 +88,8 @@ export interface ChannelDefinition<Args extends unknown[], Result> {
   /** Valida gli argomenti grezzi; deve lanciare o restituire false se invalidi. */
   validate(args: unknown[]): args is Args;
   handle(sender: SenderInfo, ...args: Args): Result | Promise<Result>;
+  /** Limite del payload serializzato (default `MAX_PAYLOAD_BYTES`); l'audio STT usa un limite dedicato. */
+  maxPayloadBytes?: number;
 }
 
 export interface RuntimeEnvironment {
@@ -128,6 +135,11 @@ export interface AiGateway {
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
 }
 
+export interface SttGateway {
+  status(): SttStatus | Promise<SttStatus>;
+  transcribe(request: SttTranscribeRequest): SttTranscribeResult | Promise<SttTranscribeResult>;
+}
+
 /** Scrittura di testo nella clipboard di sistema (pulsante Copia). */
 export interface ClipboardTextWriter {
   writeText(text: string): void;
@@ -161,6 +173,7 @@ export interface IpcServices {
   sync: SyncGateway;
   clipboardWriter: ClipboardTextWriter;
   ai: AiGateway;
+  stt: SttGateway;
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -254,6 +267,15 @@ export const validateAiCorrect = singleRequest<AiCorrectRequest>(
 
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
+export const validateSttTranscribe = singleRequest<SttTranscribeRequest>(
+  (v) =>
+    hasExactKeys(v, ['audio', 'mimeType']) &&
+    v['audio'] instanceof Uint8Array &&
+    v['audio'].byteLength > 0 &&
+    v['audio'].byteLength <= STT_MAX_AUDIO_BYTES &&
+    isAudioMimeType(v['mimeType']),
+);
+
 export const validateSearchQuery = singleRequest<SearchQueryRequest>(
   (v) =>
     hasExactKeys(v, ['query'], ['machine', 'sessionId', 'from', 'to', 'kind']) &&
@@ -305,6 +327,8 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
+  [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
+  [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
 }
 
 export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
@@ -413,17 +437,60 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: validateAiCorrect,
       handle: (_sender, request) => services.ai.correct(request),
     },
+    [IPC_CHANNELS.sttStatus]: {
+      validate: noArguments,
+      handle: () => services.stt.status(),
+    },
+    // L'audio viaggia come Uint8Array (structured clone): il limite sale a 10 MiB + margine per l'involucro JSON.
+    [IPC_CHANNELS.sttTranscribe]: {
+      validate: validateSttTranscribe,
+      handle: (_sender, request) => services.stt.transcribe(request),
+      maxPayloadBytes: STT_MAX_AUDIO_BYTES + 4096,
+    },
   };
 }
 
-function checkPayloadSize(args: unknown[]): void {
+const binaryByteLength = (value: unknown): number | undefined => {
+  if (value instanceof Uint8Array || value instanceof ArrayBuffer || ArrayBuffer.isView(value)) {
+    return value.byteLength;
+  }
+  return undefined;
+};
+
+/**
+ * Dimensione del payload come lo vede Electron: i buffer binari contano i loro byte reali
+ * (`JSON.stringify` li espanderebbe in un array di numeri), il resto viene serializzato.
+ */
+function checkPayloadSize(args: unknown[], limit: number): void {
+  let total = 0;
+  const rest = args.map((arg) => {
+    const bytes = binaryByteLength(arg);
+    if (bytes !== undefined) {
+      total += bytes;
+      return null;
+    }
+    if (!isPlainRecord(arg)) {
+      return arg;
+    }
+    const shallow: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(arg)) {
+      const nested = binaryByteLength(value);
+      if (nested !== undefined) {
+        total += nested;
+      } else {
+        shallow[key] = value;
+      }
+    }
+    return shallow;
+  });
   let serialized: string | undefined;
   try {
-    serialized = JSON.stringify(args);
+    serialized = JSON.stringify(rest);
   } catch {
     throw new IpcError('IPC_INVALID_PAYLOAD');
   }
-  if (serialized !== undefined && Buffer.byteLength(serialized, 'utf8') > MAX_PAYLOAD_BYTES) {
+  total += serialized === undefined ? 0 : Buffer.byteLength(serialized, 'utf8');
+  if (total > limit) {
     throw new IpcError('IPC_PAYLOAD_TOO_LARGE');
   }
 }
@@ -441,8 +508,8 @@ export async function dispatchIpc(
   if (!isSenderAllowed(sender, policy)) {
     throw new IpcError('IPC_INVALID_SENDER');
   }
-  checkPayloadSize(args);
   const def = definition as ChannelDefinition<unknown[], unknown>;
+  checkPayloadSize(args, def.maxPayloadBytes ?? MAX_PAYLOAD_BYTES);
   let valid = false;
   try {
     valid = def.validate(args);

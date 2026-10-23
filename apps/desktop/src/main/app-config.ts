@@ -24,6 +24,8 @@ export interface AppConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
+  /** Percorso assoluto dell'eseguibile STT locale (mai una stringa di shell). */
+  sttCommand?: string;
   syncDebounceMs?: number;
   syncMaxWaitMs?: number;
   syncFetchIntervalMs?: number;
@@ -47,6 +49,7 @@ const KNOWN_KEYS = [
   'ai_model',
   'stt_provider',
   'stt_model',
+  'stt_command',
   'sync_debounce_ms',
   'sync_max_wait_ms',
   'sync_fetch_interval_ms',
@@ -75,6 +78,9 @@ export const configValidators = {
     }
   },
   modelName: (value: string): boolean => value.length > 0 && value.length <= 128 && !hasControlCharacters(value),
+  /** Eseguibile locale: percorso assoluto, nessun argomento o metacarattere di shell. */
+  sttCommand: (value: string): boolean =>
+    value.length > 0 && value.length <= 4096 && !hasControlCharacters(value) && path.isAbsolute(value),
 };
 
 function optionalString(data: FrontmatterData, key: string, valid: (value: string) => boolean): string | undefined {
@@ -134,6 +140,7 @@ export function parseAppConfig(content: string): AppConfig {
   const baseUrl = optionalString(known, 'ai_base_url', configValidators.aiBaseUrl);
   const aiModel = optionalString(known, 'ai_model', configValidators.modelName);
   const sttModel = optionalString(known, 'stt_model', configValidators.modelName);
+  const sttCommand = optionalString(known, 'stt_command', configValidators.sttCommand);
   const debounce = optionalMs(known, 'sync_debounce_ms');
   const maxWait = optionalMs(known, 'sync_max_wait_ms');
   const fetchInterval = optionalMs(known, 'sync_fetch_interval_ms');
@@ -146,6 +153,7 @@ export function parseAppConfig(content: string): AppConfig {
     ...(aiModel !== undefined && { aiModel }),
     sttProvider: provider(known, 'stt_provider', STT_PROVIDERS),
     ...(sttModel !== undefined && { sttModel }),
+    ...(sttCommand !== undefined && { sttCommand }),
     ...(debounce !== undefined && { syncDebounceMs: debounce }),
     ...(maxWait !== undefined && { syncMaxWaitMs: maxWait }),
     ...(fetchInterval !== undefined && { syncFetchIntervalMs: fetchInterval }),
@@ -164,6 +172,7 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.aiModel !== undefined && { ai_model: config.aiModel }),
     stt_provider: config.sttProvider,
     ...(config.sttModel !== undefined && { stt_model: config.sttModel }),
+    ...(config.sttCommand !== undefined && { stt_command: config.sttCommand }),
     ...(config.syncDebounceMs !== undefined && { sync_debounce_ms: config.syncDebounceMs }),
     ...(config.syncMaxWaitMs !== undefined && { sync_max_wait_ms: config.syncMaxWaitMs }),
     ...(config.syncFetchIntervalMs !== undefined && { sync_fetch_interval_ms: config.syncFetchIntervalMs }),

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type OnDestroy, computed, inject, input, output, signal } from '@angular/core';
 import { AiStore, correctionNotice } from '../ai/ai-store';
+import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 
 @Component({
   selector: 'app-assisted-input',
@@ -31,12 +32,31 @@ import { AiStore, correctionNotice } from '../ai/ai-store';
       ></textarea>
       <button type="button" class="icon send" data-testid="assisted-send" aria-label="Invia" [disabled]="!canSend()" (click)="send()">⏎</button>
       <div class="voice">
-        <button type="button" class="icon" data-testid="assisted-mic" aria-label="Microfono" disabled>🎤</button>
-        <span class="voice-label">Voice ready</span>
+        <button
+          type="button"
+          class="icon mic"
+          data-testid="assisted-mic"
+          [attr.aria-label]="micLabel()"
+          [attr.aria-pressed]="voice.phase() === 'recording'"
+          [class.listening]="voice.phase() === 'recording'"
+          [disabled]="!canRecord()"
+          [attr.title]="voice.notice() ?? voice.status().warning ?? 'Dettatura vocale'"
+          (pointerdown)="startRecording()"
+          (pointerup)="stopRecording()"
+          (pointerleave)="stopRecording()"
+          (pointercancel)="stopRecording()"
+          (click)="toggleRecording($event)"
+        >
+          🎤
+        </button>
+        <span class="voice-label" data-testid="voice-label" role="status">{{ micLabel() }}</span>
       </div>
     </div>
     @if (notice(); as message) {
       <p class="notice" data-testid="ai-notice">{{ message }}</p>
+    }
+    @if (voice.notice(); as message) {
+      <p class="notice" data-testid="stt-notice">{{ message }}</p>
     }
   `,
   styles: `
@@ -50,22 +70,36 @@ import { AiStore, correctionNotice } from '../ai/ai-store';
     .icon { background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; width: 44px; cursor: pointer; }
     .icon:disabled { color: var(--text-muted); cursor: default; }
     .ai { color: var(--accent); font-weight: 700; }
-    .voice { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px; }
-    .voice .icon { flex: 1; }
-    .voice-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .voice { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px; max-width: 96px; }
+    .voice .icon { flex: 1; min-height: 32px; }
+    .mic.listening { border-color: var(--accent); color: var(--accent); }
+    .voice-label { font-size: 11px; line-height: 1.2; color: var(--text-muted); text-align: center; overflow-wrap: anywhere; }
     .notice { margin: 8px 0 0; min-height: 16px; color: var(--text-muted); font-size: 12px; }
   `,
 })
-export class AssistedInput {
+export class AssistedInput implements OnDestroy {
   readonly draft = input('');
-  /** Sessione attiva assente o non running: editing e invio bloccati. */
+  /** Sessione attiva assente o non running: editing, invio e microfono bloccati. */
   readonly disabled = input(false);
   readonly draftChange = output<string>();
   readonly submitted = output<string>();
-  private readonly ai = inject(AiStore);
+  protected readonly ai = inject(AiStore);
+  protected readonly voice = inject(SttStore);
   protected readonly notice = signal<string | null>(null);
   protected readonly canSend = computed(() => !this.disabled() && this.draft().trim().length > 0);
   protected readonly canCorrect = computed(() => this.ai.canCorrect() && this.draft().trim().length > 0);
+  protected readonly canRecord = computed(() => !this.disabled() && this.voice.status().configured);
+  protected readonly micLabel = computed(() => voiceLabel(this.voice.status(), this.voice.phase(), this.voice.error()));
+  private readonly unsubscribe: () => void;
+
+  constructor() {
+    this.unsubscribe = this.voice.onTranscript((text) => this.insertTranscript(text));
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribe();
+    this.voice.halt();
+  }
 
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) {
@@ -79,6 +113,33 @@ export class AssistedInput {
     if (this.canSend()) {
       this.submitted.emit(this.draft());
     }
+  }
+
+  /** Push-to-talk: premere il pulsante registra, rilasciarlo (o uscire) trascrive nella bozza. */
+  protected startRecording(): void {
+    void this.voice.start();
+  }
+
+  protected stopRecording(): void {
+    void this.voice.stop();
+  }
+
+  /** Click da tastiera (Invio/Spazio): `detail === 0`, quindi toggle accessibile; il tap del mouse è già gestito. */
+  protected toggleRecording(event: MouseEvent): void {
+    if (event.detail > 0) {
+      return;
+    }
+    if (this.voice.phase() === 'recording') {
+      void this.voice.stop();
+    } else {
+      void this.voice.start();
+    }
+  }
+
+  /** Aggiunge il testo dettato alla bozza: nessun invio automatico. */
+  private insertTranscript(text: string): void {
+    this.notice.set(null);
+    this.draftChange.emit(appendTranscript(this.draft(), text));
   }
 
   protected async correctWithAi(): Promise<void> {

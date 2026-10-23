@@ -19,8 +19,9 @@ const full: AppConfig = {
   aiProvider: 'openai-compatible',
   aiBaseUrl: 'https://llm.example.com/v1',
   aiModel: 'gpt-x',
-  sttProvider: 'cloud',
+  sttProvider: 'local',
   sttModel: 'whisper-1',
+  sttCommand: '/opt/stt/transcribe',
   syncDebounceMs: 500,
   syncMaxWaitMs: 5000,
   syncFetchIntervalMs: 60000,
@@ -45,6 +46,23 @@ describe('app config', () => {
     ['bad ms', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nsync_debounce_ms: -5\n---\n'],
     ['remote option', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\ndata_repo_remote: "--upload-pack=x"\nai_provider: none\nstt_provider: none\n---\n'],
     ['unterminated', '---\nschema_version: 1\n'],
+  ])('rejects %s', (_name, content) => {
+    expect(() => parseAppConfig(content)).toThrow();
+  });
+
+  it('roundtrips and validates the local STT command', () => {
+    expect(parseAppConfig(serializeAppConfig({ ...minimal, sttProvider: 'local', sttCommand: '/usr/local/bin/whisper-cli' }))).toMatchObject({
+      sttProvider: 'local',
+      sttCommand: '/usr/local/bin/whisper-cli',
+    });
+    expect(serializeAppConfig(full)).toContain('stt_command: "/opt/stt/transcribe"');
+  });
+
+  it.each([
+    ['relative command', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: local\nstt_command: stt\n---\n'],
+    ['command with newline', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: local\nstt_command: "/opt/stt\\nrm -rf /"\n---\n'],
+    ['command not a string', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: local\nstt_command: 5\n---\n'],
+    ['empty command', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: local\nstt_command: ""\n---\n'],
   ])('rejects %s', (_name, content) => {
     expect(() => parseAppConfig(content)).toThrow();
   });

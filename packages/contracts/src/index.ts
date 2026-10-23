@@ -29,6 +29,8 @@ export const IPC_CHANNELS = {
   appRelaunch: 'app:relaunch',
   aiStatus: 'ai:status',
   aiCorrect: 'ai:correct',
+  sttStatus: 'stt:status',
+  sttTranscribe: 'stt:transcribe',
 } as const;
 
 /** Eventi main -> renderer (non invocabili dal renderer). */
@@ -46,6 +48,8 @@ export const HISTORY_MAX_AGENT_LENGTH = 64;
 export const SEARCH_MAX_QUERY_LENGTH = 256;
 export const CLIPBOARD_WRITE_MAX_BYTES = 32 * 1024;
 export const AI_CORRECTION_MAX_TEXT_BYTES = 16 * 1024;
+/** Limite dell'audio inviato al main per una singola trascrizione (10 MiB). */
+export const STT_MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const TERMINAL_MIN_DIMENSION = 1;
 export const TERMINAL_MAX_DIMENSION = 1000;
 
@@ -216,6 +220,8 @@ export interface OnboardingConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
+  /** Percorso assoluto dell'eseguibile STT locale (provider `local`). */
+  sttCommand?: string;
 }
 
 export interface OnboardingState {
@@ -286,6 +292,37 @@ export interface CorrectionResult {
   reason?: CorrectionReason;
 }
 
+export interface SttStatus {
+  configured: boolean;
+  provider: SttProvider;
+  model?: string;
+  /** Token `stt:cloud` presente nel keychain. */
+  hasToken: boolean;
+  secureStorage: boolean;
+  warning?: string;
+}
+
+/** Audio registrato nel renderer, mai salvato su disco da nessuna delle due parti. */
+export interface SttTranscribeRequest {
+  audio: Uint8Array;
+  mimeType: string;
+}
+
+export type SttSkipReason =
+  | 'unconfigured'
+  | 'missing-token'
+  | 'invalid-audio'
+  | 'timeout'
+  | 'provider-error'
+  | 'empty'
+  | 'unsupported';
+
+export interface SttTranscribeResult {
+  text: string;
+  skipped: boolean;
+  reason?: SttSkipReason;
+}
+
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {
@@ -321,6 +358,8 @@ export interface SmartTerminalApi {
   appRelaunch(): Promise<void>;
   aiStatus(): Promise<AiStatus>;
   aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
+  sttStatus(): Promise<SttStatus>;
+  sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;

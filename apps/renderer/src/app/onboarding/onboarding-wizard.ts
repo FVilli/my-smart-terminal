@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
@@ -9,6 +9,7 @@ import {
   type SmartTerminalApi,
   type SttProvider,
 } from '@smart-terminal/contracts';
+import { SttStore } from '../stt/stt-store';
 
 type Step = 1 | 2 | 3;
 type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
@@ -110,6 +111,12 @@ const MIC_MESSAGES: Record<MicState, string> = {
                         <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
                       </label>
                     }
+                    @if (config().sttProvider === 'local') {
+                      <label>Comando STT locale (percorso assoluto)
+                        <input data-testid="onboarding-stt-command" [value]="config().sttCommand ?? ''" (input)="patch({ sttCommand: value($event) })" />
+                      </label>
+                      @if (errors()['sttCommand']; as message) { <p class="error" data-testid="onboarding-error-stt-command">{{ message }}</p> }
+                    }
                   }
                   <button type="button" data-testid="onboarding-mic-check" (click)="checkMicrophone()">Verifica microfono</button>
                   <p class="hint" data-testid="onboarding-mic-status" role="status">{{ micMessage() }}</p>
@@ -158,6 +165,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
 })
 export class OnboardingWizard {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
+  private readonly stt = inject(SttStore);
   protected readonly aiProviders = AI_PROVIDERS;
   protected readonly sttProviders = STT_PROVIDERS;
   protected readonly visible = signal(false);
@@ -205,8 +213,15 @@ export class OnboardingWizard {
 
   /** Rimuove i campi opzionali vuoti prima dell'invio al main. */
   private payload(): OnboardingConfig {
-    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, ...required } = this.config();
-    const optional = { dataRepoRemote, aiBaseUrl, aiModel, sttModel };
+    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, ...required } = this.config();
+    const optional = {
+      dataRepoRemote,
+      aiBaseUrl,
+      aiModel,
+      sttModel,
+      // Il comando locale ha senso solo con provider `local`.
+      ...(required.sttProvider === 'local' ? { sttCommand } : {}),
+    };
     const kept = Object.fromEntries(Object.entries(optional).filter(([, value]) => value !== undefined && value.trim() !== ''));
     return { ...required, ...kept };
   }
@@ -302,6 +317,8 @@ export class OnboardingWizard {
       }
       return;
     }
+    // Lo stato STT puo' essere cambiato appena salvato: il microfono si riallinea senza riavvio.
+    void this.stt.load();
     if (result.restartRequired) {
       this.restartNotice.set(true);
     } else if (result.warnings.length === 0) {

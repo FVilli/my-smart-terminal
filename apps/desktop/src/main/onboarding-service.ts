@@ -38,6 +38,7 @@ const MESSAGES = {
   aiModel: 'Nome modello non valido.',
   sttProvider: 'Provider STT non valido.',
   sttModel: 'Nome modello non valido.',
+  sttCommand: 'Comando non valido: serve il percorso assoluto di un eseguibile.',
   aiToken: 'Token non valido.',
   sttToken: 'Token non valido.',
 } as const;
@@ -94,7 +95,8 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['aiModel'], configValidators.modelName)) fail('aiModel');
   if (!STT_PROVIDERS.some((p) => p === c['sttProvider'])) fail('sttProvider');
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel'].includes(key));
+  if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttCommand'].includes(key));
   if (extra.length > 0) errors['config'] = 'Configurazione non valida.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -139,6 +141,7 @@ export class OnboardingService {
       ...(config.aiModel !== undefined && { aiModel: config.aiModel }),
       sttProvider: config.sttProvider,
       ...(config.sttModel !== undefined && { sttModel: config.sttModel }),
+      ...(config.sttCommand !== undefined && { sttCommand: config.sttCommand }),
     };
   }
 
@@ -178,6 +181,7 @@ export class OnboardingService {
     const baseUrl = empty(input.aiBaseUrl);
     const aiModel = empty(input.aiModel);
     const sttModel = empty(input.sttModel);
+    const sttCommand = input.sttProvider === 'local' ? empty(input.sttCommand) : undefined;
     const next: AppConfig = {
       ...(this.config ?? {}),
       machineName: input.machineName.trim(),
@@ -185,13 +189,14 @@ export class OnboardingService {
       aiProvider: input.aiProvider,
       sttProvider: input.sttProvider,
     } as AppConfig;
-    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel'] as const) {
+    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel', 'sttCommand'] as const) {
       delete next[key];
     }
     if (baseRemote !== undefined) next.dataRepoRemote = baseRemote;
     if (baseUrl !== undefined) next.aiBaseUrl = baseUrl;
     if (aiModel !== undefined) next.aiModel = aiModel;
     if (sttModel !== undefined) next.sttModel = sttModel;
+    if (sttCommand !== undefined) next.sttCommand = sttCommand;
 
     try {
       fs.mkdirSync(next.dataRepoPath, { recursive: true });

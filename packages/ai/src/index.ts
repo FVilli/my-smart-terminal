@@ -1,5 +1,20 @@
 import type { AiProvider } from '@smart-terminal/contracts';
 export type { AiProvider } from '@smart-terminal/contracts';
+export {
+  LocalSttAdapter,
+  OpenAiSttAdapter,
+  STT_DEFAULT_TIMEOUT_MS,
+  execFileSttRunner,
+  isAudioMimeType,
+  isValidSttAudio,
+  transcribeAudio,
+  type OpenAiSttOptions,
+  type SttAdapter,
+  type SttProcessRunner,
+  type SttRequest,
+  type SttResult,
+  type TranscribeAudioRequest,
+} from './stt';
 
 export interface CorrectionRequest {
   provider: AiProvider;

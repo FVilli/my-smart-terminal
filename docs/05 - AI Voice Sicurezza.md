@@ -20,6 +20,11 @@ Provider Anthropic, OpenAI e OpenAI-compatible locale tramite interfaccia comune
 ## Voice
 STT locale oppure cloud configurabile; microfono push-to-talk, permessi espliciti, bozza modificabile prima dell'invio. Nessuna registrazione permanente audio per default.
 
+## Implementazione STT (M05)
+- `LocalSttAdapter`: comando assoluto configurato (`stt_command`), audio via stdin, mai shell, nessun file temporaneo, timeout 30 s. `OpenAiSttAdapter`: multipart `/audio/transcriptions`, token `stt:cloud`, modello `stt_model`/`whisper-1`.
+- Push-to-talk nel renderer: permesso microfono esplicito, `MediaRecorder` solo in memoria, stop a 60 s, risultato aggiunto alla bozza editabile senza invio automatico. Nessuna registrazione permanente; stop/scarto su cambio tab o destroy.
+- Errori/permesso negato mostrano messaggi localizzati e non bloccano terminale o invio. Test seam `SMART_TERMINAL_STT_TEST_MODE=1` solo per smoke.
+
 ## Segreti
 Token nel keychain OS, SSH via client OpenSSH/agent e `~/.ssh/config`; non salvare chiavi, password o contenuti sensibili in history/clipboard/repo. Filtri configurabili e modalità pausa raccolta; logout/revoca provider.
 

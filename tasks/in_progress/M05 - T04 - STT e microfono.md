@@ -26,3 +26,9 @@ Test autorizzazioni/deny; risultato editabile; no audio persistito.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: config `stt_command`, adapter STT locale (stdin, no shell/file) e cloud OpenAI, `SttService` main con status/transcribe e test mode, IPC/preload, `SttStore` push-to-talk con permessi/deny, MediaRecorder in memoria, limite 60 s, risultato editabile senza auto-send, onboarding step 3 aggiornato.
+- Verifica: 380 test (50 nuovi), smoke STT con deny, dettatura simulata, nessun file audio in userData/repo, nessun overflow; build/lint/typecheck verdi.
+- Deviazioni: limite payload per-canale per l'audio; cloud usa endpoint OpenAI di default (base URL solo opzione adapter/test); comando locale senza argomenti (wrapper utente); halt su cambio tab scarta l'audio in volo.

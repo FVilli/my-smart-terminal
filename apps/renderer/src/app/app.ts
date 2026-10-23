@@ -7,6 +7,7 @@ import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
 import { SearchStore } from './search/search-store';
 import { SessionsStore } from './sessions-store';
+import { SttStore } from './stt/stt-store';
 import { SidebarPanel } from './sidebar-panel/sidebar-panel';
 import { StatusFooter } from './status-footer/status-footer';
 import { SyncStatusStore } from './sync-status/sync-status-store';
@@ -29,6 +30,7 @@ export class App {
   protected readonly sync = inject(SyncStatusStore);
   protected readonly clipboardCapture = inject(ClipboardCaptureStore);
   protected readonly ai = inject(AiStore);
+  protected readonly stt = inject(SttStore);
   /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
   protected readonly isPrimary = signal(false);
   protected readonly sshAliases = signal<readonly string[]>([]);
@@ -37,6 +39,15 @@ export class App {
     void this.store.createLocal();
     this.loadSshAliases();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
+    // Cambio tab: una registrazione in corso viene interrotta, non finisce nella bozza sbagliata.
+    effect(() => {
+      const activeId = this.store.activeId();
+      untracked(() => {
+        if (activeId !== undefined) {
+          this.stt.halt();
+        }
+      });
+    });
     // Un nuovo `lastSyncAt` (anche letto dal primary via RPC) significa che un pull puo' aver portato dati nuovi.
     effect(() => {
       const lastSyncAt = this.sync.status().lastSyncAt;
@@ -52,6 +63,7 @@ export class App {
     window.addEventListener('focus', () => {
       this.clipboardCapture.refresh();
       this.ai.load();
+      void this.stt.load();
       this.sync.refresh();
       this.search.refresh();
     });

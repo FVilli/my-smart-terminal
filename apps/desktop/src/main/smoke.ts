@@ -71,6 +71,8 @@ const EXPECTED_KEYS = [
   'secretsLogout',
   'secretsStatus',
   'sshAliases',
+  'sttStatus',
+  'sttTranscribe',
   'syncStatus',
   'writeTerminal',
 ].join(',');
@@ -511,6 +513,93 @@ const AI_SCRIPT = `(async () => {
 /** Smoke AI attivo con SMART_TERMINAL_AI_SMOKE=1: richiede SMART_TERMINAL_AI_TEST_MODE=1 e config provider. */
 export function runAiSmoke(window: BrowserWindow): void {
   runUiSmoke(window, AI_SCRIPT, 'SMART_TERMINAL_AI_SMOKE_RESULT');
+}
+
+const STT_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const mic = () => q('assisted-mic');
+  const voiceLabel = () => q('voice-label').textContent.trim();
+  const textarea = () => q('assisted-textarea');
+  const setText = (value) => {
+    const el = textarea();
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const press = (type) => mic().dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, isPrimary: true }));
+  const result = {};
+  result.sessionReady = await waitFor(async () => (await api.listTerminals()).length === 1 && !textarea().disabled, 8000);
+  const status = await api.sttStatus();
+  result.statusConfigured = status.configured === true && status.provider === 'local';
+  result.micIdleLabel = mic().disabled === false && voiceLabel() === 'Voice ready';
+
+  // 1. Permesso negato: messaggio localizzato, terminale e invio restano usabili.
+  navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+  mic().click();
+  result.deniedMessage = await waitFor(() => voiceLabel() === 'Microfono negato', 4000);
+  setText('echo MIC_DENIED_STILL_WORKS');
+  await sleep(100);
+  result.deniedDoesNotBlockSend = q('assisted-send').disabled === false;
+  setText('');
+  await sleep(50);
+
+  // 2. Stream sintetico (nessun audio reale): push-to-talk start/stop e testo nella bozza.
+  const context = new AudioContext();
+  const destination = context.createMediaStreamDestination();
+  const oscillator = context.createOscillator();
+  oscillator.connect(destination);
+  oscillator.start();
+  navigator.mediaDevices.getUserMedia = async () => destination.stream;
+  press('pointerdown');
+  result.listeningLabel = await waitFor(() => voiceLabel() === 'Ascolto…', 4000);
+  await sleep(1200);
+  press('pointerup');
+  result.transcriptInDraft = await waitFor(() => textarea().value.includes('testo dettato di prova'), 15000);
+  result.labelBackToIdle = await waitFor(() => voiceLabel() === 'Voice ready', 4000);
+  try { oscillator.stop(); void context.close(); } catch {}
+
+  // 3. Il testo arriva nella bozza editabile e non viene inviato.
+  setText('testo dettato di prova editato');
+  await sleep(100);
+  result.transcriptEditable = textarea().value === 'testo dettato di prova editato';
+  await sleep(500);
+  result.notSent = (await api.search({ query: 'testo dettato di prova' })).entries.length === 0 && textarea().value.length > 0;
+
+  // 4. Nessun overflow del layout con l'etichetta vocale.
+  const host = document.querySelector('app-assisted-input');
+  const row = document.querySelector('app-assisted-input .row');
+  result.noOverflow = host.scrollWidth <= host.clientWidth && row.scrollWidth <= row.clientWidth;
+  return result;
+})()`;
+
+const AUDIO_FILE_PATTERN = /\.(webm|wav|mp3|ogg|m4a|aac|flac|opus)$/i;
+
+/** Nessun file audio (e nessun file oltre la configurazione) nella userData dopo una trascrizione. */
+function hasNoAudioArtifacts(directory: string): boolean {
+  try {
+    return !fs
+      .readdirSync(directory, { recursive: true, withFileTypes: true })
+      .some((entry) => entry.isFile() && AUDIO_FILE_PATTERN.test(entry.name));
+  } catch {
+    return true;
+  }
+}
+
+/** Smoke STT attivo con SMART_TERMINAL_STT_SMOKE=1: richiede SMART_TERMINAL_STT_TEST_MODE=1 e un provider configurato. */
+export function runSttSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, STT_SCRIPT, 'SMART_TERMINAL_STT_SMOKE_RESULT', async () => ({
+    noAudioFileInUserData: hasNoAudioArtifacts(app.getPath('userData')),
+    noAudioFileInDataRepo: hasNoAudioArtifacts(process.env['SMART_TERMINAL_DATA_REPO'] ?? ''),
+  }));
 }
 
 export function runClipboardSmoke(window: BrowserWindow): void {

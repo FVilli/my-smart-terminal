@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { IPC_CHANNELS } from '@smart-terminal/contracts';
+import { IPC_CHANNELS, STT_MAX_AUDIO_BYTES } from '@smart-terminal/contracts';
 import { TerminalError } from '@smart-terminal/terminal';
 import {
   MAX_PAYLOAD_BYTES,
@@ -56,6 +56,10 @@ const services: IpcServices = {
   ai: {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
     correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),
+  },
+  stt: {
+    status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),
+    transcribe: vi.fn(() => ({ text: 'testo dettato di prova', skipped: false })),
   },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
@@ -263,5 +267,48 @@ describe('M05 channels', () => {
     await run(IPC_CHANNELS.appRelaunch);
     expect(services.app.relaunch).toHaveBeenCalledTimes(1);
     await expect(run(IPC_CHANNELS.appRelaunch, 1)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+});
+
+describe('stt channels', () => {
+  const run = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.sttTranscribe], sender, policy, args);
+  const audio = (size = 64): Uint8Array => new Uint8Array(size).fill(3);
+
+  it('answers stt:status without arguments', async () => {
+    await expect(dispatchIpc(channels[IPC_CHANNELS.sttStatus], sender, policy, [])).resolves.toMatchObject({
+      configured: true,
+      provider: 'local',
+    });
+    await expect(dispatchIpc(channels[IPC_CHANNELS.sttStatus], sender, policy, [1])).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it('dispatches a valid transcribe request to the gateway', async () => {
+    await expect(run({ audio: audio(16), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: 'testo dettato di prova' });
+    const [request] = (services.stt.transcribe as unknown as { mock: { calls: [{ audio: Uint8Array }][] } }).mock.calls.at(-1) ?? [];
+    expect(request?.audio.byteLength).toBe(16);
+  });
+
+  it('accepts up to 10 MiB of audio (structured clone, not JSON expansion)', async () => {
+    await expect(run({ audio: audio(STT_MAX_AUDIO_BYTES), mimeType: 'audio/webm' })).resolves.toMatchObject({ skipped: false });
+    await expect(run({ audio: audio(STT_MAX_AUDIO_BYTES + 1), mimeType: 'audio/webm' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it.each([
+    [{ audio: 'audio', mimeType: 'audio/webm' }],
+    [{ audio: new Uint8Array(0), mimeType: 'audio/webm' }],
+    [{ audio: audio(), mimeType: 'text/plain' }],
+    [{ audio: audio(), mimeType: 'audio/webm;codecs=opus' }],
+    [{ audio: audio() }],
+    [{ audio: audio(), mimeType: 'audio/webm', extra: 1 }],
+    [{ audio: audio(), mimeType: 'audio/webm', language: 'it' }],
+    [{ mimeType: 'audio/webm' }],
+  ])('rejects invalid transcribe payload %#', async (payload) => {
+    await expect(run(payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it('keeps the default payload limit for other channels', async () => {
+    await expect(
+      dispatchIpc(channels[IPC_CHANNELS.aiCorrect], sender, policy, [{ text: 'a'.repeat(MAX_PAYLOAD_BYTES) }]),
+    ).rejects.toThrow('IPC_PAYLOAD_TOO_LARGE');
   });
 });

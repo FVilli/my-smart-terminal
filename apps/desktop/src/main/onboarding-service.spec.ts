@@ -133,6 +133,25 @@ describe('OnboardingService', () => {
     expect(second.service.save({ config: valid({ aiProvider: 'openai' }) })).toMatchObject({ ok: true, restartRequired: false });
   });
 
+  it('saves the local STT command only for provider local and drops it otherwise', () => {
+    const { service, store } = setup();
+    expect(service.save({ config: valid({ sttProvider: 'local', sttCommand: path.join(root, 'stt') }) })).toMatchObject({ ok: true });
+    expect(parseAppConfig(fs.readFileSync(store.filePath, 'utf8'))).toMatchObject({ sttProvider: 'local', sttCommand: path.join(root, 'stt') });
+    expect(service.state().config).toMatchObject({ sttProvider: 'local', sttCommand: path.join(root, 'stt') });
+    expect(service.save({ config: valid({ sttProvider: 'none', sttCommand: path.join(root, 'stt') }) })).toMatchObject({ ok: true });
+    expect(parseAppConfig(fs.readFileSync(store.filePath, 'utf8')).sttCommand).toBeUndefined();
+  });
+
+  it('rejects a relative or non-string STT command with a sanitized error', () => {
+    const { service, store } = setup();
+    expect(service.validate(valid({ sttProvider: 'local', sttCommand: 'stt' })).errors).toHaveProperty('sttCommand');
+    expect(service.validate(valid({ sttProvider: 'local', sttCommand: '/opt/stt\nrm -rf /' })).errors).toHaveProperty('sttCommand');
+    expect(service.validate(valid({ sttProvider: 'local', sttCommand: 5 as unknown as string })).errors).toHaveProperty('sttCommand');
+    expect(service.validate(valid({ sttProvider: 'local' })).ok).toBe(true);
+    expect(service.save({ config: valid({ sttProvider: 'local', sttCommand: 'relativo' }) }).ok).toBe(false);
+    expect(fs.existsSync(store.filePath)).toBe(false);
+  });
+
   it('logout revokes a token', () => {
     const { service, secrets } = setup();
     service.save({ config: valid(), aiToken: 'tok' });

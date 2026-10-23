@@ -99,6 +99,12 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test:clipboard-smoke` | opt-in, pausa, evento reale, hash, pattern sensibile ignorato |
 | `npm run test:search-smoke` | invio assistito indicizzato, filtri, sensibile escluso, rebuild da disco |
 
+## STT (M05-T04)
+- Canali `stt:status` e `stt:transcribe {audio: Uint8Array, mimeType}`; audio ≤10 MiB, MIME `audio/*` senza parametri, limite payload per canale. Risposta `{text, skipped, reason?}`.
+- Provider locale (`stt_command` assoluto, stdin, no shell/no file) o cloud OpenAI (`stt:cloud`, `/audio/transcriptions`); token e audio restano nel main e non vengono loggati.
+- Renderer: push-to-talk, permessi/deny, `Voice ready`/`Ascolto…`/`Trascrivo…`/errori, risultato editabile senza invio automatico, nessuna registrazione persistente.
+- Smoke `test:stt-smoke` con `SMART_TERMINAL_STT_TEST_MODE=1`; nessun audio reale/API reale.
+
 ## AI correction (M05-T03)
 - Canali `ai:status` e `ai:correct {text}`; `text` ≤16 KiB. Il main legge config/token, salta comandi shell e chiama l'adapter; risposta `{original, corrected, changed, skipped, reason?}`.
 - Il renderer mostra solo stato/risultato, applica la correzione alla bozza e non invia mai automaticamente. Token e chiamate provider restano nel main.
@@ -122,7 +128,7 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.
 - L'invio aggiunge `\r` se assente, non supera 64 KiB UTF-8, svuota la bozza solo in caso di successo.
 - Il key handler è solo sulla textarea: xterm/TUI non vengono intercettati e non esistono listener globali.
-- AI correction e microfono restano disabilitati fino a M05.
+- AI correction e microfono sono attivi da M05 (provider/keychain/permessi).
 
 ## Debito noto
 - Il protocollo `smart-terminal://` e `will-navigate` saranno oggetto di hardening in M06 (origin esatta, path traversal, null byte).
