@@ -130,6 +130,13 @@ function createWindow(): BrowserWindow {
     }
   });
 
+  const title = formatWindowTitle(app.getVersion());
+  window.webContents.on('page-title-updated', (event) => {
+    event.preventDefault();
+    window.setTitle(title);
+  });
+  window.setTitle(title);
+
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, targetUrl) => {
     if (!isAllowedNavigation(targetUrl, devServerUrl, APP_SCHEME, APP_HOST)) {
@@ -137,10 +144,11 @@ function createWindow(): BrowserWindow {
     }
   });
 
+  window.setTitle(title);
   if (devServerUrl) {
-    void window.loadURL(devServerUrl);
+    void window.loadURL(devServerUrl).then(() => window.setTitle(title));
   } else {
-    void window.loadURL(`${APP_SCHEME}://${APP_HOST}/index.html`);
+    void window.loadURL(`${APP_SCHEME}://${APP_HOST}/index.html`).then(() => window.setTitle(title));
   }
 
   if (terminalHost === undefined) {

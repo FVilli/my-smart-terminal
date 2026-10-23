@@ -1,6 +1,20 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.2.1
+
+Hotfix release.
+
+### Fixed
+
+- The window title now keeps the versioned title (`Smart Terminal - Version 1.2.1`) instead of being overwritten by the renderer document title.
+- The header gear now opens the Settings dialog immediately, even while configuration state is loading.
+
+### Verification
+
+- Settings smoke asserts the versioned window title and immediate gear opening.
+- Patch release; no data or configuration migration required.
+
 ## v1.2.0
 
 Input, settings and self-hosted providers release.

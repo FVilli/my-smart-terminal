@@ -323,6 +323,10 @@ export class OnboardingWizard {
   }
 
   private async openFromSettings(): Promise<void> {
+    this.editMode.set(true);
+    this.visible.set(true);
+    this.step.set(1);
+    this.confirmDiscard.set(false);
     try {
       const state = await this.api.onboardingState();
       this.state.set(state);

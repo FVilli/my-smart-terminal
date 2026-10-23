@@ -152,6 +152,7 @@ packages/ai/        AI and STT providers
 - [Repository setup guide](docs/18%20-%20Repository%20setup%20guide.md)
 - [AI provider setup guide](docs/19%20-%20AI%20provider%20setup%20guide.md)
 - [STT setup guide](docs/17%20-%20STT%20setup%20guide.md)
+- [Hotfix log](docs/25%20-%20Hotfix%20log.md)
 - [Release notes](RELEASE_NOTES.md)
 - [Agent workflow](docs/WORKFLOW.md)
 - [Build and release](docs/09%20-%20Build%20and%20release.md)
@@ -160,7 +161,7 @@ packages/ai/        AI and STT providers
 
 ## Status and known limitations
 
-v1.2.0 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
+v1.2.1 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
 
 ## License
 

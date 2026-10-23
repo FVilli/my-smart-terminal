@@ -1,6 +1,6 @@
 {
   "name": "my-smart-terminal",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Multi-instance desktop terminal with Markdown sessions and Git sync",
   "workspaces": [

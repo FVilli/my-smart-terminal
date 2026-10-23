@@ -751,7 +751,9 @@ export function runRemoteSetupSmoke(window: BrowserWindow): void {
 }
 
 export function runSettingsSmoke(window: BrowserWindow): void {
-  runUiSmoke(window, SETTINGS_SCRIPT, 'SMART_TERMINAL_SETTINGS_SMOKE_RESULT');
+  runUiSmoke(window, SETTINGS_SCRIPT, 'SMART_TERMINAL_SETTINGS_SMOKE_RESULT', async () => ({
+    versionedWindowTitle: window.getTitle() === `Smart Terminal - Version ${app.getVersion()}`,
+  }));
 }
 
 export function runClipboardSmoke(window: BrowserWindow): void {
