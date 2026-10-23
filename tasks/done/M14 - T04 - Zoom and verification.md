@@ -19,3 +19,8 @@ Implement zoom out/in/reset for `Ctrl/Cmd+-`, `Ctrl/Cmd++`, `Ctrl+=`, `Ctrl+Shif
 
 ## Acceptance
 All zoom variants work, reset returns 100%, xterm remains usable, no other Ctrl keys are consumed, documentation matches behavior.
+
+## Outcome
+- Zoom helper and one `before-input-event` handler: Ctrl/Cmd+- / + (including =, Shift+= and numpad) and Ctrl/Cmd+0, 10% steps, 50–200%, reset 100%; ADR exception scoped to zoom only.
+- Menu policy/title/runtime icon implemented; Linux package includes `resources/icon.png`.
+- Settings/onboarding/AI/STT setup smokes, layout, screenshots, unit tests, lint, typecheck, build and Linux package verification pass. Screenshots refreshed for the unified palette.
