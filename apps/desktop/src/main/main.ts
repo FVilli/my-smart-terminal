@@ -1,5 +1,6 @@
-import { app, BrowserWindow, clipboard, net, protocol, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, clipboard, Menu, net, protocol, safeStorage, session, shell } from 'electron';
 import path from 'node:path';
+import { formatWindowTitle, resolveWindowIcon } from './window-branding';
 import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
@@ -89,12 +90,13 @@ function registerAppProtocol(): void {
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
+    icon: resolveWindowIcon(app.isPackaged, process.resourcesPath, path.resolve(__dirname, '../../..')),
     ...readWindowSize(),
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#171e25',
     show: false,
-    title: 'Smart Terminal',
+    title: formatWindowTitle(app.getVersion()),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -193,6 +195,24 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(async () => {
+  if (process.platform === 'darwin') {
+    Menu.setApplicationMenu(Menu.buildFromTemplate([{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    }]));
+  } else {
+    Menu.setApplicationMenu(null);
+  }
   const userDataPath = app.getPath('userData');
   // The microphone is the only permitted permission (checked in the wizard); everything else is denied.
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {

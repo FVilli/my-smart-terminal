@@ -12,6 +12,9 @@ files:
 extraMetadata:
   main: dist/apps/desktop/main.js
 asar: true
+extraResources:
+  - from: apps/desktop/build/icon-linux.png
+    to: icon.png
 asarUnpack:
   - node_modules/node-pty/**/*
 npmRebuild: true
