@@ -6,6 +6,7 @@ export interface SttRequest {
   audio: Uint8Array;
   mimeType: string;
   language?: string;
+  responseFormat?: 'json' | 'verbose_json';
 }
 
 export interface SttResult {
@@ -87,6 +88,7 @@ export interface OpenAiSttOptions {
   token: string;
   baseUrl?: string;
   model?: string;
+  responseFormat?: 'json' | 'verbose_json';
   fetch?: typeof fetch;
 }
 
@@ -105,6 +107,7 @@ export class OpenAiSttAdapter implements SttAdapter {
       const form = new FormData();
       form.append('file', new Blob([request.audio], { type: request.mimeType }), 'audio');
       form.append('model', this.options.model || 'whisper-1');
+      form.append('response_format', request.responseFormat ?? this.options.responseFormat ?? 'json');
       if (request.language !== undefined) {
         form.append('language', request.language);
       }
@@ -135,6 +138,7 @@ export interface TranscribeAudioRequest extends SttRequest {
   command?: string;
   baseUrl?: string;
   model?: string;
+  responseFormat?: 'json' | 'verbose_json';
   timeoutMs?: number;
   fetch?: typeof fetch;
   run?: SttProcessRunner;
@@ -169,6 +173,7 @@ export async function transcribeAudio(request: TranscribeAudioRequest): Promise<
       token: request.token,
       ...(request.baseUrl !== undefined ? { baseUrl: request.baseUrl } : {}),
       ...(request.model !== undefined ? { model: request.model } : {}),
+      ...(request.responseFormat !== undefined ? { responseFormat: request.responseFormat } : {}),
       ...(request.fetch !== undefined ? { fetch: request.fetch } : {}),
     });
   } else {

@@ -58,10 +58,12 @@ describe('AiService', () => {
     expect(JSON.stringify(result)).not.toContain('secret-token');
   });
 
-  it('falls back to the original on provider failure', async () => {
+  it('falls back to the original on provider failure with a sanitized status', async () => {
     const fetcher = vi.fn(async () => new Response('nope', { status: 500 }));
     const result = await new AiService({ ...stores(config()), fetch: fetcher as typeof fetch }).correct({ text: 'text' });
-    expect(result).toMatchObject({ corrected: 'text', skipped: true, reason: 'provider-error' });
+    expect(result).toMatchObject({ corrected: 'text', skipped: true, reason: 'provider-error', error: 'HTTP 500' });
+    expect(JSON.stringify(result)).not.toContain('secret-token');
+    expect(JSON.stringify(result)).not.toContain('nope');
   });
 });
 
@@ -69,6 +71,14 @@ describe('AiService connection test', () => {
   it('reports a deterministic success in test mode', async () => {
     const service = new AiService({ ...stores(config()), testMode: true });
     await expect(service.testConnection()).resolves.toMatchObject({ ok: true, provider: 'openai', response: 'OK' });
+  });
+
+  it('reports a sanitized HTTP status from Test AI', async () => {
+    const fetcher = vi.fn(async () => new Response('unauthorized', { status: 401 }));
+    const result = await new AiService({ ...stores(config({ aiBaseUrl: 'https://example.test/v1' })), fetch: fetcher as typeof fetch }).testConnection();
+    expect(result).toMatchObject({ ok: false, error: 'HTTP 401' });
+    expect(JSON.stringify(result)).not.toContain('secret-token');
+    expect(JSON.stringify(result)).not.toContain('unauthorized');
   });
 
   it('reports unconfigured and missing-token states', async () => {

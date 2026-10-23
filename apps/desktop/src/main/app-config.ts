@@ -10,7 +10,7 @@ import {
   writeFileAtomic,
   type FrontmatterData,
 } from '@smart-terminal/data';
-import { AI_PROVIDERS, STT_PROVIDERS, TERMINAL_FONT_IDS, type TerminalFontId, type AiProvider, type SttProvider } from '@smart-terminal/contracts';
+import { AI_PROVIDERS, STT_PROVIDERS, STT_RESPONSE_FORMATS, TERMINAL_FONT_IDS, type SttResponseFormat, type TerminalFontId, type AiProvider, type SttProvider } from '@smart-terminal/contracts';
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
@@ -24,6 +24,9 @@ export interface AppConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
+  sttBaseUrl?: string;
+  sttResponseFormat?: SttResponseFormat;
+  sttLanguage?: string;
   /** Absolute path to the local STT executable (never a shell string). */
   sttCommand?: string;
   syncDebounceMs?: number;
@@ -50,6 +53,9 @@ const KNOWN_KEYS = [
   'ai_model',
   'stt_provider',
   'stt_model',
+  'stt_base_url',
+  'stt_response_format',
+  'stt_language',
   'stt_command',
   'sync_debounce_ms',
   'sync_max_wait_ms',
@@ -80,6 +86,7 @@ export const configValidators = {
     }
   },
   modelName: (value: string): boolean => value.length > 0 && value.length <= 128 && !hasControlCharacters(value),
+  sttLanguage: (value: string): boolean => value.length <= 16 && /^[A-Za-z]{2,3}(?:-[A-Za-z]{2,8})?$/.test(value),
   /** Local executable: absolute path, no arguments or shell metacharacters. */
   terminalFont: (value: string): boolean => TERMINAL_FONT_IDS.some((id) => id === value),
   sttCommand: (value: string): boolean =>
@@ -144,6 +151,9 @@ export function parseAppConfig(content: string): AppConfig {
   const baseUrl = optionalString(known, 'ai_base_url', configValidators.aiBaseUrl);
   const aiModel = optionalString(known, 'ai_model', configValidators.modelName);
   const sttModel = optionalString(known, 'stt_model', configValidators.modelName);
+  const sttBaseUrl = optionalString(known, 'stt_base_url', configValidators.aiBaseUrl);
+  const sttResponseFormat = optionalString(known, 'stt_response_format', (v) => STT_RESPONSE_FORMATS.some((format) => format === v));
+  const sttLanguage = optionalString(known, 'stt_language', configValidators.sttLanguage);
   const sttCommand = optionalString(known, 'stt_command', configValidators.sttCommand);
   const debounce = optionalMs(known, 'sync_debounce_ms');
   const maxWait = optionalMs(known, 'sync_max_wait_ms');
@@ -158,6 +168,9 @@ export function parseAppConfig(content: string): AppConfig {
     ...(aiModel !== undefined && { aiModel }),
     sttProvider: provider(known, 'stt_provider', STT_PROVIDERS),
     ...(sttModel !== undefined && { sttModel }),
+    ...(sttBaseUrl !== undefined && { sttBaseUrl }),
+    ...(sttResponseFormat !== undefined && { sttResponseFormat: sttResponseFormat as SttResponseFormat }),
+    ...(sttLanguage !== undefined && { sttLanguage }),
     ...(sttCommand !== undefined && { sttCommand }),
     ...(debounce !== undefined && { syncDebounceMs: debounce }),
     ...(maxWait !== undefined && { syncMaxWaitMs: maxWait }),
@@ -177,6 +190,9 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.aiModel !== undefined && { ai_model: config.aiModel }),
     stt_provider: config.sttProvider,
     ...(config.sttModel !== undefined && { stt_model: config.sttModel }),
+    ...(config.sttBaseUrl !== undefined && { stt_base_url: config.sttBaseUrl }),
+    ...(config.sttResponseFormat !== undefined && { stt_response_format: config.sttResponseFormat }),
+    ...(config.sttLanguage !== undefined && { stt_language: config.sttLanguage }),
     ...(config.sttCommand !== undefined && { stt_command: config.sttCommand }),
     ...(config.syncDebounceMs !== undefined && { sync_debounce_ms: config.syncDebounceMs }),
     ...(config.syncMaxWaitMs !== undefined && { sync_max_wait_ms: config.syncMaxWaitMs }),

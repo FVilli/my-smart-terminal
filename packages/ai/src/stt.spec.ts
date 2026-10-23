@@ -115,6 +115,25 @@ describe('OpenAiSttAdapter', () => {
     await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'it' }, { timeoutMs: 5000 })).resolves.toBe('ok');
   });
 
+  it('supports a Unsloth-style base URL, custom model, language and verbose_json', async () => {
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://unsloth.example/v1/audio/transcriptions');
+      const body = init?.body as FormData;
+      expect(body.get('model')).toBe('audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF');
+      expect(body.get('response_format')).toBe('verbose_json');
+      expect(body.get('language')).toBe('en');
+      return new Response(JSON.stringify({ text: 'hello world', segments: [] }), { status: 200 });
+    });
+    const adapter = new OpenAiSttAdapter({
+      token: 'sk-unsloth-test',
+      baseUrl: 'https://unsloth.example/v1',
+      model: 'audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF',
+      responseFormat: 'verbose_json',
+      fetch: fetcher as typeof fetch,
+    });
+    await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'en' }, { timeoutMs: 5000 })).resolves.toBe('hello world');
+  });
+
   it('maps provider failures, empty transcripts and timeouts without leaking the token', async () => {
     const failing = await transcribeAudio({
       provider: 'cloud',

@@ -32,6 +32,15 @@ export interface CorrectionResult {
   changed: boolean;
   skipped: boolean;
   reason?: 'shell' | 'unconfigured' | 'missing-token' | 'timeout' | 'provider-error' | 'empty';
+  /** Sanitized diagnostic (HTTP status/category only); never a token or response body. */
+  error?: string;
+}
+
+class ProviderHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP ${status}`);
+    this.name = 'ProviderHttpError';
+  }
 }
 
 export interface AiProviderAdapter {
@@ -75,7 +84,7 @@ async function request(provider: AiProvider, input: string, options: Parameters<
       body = { model: options.model || 'gpt-4o-mini', temperature: 0, messages: [{ role: 'user', content: buildCorrectionPrompt(input) }] };
     }
     const response = await call(endpoint(provider, options.baseUrl), { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
-    if (!response.ok) throw new Error('provider-error');
+    if (!response.ok) throw new ProviderHttpError(response.status);
     const data: unknown = await response.json();
     if (provider === 'anthropic') {
       const content = (data as { content?: { text?: unknown }[] }).content;
@@ -103,6 +112,8 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
     if (!corrected.trim()) return skip('empty');
     return { original, corrected, changed: corrected !== original, skipped: false };
   } catch (error) {
-    return skip(error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'provider-error');
+    const reason = error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'provider-error';
+    const diagnostic = error instanceof ProviderHttpError ? error.message : 'Provider request failed.';
+    return { ...skip(reason), error: diagnostic };
   }
 }

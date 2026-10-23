@@ -82,7 +82,7 @@ export class AiService {
       return {
         ok: false,
         provider: config.aiProvider,
-        error: result.reason === 'timeout' ? 'AI request timed out.' : 'AI provider did not respond successfully.',
+        error: result.reason === 'timeout' ? 'AI request timed out.' : result.error ?? 'AI provider did not respond successfully.',
       };
     }
     return {

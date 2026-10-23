@@ -220,6 +220,8 @@ export type TerminalFontId = (typeof TERMINAL_FONT_IDS)[number];
 
 export const AI_PROVIDERS = ['none', 'anthropic', 'openai', 'openai-compatible'] as const;
 export const STT_PROVIDERS = ['none', 'local', 'cloud'] as const;
+export const STT_RESPONSE_FORMATS = ['json', 'verbose_json'] as const;
+export type SttResponseFormat = (typeof STT_RESPONSE_FORMATS)[number];
 export type AiProvider = (typeof AI_PROVIDERS)[number];
 export type SttProvider = (typeof STT_PROVIDERS)[number];
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
@@ -235,6 +237,9 @@ export interface OnboardingConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
+  sttBaseUrl?: string;
+  sttResponseFormat?: SttResponseFormat;
+  sttLanguage?: string;
   /** Absolute path to the local STT executable (`local` provider). */
   sttCommand?: string;
 }
@@ -331,6 +336,7 @@ export interface CorrectionResult {
   changed: boolean;
   skipped: boolean;
   reason?: CorrectionReason;
+  error?: string;
 }
 
 export interface SttStatus {

@@ -47,6 +47,9 @@ const MESSAGES = {
   aiModel: 'Invalid model name.',
   sttProvider: 'Invalid STT provider.',
   sttModel: 'Invalid model name.',
+  sttBaseUrl: 'Invalid URL: use http(s) without credentials or query.',
+  sttResponseFormat: 'Invalid response format.',
+  sttLanguage: 'Invalid language.',
   sttCommand: 'Invalid command: an absolute executable path is required.',
   terminalFont: 'Invalid terminal font.',
   aiToken: 'Invalid token.',
@@ -105,9 +108,12 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['aiModel'], configValidators.modelName)) fail('aiModel');
   if (!STT_PROVIDERS.some((p) => p === c['sttProvider'])) fail('sttProvider');
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
+  if (!isOptionalText(c['sttBaseUrl'], configValidators.aiBaseUrl)) fail('sttBaseUrl');
+  if (c['sttResponseFormat'] !== undefined && c['sttResponseFormat'] !== 'json' && c['sttResponseFormat'] !== 'verbose_json') fail('sttResponseFormat');
+  if (!isOptionalText(c['sttLanguage'], configValidators.sttLanguage)) fail('sttLanguage');
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
   if (c['terminalFont'] !== undefined && c['terminalFont'] !== '' && !TERMINAL_FONT_IDS.some((id) => id === c['terminalFont'])) fail('terminalFont');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttCommand', 'terminalFont'].includes(key));
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont'].includes(key));
   if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -153,6 +159,9 @@ export class OnboardingService {
       ...(config.aiModel !== undefined && { aiModel: config.aiModel }),
       sttProvider: config.sttProvider,
       ...(config.sttModel !== undefined && { sttModel: config.sttModel }),
+      ...(config.sttBaseUrl !== undefined && { sttBaseUrl: config.sttBaseUrl }),
+      ...(config.sttResponseFormat !== undefined && { sttResponseFormat: config.sttResponseFormat }),
+      ...(config.sttLanguage !== undefined && { sttLanguage: config.sttLanguage }),
       ...(config.sttCommand !== undefined && { sttCommand: config.sttCommand }),
       terminalFont: config.terminalFont ?? 'jetbrains',
     };
@@ -213,6 +222,8 @@ export class OnboardingService {
     const baseUrl = empty(input.aiBaseUrl);
     const aiModel = empty(input.aiModel);
     const sttModel = empty(input.sttModel);
+    const sttBaseUrl = empty(input.sttBaseUrl);
+    const sttLanguage = empty(input.sttLanguage);
     const sttCommand = input.sttProvider === 'local' ? empty(input.sttCommand) : undefined;
     const next: AppConfig = {
       ...(this.config ?? {}),
@@ -222,13 +233,16 @@ export class OnboardingService {
       sttProvider: input.sttProvider,
       terminalFont: (input.terminalFont ?? 'jetbrains') as TerminalFontId,
     } as AppConfig;
-    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel', 'sttCommand'] as const) {
+    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
       delete next[key];
     }
     if (baseRemote !== undefined) next.dataRepoRemote = baseRemote;
     if (baseUrl !== undefined) next.aiBaseUrl = baseUrl;
     if (aiModel !== undefined) next.aiModel = aiModel;
     if (sttModel !== undefined) next.sttModel = sttModel;
+    if (sttBaseUrl !== undefined) next.sttBaseUrl = sttBaseUrl;
+    if (input.sttResponseFormat !== undefined) next.sttResponseFormat = input.sttResponseFormat;
+    if (sttLanguage !== undefined) next.sttLanguage = sttLanguage;
     if (sttCommand !== undefined) next.sttCommand = sttCommand;
 
     try {
