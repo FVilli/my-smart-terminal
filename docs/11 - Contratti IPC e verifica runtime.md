@@ -73,6 +73,10 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - `scripts/capture-layout.mjs` usa lo stesso wrapper, quindi gli screenshot finiscono in `dist/layout/` senza aprire finestre sul desktop.
 - In CI Linux usare `xvfb-run` o installare Xvfb; su macOS/Windows il wrapper lascia il display nativo dei runner.
 
+## Hardening (M06-T02)
+- Protocollo renderer e navigazione con origin esatta, anti-traversal/null byte; symlink rifiutati nei path sessione; socket path lungo con fallback in temp per-utente.
+- IP remote Git validato anche da env; limiti payload per-canale; checklist completa in `docs/13 - Security checklist.md`.
+
 ## PTY
 - `packages/terminal` contiene interfacce e `SessionManager` testabile; l'adapter nativo è nel subpath `@smart-terminal/terminal/node-pty` e va importato solo dal main.
 - File e args sono sempre separati (mai una stringa shell composta da IPC). `cwd` deve essere assoluto ed esistente.

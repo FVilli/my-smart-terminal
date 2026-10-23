@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 export type SessionPathErrorCode =
@@ -168,6 +169,25 @@ export function sessionFilePaths(absoluteDir: string): SessionFilePaths {
   };
 }
 
+/** Rifiuta componenti simbolici sotto la radice: un symlink in sessions/ non deve far uscire le scritture. */
+export function assertNoSymlinkComponents(root: string, relative: string): void {
+  const base = path.resolve(root);
+  let current = base;
+  for (const segment of relative.split(/[\\/]+/)) {
+    if (segment.length === 0) continue;
+    current = path.join(current, segment);
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) {
+        throw new SessionPathError('PATH_TRAVERSAL');
+      }
+    } catch (error) {
+      if (error instanceof SessionPathError) throw error;
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw new SessionPathError('PATH_TRAVERSAL');
+    }
+  }
+}
+
 /** Valida un percorso relativo di sessione e lo risolve dentro il repo dati. */
 export function resolveSessionDirectory(dataRepoPath: string, relativeDir: string): string {
   const segments = relativeDir.split('/');
@@ -182,5 +202,7 @@ export function resolveSessionDirectory(dataRepoPath: string, relativeDir: strin
   ) {
     throw new SessionPathError(relativeDir.includes('..') ? 'PATH_TRAVERSAL' : 'PATH_INVALID_DIRECTORY');
   }
-  return resolveInside(dataRepoPath, relativeDir);
+  const resolved = resolveInside(dataRepoPath, relativeDir);
+  assertNoSymlinkComponents(dataRepoPath, relativeDir);
+  return resolved;
 }

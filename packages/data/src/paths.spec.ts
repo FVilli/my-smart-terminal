@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -71,5 +73,30 @@ describe('paths', () => {
     );
     expect(() => resolveSessionDirectory('/r', 'sessions/../x/2026-01-02_03.04_S1_local')).toThrow(expect.objectContaining({ code: 'PATH_TRAVERSAL' }));
     expect(() => resolveSessionDirectory('/r', 'sessions/host/other')).toThrow(expect.objectContaining({ code: 'PATH_INVALID_DIRECTORY' }));
+  });
+});
+
+describe('path safety', () => {
+  it('rejects symlinked session components', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'st-paths-'));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'st-outside-'));
+    try {
+      const machine = 'host';
+      const dir = buildSessionDirectoryName(new Date(2026, 0, 1, 10, 0, 0), 1, 'local');
+      fs.mkdirSync(path.join(root, 'sessions', machine), { recursive: true });
+      fs.symlinkSync(outside, path.join(root, 'sessions', machine, dir), 'dir');
+      expect(() => resolveSessionDirectory(root, `sessions/${machine}/${dir}`)).toThrow(
+        expect.objectContaining({ code: 'PATH_TRAVERSAL' }),
+      );
+      fs.rmSync(path.join(root, 'sessions', machine, dir), { force: true });
+      fs.rmSync(path.join(root, 'sessions', machine), { recursive: true, force: true });
+      fs.symlinkSync(outside, path.join(root, 'sessions', machine), 'dir');
+      expect(() => resolveSessionDirectory(root, `sessions/${machine}/${dir}`)).toThrow(
+        expect.objectContaining({ code: 'PATH_TRAVERSAL' }),
+      );
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
   });
 });

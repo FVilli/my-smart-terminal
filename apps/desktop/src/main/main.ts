@@ -6,6 +6,8 @@ import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { listSshAliases } from '@smart-terminal/terminal';
 import { readWindowSize, runCapture } from './capture';
+import { isAllowedNavigation } from './navigation';
+import { resolveRendererPath } from './renderer-path';
 import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSttSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
 import { AppConfigStore, resolveConfigPath } from './app-config';
 import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
@@ -69,11 +71,8 @@ function registerAppProtocol(): void {
       return new Response('Not found', { status: 404 });
     }
 
-    const requestedPath = decodeURIComponent(requestUrl.pathname);
-    const relativePath = requestedPath === '/' ? 'index.html' : requestedPath.slice(1);
-    const filePath = path.resolve(rendererRoot, relativePath);
-
-    if (filePath !== rendererRoot && !filePath.startsWith(`${rendererRoot}${path.sep}`)) {
+    const filePath = resolveRendererPath(rendererRoot, requestUrl.pathname);
+    if (filePath === null) {
       return new Response('Not found', { status: 404 });
     }
 
@@ -103,8 +102,7 @@ function createWindow(): BrowserWindow {
 
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, targetUrl) => {
-    const allowed = devServerUrl ? targetUrl.startsWith(devServerUrl) : targetUrl.startsWith(`${APP_SCHEME}://`);
-    if (!allowed) {
+    if (!isAllowedNavigation(targetUrl, devServerUrl, APP_SCHEME, APP_HOST)) {
       event.preventDefault();
     }
   });

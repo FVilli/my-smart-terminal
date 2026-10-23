@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import {
   MAX_LINE_BYTES,
@@ -16,12 +17,28 @@ export const TOKEN_FILE_NAME = 'token';
 export const SOCKET_FILE_NAME = 'coordinator.sock';
 const IDLE_TIMEOUT_MS = 30_000;
 
+const UNIX_SOCKET_MAX_PATH = 100;
+
+/** Directory del socket: usa userData se il path resta sotto il limite sockaddr, altrimenti una dir privata in temp. */
+export function coordinatorSocketDirectory(userDataPath: string, platform: NodeJS.Platform = process.platform): string {
+  const coordinatorDir = path.join(userDataPath, 'coordinator');
+  if (platform === 'win32') {
+    return coordinatorDir;
+  }
+  if (Buffer.byteLength(path.join(coordinatorDir, SOCKET_FILE_NAME)) < UNIX_SOCKET_MAX_PATH) {
+    return coordinatorDir;
+  }
+  const hash = createHash('sha256').update(path.resolve(userDataPath)).digest('hex').slice(0, 16);
+  const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
+  return path.join(os.tmpdir(), `smart-terminal-${uid}-${hash}`);
+}
+
 export function coordinatorEndpoint(userDataPath: string, platform: NodeJS.Platform = process.platform): string {
   if (platform === 'win32') {
     const hash = createHash('sha256').update(path.resolve(userDataPath)).digest('hex').slice(0, 16);
     return `\\\\.\\pipe\\smart-terminal-${hash}`;
   }
-  return path.join(userDataPath, 'coordinator', SOCKET_FILE_NAME);
+  return path.join(coordinatorSocketDirectory(userDataPath, platform), SOCKET_FILE_NAME);
 }
 
 export function tokenPath(userDataPath: string): string {
@@ -44,7 +61,8 @@ export interface CoordinatorServerOptions {
 export class CoordinatorServer {
   readonly endpoint: string;
   readonly startedAt = new Date().toISOString();
-  private readonly directory: string;
+  private readonly socketDirectory: string;
+  private readonly coordinatorDirectory: string;
   private readonly tokenFile: string;
   private readonly platform: NodeJS.Platform;
   private readonly sockets = new Set<net.Socket>();
@@ -54,15 +72,17 @@ export class CoordinatorServer {
   constructor(private readonly options: CoordinatorServerOptions) {
     this.platform = options.platform ?? process.platform;
     this.endpoint = coordinatorEndpoint(options.userDataPath, this.platform);
-    this.directory = path.join(options.userDataPath, 'coordinator');
+    this.socketDirectory = coordinatorSocketDirectory(options.userDataPath, this.platform);
+    this.coordinatorDirectory = path.join(options.userDataPath, 'coordinator');
     this.tokenFile = tokenPath(options.userDataPath);
   }
 
   /** Va chiamato solo da chi detiene il lock primary: socket e token residui sono sovrascritti. */
   async start(): Promise<void> {
-    fs.mkdirSync(this.directory, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(this.socketDirectory, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(this.coordinatorDirectory, { recursive: true, mode: 0o700 });
     if (this.platform !== 'win32') {
-      fs.chmodSync(this.directory, 0o700);
+      fs.chmodSync(this.socketDirectory, 0o700);
       fs.rmSync(this.endpoint, { force: true });
     }
     fs.rmSync(this.tokenFile, { force: true });

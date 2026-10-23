@@ -26,3 +26,9 @@ Test negativi e report checklist senza segreti nei file.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: origin esatta per navigazione, protocol handler anti-traversal/null/URI invalidi, rifiuto symlink nei path sessione e allocatore, fallback socket path lungo, validazione remote Git, limiti payload per-canale, audit log/API rischiose.
+- Verifica: 385 test (navigation hardening, path safety, endpoint lungo, remote Git, IPC negativi); lint/typecheck/build verdi.
+- Report: `docs/13 - Security checklist.md` con rischi residui (filtri euristici, ACL named pipe, hook Git, keyring, firma, no auto-update).

@@ -388,3 +388,13 @@ describe('Coordinator (multi-process)', () => {
     expect(await client.request('ping')).toMatchObject({ pid: second.process.pid, role: 'primary' });
   }, 60_000);
 });
+
+describe('coordinator endpoint', () => {
+  it('falls back to a short per-user temp path when userData is too deep', () => {
+    const longUserData = path.join(root, 'x'.repeat(120), 'user-data');
+    const endpoint = coordinatorEndpoint(longUserData);
+    expect(Buffer.byteLength(endpoint)).toBeLessThan(100);
+    expect(endpoint.startsWith(os.tmpdir())).toBe(true);
+    expect(coordinatorEndpoint(path.join(root, 'short'))).toBe(path.join(root, 'short', 'coordinator', 'coordinator.sock'));
+  });
+});

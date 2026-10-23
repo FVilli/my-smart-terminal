@@ -434,3 +434,11 @@ async function waitUntil(predicate: () => boolean, timeoutMs = 10_000): Promise<
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
 }
+
+describe('git remote validation', () => {
+  it('rejects option-like remotes and embedded passwords', () => {
+    expect(() => new GitEngine({ repoPath: path.join(root, 'r1'), machine: 'm', remote: '--upload-pack=evil' })).toThrow();
+    expect(() => new GitEngine({ repoPath: path.join(root, 'r2'), machine: 'm', remote: 'https://user:secret@example.test/repo.git' })).toThrow();
+    expect(() => new GitEngine({ repoPath: path.join(root, 'r3'), machine: 'm', remote: 'git@example.test:repo.git' })).not.toThrow();
+  });
+});

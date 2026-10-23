@@ -73,6 +73,18 @@ interface LockOwner {
 const OWNER_FILE = 'owner.json';
 const MAX_DIRECTORY_COLLISIONS = 1000;
 
+function assertRealDirectory(directory: string): void {
+  try {
+    const stat = fs.lstatSync(directory);
+    if (stat.isSymbolicLink() || !stat.isDirectory()) {
+      throw new SessionPathError('PATH_TRAVERSAL');
+    }
+  } catch (error) {
+    if (error instanceof SessionPathError) throw error;
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new SessionPathError('PATH_TRAVERSAL');
+  }
+}
+
 export function defaultIsPidAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
@@ -133,6 +145,8 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
 
   private allocateLocked(request: AllocateSessionRequest, destination: string): AllocatedSession {
     const machineDir = machineDirectory(this.dataRepoPath, this.machine);
+    assertRealDirectory(path.join(this.dataRepoPath, SESSIONS_DIRECTORY));
+    assertRealDirectory(machineDir);
     fs.mkdirSync(machineDir, { recursive: true });
     const counterFile = path.join(machineDir, COUNTER_FILE_NAME);
     let last = this.readCounter(counterFile) ?? this.maxExistingSequence(machineDir);

@@ -77,6 +77,17 @@ export class GitEngine {
     if (!/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(this.branch) || this.branch.includes('..')) {
       throw new GitEngineError('git', 'Invalid git branch name');
     }
+    if (options.remote !== undefined && options.remote.length > 0) {
+      const remote = options.remote;
+      if (
+        remote.startsWith('-') ||
+        remote.length > 2048 ||
+        /[\u0000-\u001f\u007f\s]/.test(remote) ||
+        /^[A-Za-z][A-Za-z0-9+.-]*:\/\/[^/@]*:[^/@]*@/.test(remote)
+      ) {
+        throw new GitEngineError('git', 'Invalid git remote');
+      }
+    }
   }
 
   get status(): SyncStatus {
