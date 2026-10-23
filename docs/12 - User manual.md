@@ -8,6 +8,10 @@ created: 2026-10-23
 
 # My Smart Terminal v1.0.0 — User manual
 
+## Next step: post-install onboarding
+
+New users should follow the [Post-install onboarding guide](14%20-%20Post-install%20onboarding.md) for first launch, local and SSH sessions, optional AI/STT, clipboard privacy, and Git troubleshooting.
+
 ## 1. What it is
 
 My Smart Terminal is a multi-instance desktop terminal: each tab is an independent PTY session, local or SSH. It provides assisted input, per-tab drafts, browsable history and clipboard, Markdown sessions, and Git synchronization. A local coordinator assigns IDs and serializes writes and Git; a window can be primary or secondary.
