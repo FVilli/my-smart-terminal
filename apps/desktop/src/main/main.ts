@@ -66,6 +66,10 @@ const aiSetupSmokeTest = process.env['SMART_TERMINAL_AI_SETUP_SMOKE'] === '1';
 const sttSetupSmokeTest = process.env['SMART_TERMINAL_STT_SETUP_SMOKE'] === '1';
 const e2eMode = process.env['SMART_TERMINAL_E2E_MODE'];
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
+// Headless Xvfb capture can transiently fail in the GPU/viz process; software rendering is deterministic.
+if (capturePath !== undefined && capturePath.length > 0) {
+  app.disableHardwareAcceleration();
+}
 const ipcSenderIds = new Set<number>();
 let terminalHost: TerminalHost | undefined;
 let coordinatorRuntime: CoordinatorRuntime | undefined;

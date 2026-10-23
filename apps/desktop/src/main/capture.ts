@@ -138,7 +138,17 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           console.log('SMART_TERMINAL_CAPTURE_SCENARIO_RESULT', JSON.stringify({ scenario, ...checks, ok: scenarioOk }));
         }
         const metrics = (await window.webContents.executeJavaScript(METRICS_SCRIPT)) as { overflow: boolean };
-        const image = await window.webContents.capturePage();
+        let image;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          try {
+            image = await window.webContents.capturePage();
+            break;
+          } catch (error) {
+            if (attempt === 3) throw error;
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          }
+        }
+        if (image === undefined) throw new Error('capturePage returned no image');
         fs.mkdirSync(path.dirname(path.resolve(outputPath)), { recursive: true });
         fs.writeFileSync(outputPath, image.toPNG());
         console.log('SMART_TERMINAL_LAYOUT_RESULT', JSON.stringify(metrics));
