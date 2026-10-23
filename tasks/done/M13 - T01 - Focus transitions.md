@@ -19,3 +19,8 @@ Implement `Ctrl+Shift+E` (Cmd+Shift+E on macOS) to focus the assisted textarea w
 
 ## Acceptance
 Shortcut works from terminal focus; Escape works from composer; drafts survive both; tab activation focuses terminal; first key after transition reaches the intended surface; no PTY key beyond the M12 zoom exception is consumed.
+
+## Outcome
+- Added `Ctrl/Cmd+Shift+E` composer focus and `Escape` return-to-terminal (draft preserved).
+- Successful sends refocus the composer; terminal panel handles a narrow focus event only.
+- Editor smoke verifies shortcut, Escape and draft retention; build, unit tests, lint and editor smoke pass.

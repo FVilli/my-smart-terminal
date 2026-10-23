@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, type OnDestroy, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { AiStore, correctionNotice } from '../ai/ai-store';
 import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 
@@ -21,10 +21,12 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
       <textarea
         class="editor"
         data-testid="assisted-textarea"
+        #textarea
         rows="3"
         spellcheck="false"
         placeholder="Enter sends · Shift+Enter inserts a newline"
         aria-label="Assisted input"
+        title="Focus composer: Ctrl+Shift+E"
         [value]="draft()"
         [disabled]="disabled()"
         (input)="draftChange.emit($any($event.target).value)"
@@ -79,6 +81,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
   `,
 })
 export class AssistedInput implements OnDestroy {
+  private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('textarea');
   readonly draft = input('');
   /** No active session or the session is not running: editing, sending, and microphone are disabled. */
   readonly disabled = input(false);
@@ -103,6 +106,11 @@ export class AssistedInput implements OnDestroy {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && !event.isComposing) {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('smart-terminal-focus-terminal'));
+      return;
+    }
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) {
       return;
     }
@@ -113,6 +121,15 @@ export class AssistedInput implements OnDestroy {
   protected send(): void {
     if (this.canSend()) {
       this.submitted.emit(this.draft());
+      queueMicrotask(() => this.textarea().nativeElement.focus());
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected onDocumentKeydown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'e') {
+      event.preventDefault();
+      this.textarea().nativeElement.focus();
     }
   }
 

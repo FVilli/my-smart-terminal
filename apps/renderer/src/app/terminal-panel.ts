@@ -49,7 +49,14 @@ export class TerminalPanel implements OnDestroy {
   private exitAnnounced = false;
   private readonly disposers: Array<() => void> = [];
 
+  private readonly focusTerminal = (): void => {
+    if (this.active()) {
+      this.terminal?.focus();
+    }
+  };
+
   constructor() {
+    window.addEventListener('smart-terminal-focus-terminal', this.focusTerminal);
     afterNextRender(() => this.start());
 
     effect(() => {
@@ -71,6 +78,7 @@ export class TerminalPanel implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('smart-terminal-focus-terminal', this.focusTerminal);
     for (const dispose of this.disposers.splice(0)) {
       dispose();
     }

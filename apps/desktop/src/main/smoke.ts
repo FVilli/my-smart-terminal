@@ -266,6 +266,11 @@ const EDITOR_SCRIPT = `(async () => {
   try {
     result.initialSession = await waitFor(async () => q('session-tab').length === 1 && !textarea().disabled, 8000);
     await sleep(500);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+    result.shortcutFocusesComposer = await waitFor(() => document.activeElement === textarea(), 1000);
+    setText('escape-draft');
+    textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    result.escapeReturnsToTerminalAndKeepsDraft = await waitFor(() => document.activeElement !== textarea(), 1000) && textarea().value === 'escape-draft';
     result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter inserts a newline';
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
     setText("printf 'EDITOR_%s\\\\n' OK");
