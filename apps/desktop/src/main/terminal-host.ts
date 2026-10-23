@@ -14,7 +14,7 @@ interface WindowState {
   extras: Map<string, SessionExtras>;
 }
 
-/** Mantiene un SessionManager (e quindi i PTY) per ciascuna finestra. */
+/** Maintains a SessionManager (and therefore PTYs) for each window. */
 export class TerminalHost implements TerminalGateway {
   private readonly windows = new Map<number, WindowState>();
   private readonly webContentsById = new Map<number, WebContents>();
@@ -31,7 +31,7 @@ export class TerminalHost implements TerminalGateway {
     webContents.once('destroyed', dispose);
   }
 
-  /** Alloca ID e file Markdown, poi avvia il PTY con l'ID assegnato. */
+  /** Allocates an ID and Markdown files, then starts the PTY with the assigned ID. */
   async create(senderId: number, request: Parameters<TerminalGateway['create']>[1]): Promise<TerminalSessionInfo> {
     const state = this.stateFor(senderId);
     const { cwd } = state.manager.prepare(request);
@@ -78,7 +78,7 @@ export class TerminalHost implements TerminalGateway {
     });
   }
 
-  /** Risolve una sessione viva della finestra `senderId`; `undefined` se sconosciuta, di un'altra finestra o terminata. */
+  /** Resolves a live session for window `senderId`; `undefined` se sconosciuta, di un'altra finestra o terminata. */
   resolveSession(senderId: number, sessionId: string): Pick<TerminalSessionInfo, 'machine' | 'sessionDirectory'> | undefined {
     const extras = this.windows.get(senderId)?.extras.get(sessionId);
     return extras === undefined ? undefined : { machine: extras.machine, sessionDirectory: extras.sessionDirectory };
@@ -97,7 +97,7 @@ export class TerminalHost implements TerminalGateway {
     }
   }
 
-  /** Chiude i PTY e finalizza subito `ended_at`: l'exit asincrono potrebbe non arrivare prima dell'uscita dell'app. */
+  /** Closes PTYs and immediately finalizes `ended_at`: the asynchronous exit might not arrive before the app exits. */
   private closeState(state: WindowState): void {
     const sessionIds = [...state.extras.keys()];
     state.manager.closeAll();

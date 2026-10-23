@@ -102,7 +102,7 @@ describe('GitEngine', () => {
     await a.engine.syncOnce();
     await b.engine.syncOnce();
     writeSession(b.repo, 'b', 's1');
-    // A pubblica tra il fetch e il push di B: simulato dal hook su `fetch` di B.
+    // A publishes between B's fetch and push: simulated by B's `fetch` hook.
     let injected = false;
     const hooked = new GitEngine({
       repoPath: b.repo,
@@ -136,7 +136,7 @@ describe('GitEngine', () => {
     writeSession(a.repo, 'a', 's1', 'base');
     await a.engine.syncOnce();
     await b.engine.syncOnce();
-    // Stesso file modificato da entrambe le parti (non previsto dal modello, ma deve restare sicuro).
+    // Same file modified by both sides (not expected by the model, but must remain safe).
     writeSession(a.repo, 'a', 's1', 'from-a');
     await a.engine.syncOnce();
     const file = writeSession(b.repo, 'a', 's1', 'from-b');
@@ -185,7 +185,7 @@ describe('GitEngine', () => {
     fs.writeFileSync(path.join(a.repo, 'outside.txt'), 'secret');
     fs.writeFileSync(path.join(a.repo, 'sessions', 'a', 's1', '.history.md.1.tmp'), 'tmp');
     git(a.repo, 'init', '-b', 'main');
-    git(a.repo, 'add', 'outside.txt'); // anche se staged da altri, il commit usa il pathspec sessions
+    git(a.repo, 'add', 'outside.txt'); // even if staged by others, the commit uses the sessions pathspec
     await a.engine.syncOnce();
     expect(git(a.repo, 'ls-tree', '-r', '--name-only', 'HEAD')).toBe('sessions/a/s1/history.md');
     expect(git(remote, 'ls-tree', '-r', '--name-only', 'main')).toBe('sessions/a/s1/history.md');
@@ -323,7 +323,7 @@ describe('GitEngine.integrateRemote', () => {
     await b.engine.syncOnce();
     fs.writeFileSync(path.join(b.repo, 'sessions', 'a', 's1', 'history.md'), 'remote-change');
     await b.engine.syncOnce();
-    // commit locale divergente su A, non pushato
+    // divergent local commit on A, not pushed
     fs.writeFileSync(fileA, 'local-change');
     git(a.repo, 'add', '--', 'sessions');
     git(a.repo, 'commit', '-m', 'local');

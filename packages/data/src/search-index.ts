@@ -11,10 +11,10 @@ export type SearchEntryKind = 'history' | 'clipboard';
 export interface SearchEntry {
   machine: string;
   sessionId: string;
-  /** Directory sessione relativa al repo dati: `sessions/<machine>/<dir>`. */
+  /** Session directory relative to the data repository: `sessions/<machine>/<dir>`. */
   sessionDirectory: string;
   kind: SearchEntryKind;
-  /** ISO 8601 con offset. */
+  /** ISO 8601 with offset. */
   timestamp: string;
   text: string;
   source?: string;
@@ -22,7 +22,7 @@ export interface SearchEntry {
 }
 
 export interface SearchQuery {
-  /** Sottostringa case-insensitive; vuota = solo filtri. */
+  /** Case-insensitive substring; empty means filters only. */
   query: string;
   machine?: string;
   sessionId?: string;
@@ -51,8 +51,8 @@ interface SessionRef {
 }
 
 /**
- * Indice volatile in memoria dei Markdown sotto `sessions/`. Nessun database, nessun watcher:
- * si aggiorna con `rebuild()`, `refresh()` (rescan incrementale) e `upsertSession()`.
+ * Volatile in-memory index of Markdown files under `sessions/`. No database or watcher:
+ * updated by `rebuild()`, `refresh()` (incremental rescan), and `upsertSession()`.
  */
 export class MarkdownSearchIndex {
   private readonly sessionsRoot: string;
@@ -73,7 +73,7 @@ export class MarkdownSearchIndex {
     return count;
   }
 
-  /** Macchine con almeno una sessione indicizzata, in ordine alfabetico. */
+  /** Machines with at least one indexed session, in alphabetical order. */
   machines(): string[] {
     const machines = new Set<string>();
     for (const key of this.files.keys()) {
@@ -85,20 +85,20 @@ export class MarkdownSearchIndex {
     return [...machines].sort();
   }
 
-  /** Scarta tutto e rilegge da disco. */
+  /** Discards everything and rereads from disk. */
   rebuild(): void {
     this.files = new Map();
     this.scan(false);
   }
 
-  /** Rescan incrementale: rilegge solo i file cambiati (mtime/size) e dimentica quelli spariti. Restituisce `true` se l'indice e' cambiato. */
+  /** Incremental rescan: rereads only changed files (mtime/size) and forgets missing files. Returns `true` when the index changed. */
   refresh(): boolean {
     const before = this.signature();
     this.scan(true);
     return this.signature() !== before;
   }
 
-  /** Rilegge history/clipboard di una sessione (percorso relativo al repo dati). Ignora percorsi non validi. */
+  /** Rereads a session's history/clipboard (data-repository-relative path). Ignores invalid paths. */
   upsertSession(sessionDirectory: string): void {
     let absoluteDir: string;
     try {
@@ -175,7 +175,7 @@ export class MarkdownSearchIndex {
     return sessions;
   }
 
-  /** Nomi di sottodirectory reali (symlink esclusi). */
+  /** Names of real subdirectories (excluding symlinks). */
   private listDirectories(directory: string): string[] {
     try {
       return fs
@@ -187,7 +187,7 @@ export class MarkdownSearchIndex {
     }
   }
 
-  /** Indicizza una sessione; restituisce le chiavi dei file presenti (anche se ignorati per errore). */
+  /** Indexes a session; returns keys for present files (including files skipped due to errors). */
   private indexSession(session: SessionRef, incremental: boolean): string[] {
     const kinds: Array<{ kind: SearchEntryKind; file: string }> = [
       { kind: 'history', file: SESSION_FILE_NAMES.history },
@@ -261,7 +261,7 @@ export class MarkdownSearchIndex {
     }
   }
 
-  /** File regolare (non symlink) entro il limite di dimensione. */
+  /** Regular file (not a symlink) within the size limit. */
   private readableFile(filePath: string): { path: string; mtimeMs: number; size: number } | undefined {
     try {
       const stat = fs.lstatSync(filePath);

@@ -37,7 +37,7 @@ for (const { width, height } of viewports) {
     if (Math.abs(metrics.ratio - 0.75) > 0.02) problems.push(`ratio ${metrics.ratio}`);
     if (metrics.overflow !== false) problems.push('overflow');
   }
-  if (!fs.existsSync(screenshot) || fs.statSync(screenshot).size === 0) problems.push('screenshot mancante');
+  if (!fs.existsSync(screenshot) || fs.statSync(screenshot).size === 0) problems.push('screenshot missing');
   console.log(`${width}x${height}`, JSON.stringify(metrics), problems.length ? `FAIL: ${problems.join(', ')}` : 'OK', screenshot);
   if (problems.length) {
     failed = true;

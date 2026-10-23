@@ -37,7 +37,7 @@ describe('AI provider adapters', () => {
       expect(body.messages[0]?.content).toContain('--- INIZIO TESTO ---');
       return new Response(JSON.stringify({ content: [{ text: 'corretto /tmp/a --flag' }] }), { status: 200 });
     });
-    const result = await correctText({ provider: 'anthropic', token: 'anthropic-token', model: 'claude-test', text: 'correggi', fetch: fetcher as typeof fetch });
+    const result = await correctText({ provider: 'anthropic', token: 'anthropic-token', model: 'claude-test', text: 'fix typos', fetch: fetcher as typeof fetch });
     expect(result.corrected).toBe('corretto /tmp/a --flag');
   });
 
@@ -48,7 +48,7 @@ describe('AI provider adapters', () => {
       expect(JSON.parse(String(init?.body))).toMatchObject({ temperature: 0 });
       return new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), { status: 200 });
     });
-    await expect(correctText({ provider: 'openai', token: 'openai-token', text: 'correggi', fetch: fetcher as typeof fetch })).resolves.toMatchObject({ corrected: 'ok' });
+    await expect(correctText({ provider: 'openai', token: 'openai-token', text: 'fix typos', fetch: fetcher as typeof fetch })).resolves.toMatchObject({ corrected: 'ok' });
   });
 
   it('falls back on timeout without leaking the token', async () => {
@@ -59,8 +59,8 @@ describe('AI provider adapters', () => {
         reject(error);
       });
     }));
-    const result = await correctText({ provider: 'openai', token: 'timeout-token', text: 'correggi', timeoutMs: 10, fetch: fetcher as typeof fetch });
-    expect(result).toMatchObject({ corrected: 'correggi', skipped: true, reason: 'timeout' });
+    const result = await correctText({ provider: 'openai', token: 'timeout-token', text: 'fix typos', timeoutMs: 10, fetch: fetcher as typeof fetch });
+    expect(result).toMatchObject({ corrected: 'fix typos', skipped: true, reason: 'timeout' });
     expect(JSON.stringify(result)).not.toContain('timeout-token');
   });
 });

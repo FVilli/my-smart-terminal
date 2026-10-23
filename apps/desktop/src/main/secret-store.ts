@@ -7,14 +7,14 @@ export interface SafeStorageLike {
   isEncryptionAvailable(): boolean;
   encryptString(plainText: string): Buffer;
   decryptString(encrypted: Buffer): string;
-  /** Solo Linux: `basic_text` significa cifratura con chiave fissa, quindi non sicura. */
+  /** Linux only: `basic_text` means encryption with a fixed key and is therefore insecure. */
   getSelectedStorageBackend?(): string;
 }
 
 export interface SecretSetResult {
-  /** Il token e' stato scritto su disco cifrato. */
+  /** The token was written to encrypted disk. */
   persisted: boolean;
-  /** Presente quando il token resta solo in memoria. */
+  /** Present when the token remains in memory only. */
   warning?: string;
 }
 
@@ -47,8 +47,8 @@ function writePrivateFileAtomic(file: string, content: string): void {
 }
 
 /**
- * Token cifrati con `safeStorage` in `<dir>/<chiave>.json` (0600, scrittura atomica). Se la cifratura sicura non e'
- * disponibile nulla viene scritto su disco: il token vive solo in memoria per la sessione.
+ * Tokens encrypted with `safeStorage` in `<dir>/<key>.json` (0600, atomic write). If secure encryption is
+ * unavailable, nothing is written to disk: the token remains in memory for the session.
  */
 export class SecretStore {
   private readonly memory = new Map<string, string>();
@@ -94,7 +94,7 @@ export class SecretStore {
     return { persisted: true };
   }
 
-  /** Solo uso interno del main (futuri adapter AI/STT); non esposto via IPC. */
+  /** For internal main-process use only (future AI/STT adapters); not exposed through IPC. */
   get(key: string): string | undefined {
     if (!isValidSecretKey(key)) {
       return undefined;
@@ -118,7 +118,7 @@ export class SecretStore {
     return isValidSecretKey(key) && (this.memory.has(key) || fs.existsSync(this.fileFor(key)));
   }
 
-  /** Revoca: rimuove il token da memoria e disco. */
+  /** Revocation: removes the token from memory and disk. */
   delete(key: string): void {
     if (!isValidSecretKey(key)) {
       throw new Error('SECRET_INVALID');
@@ -137,7 +137,7 @@ export class SecretStore {
         }
       }
     } catch {
-      // directory assente: nessun segreto persistito
+      // directory missing: no secret persisted
     }
     return [...keys].sort();
   }

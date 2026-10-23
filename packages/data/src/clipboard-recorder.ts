@@ -9,13 +9,13 @@ export const CLIPBOARD_MAX_TEXT_BYTES = 32 * 1024;
 export const CLIPBOARD_EVENT_SOURCE = 'system';
 
 export interface ClipboardTextSource {
-  /** Testo corrente della clipboard di sistema (stringa vuota se non testuale). */
+  /** Current system clipboard text (empty when the content is not text). */
   readText(): string | Promise<string>;
 }
 
 export interface ClipboardTarget {
   clipboardFile: string;
-  /** Identificatore opaco passato a `onRecorded` (es. directory relativa di sessione). */
+  /** Opaque identifier passed to `onRecorded` (for example, a session-relative directory). */
   sessionDirectory: string;
 }
 
@@ -26,7 +26,7 @@ export interface ClipboardTimers {
 
 export interface ClipboardRecorderOptions {
   source: ClipboardTextSource;
-  /** Risolve il file clipboard.md della sessione; `undefined` se la sessione non e' piu' valida. */
+  /** Resolves the session's clipboard.md file; `undefined` when the session is no longer valid. */
   resolveTarget(sessionId: string): ClipboardTarget | undefined;
   clock?: () => Date;
   newId?: () => string;
@@ -40,7 +40,7 @@ export interface ClipboardRecorderState {
   paused: boolean;
   polling: boolean;
   activeSessionId: string | null;
-  /** ISO 8601 dell'ultimo evento scritto. */
+  /** ISO 8601 timestamp of the last written event. */
   lastEventAt: string | null;
 }
 
@@ -52,8 +52,8 @@ const defaultTimers: ClipboardTimers = {
 };
 
 /**
- * Cattura opt-in del testo della clipboard nella sessione attiva. Un solo timer per istanza;
- * dedupe per sessione (memoria + hash gia' presenti in clipboard.md).
+ * Opt-in capture of clipboard text in the active session. One timer per instance;
+ * deduplication per session (memory plus hashes already present in clipboard.md).
  */
 export class ClipboardRecorder {
   private enabled = false;
@@ -86,7 +86,7 @@ export class ClipboardRecorder {
     this.activeSessionId = sessionId;
   }
 
-  /** Dimentica gli hash in memoria (quelli gia' scritti su file restano dedupati). */
+  /** Forgets in-memory hashes (entries already written to the file remain deduplicated). */
   clearDedupe(): void {
     this.seenHashes.clear();
   }
@@ -106,7 +106,7 @@ export class ClipboardRecorder {
     this.syncTimer();
   }
 
-  /** Un solo poll alla volta: se una lettura e' ancora in corso restituisce `busy`. */
+  /** Only one poll at a time: returns `busy` when a read is still in progress. */
   async pollOnce(): Promise<PollOutcome> {
     if (!this.enabled || this.paused) {
       return 'inactive';

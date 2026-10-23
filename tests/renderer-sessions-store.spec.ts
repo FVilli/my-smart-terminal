@@ -49,7 +49,7 @@ describe('SessionsStore', () => {
     });
   });
 
-  it('crea sessioni con etichette progressive e attiva l’ultima', async () => {
+  it('creates sessions with sequential labels and activates the last one', async () => {
     const store = new SessionsStore();
     await store.createLocal();
     await store.createLocal();
@@ -57,7 +57,7 @@ describe('SessionsStore', () => {
     expect(store.activeId()).toBe('id-2');
   });
 
-  it('chiude il PTY, rimuove il tab, non riusa le etichette', async () => {
+  it('closes the PTY, removes the tab, and does not reuse labels', async () => {
     const store = new SessionsStore();
     await store.createLocal();
     await store.createLocal();
@@ -71,7 +71,7 @@ describe('SessionsStore', () => {
     expect(store.activeId()).toBeNull();
   });
 
-  it('conserva le bozze per sessione e segna le sessioni terminate senza richiudere il PTY', async () => {
+  it('preserves drafts per session and marks terminated sessions without closing the PTY again', async () => {
     const store = new SessionsStore();
     await store.createLocal();
     await store.createLocal();
@@ -84,7 +84,7 @@ describe('SessionsStore', () => {
     expect(closeTerminal).not.toHaveBeenCalled();
   });
 
-  it('bufferizza l’output finché il pannello non si aggancia', async () => {
+  it('buffers output until the panel attaches', async () => {
     const store = new SessionsStore();
     emitData({ sessionId: 'id-1', data: 'a' });
     const received: string[] = [];
@@ -93,7 +93,7 @@ describe('SessionsStore', () => {
     expect(received).toEqual(['a', 'b']);
   });
 
-  it('espone l’errore di creazione senza aggiungere tab', async () => {
+  it('exposes a creation error without adding a tab', async () => {
     createTerminal.mockRejectedValueOnce(new Error('boom'));
     const store = new SessionsStore();
     expect(await store.createLocal()).toBeNull();
@@ -102,7 +102,7 @@ describe('SessionsStore', () => {
   });
 
   describe('sendActive', () => {
-    it('invia al PTY attivo aggiungendo \\r e svuota la bozza', async () => {
+    it('sends to the active PTY, adding \\r, and clears the draft', async () => {
       const store = new SessionsStore();
       await store.createLocal();
       store.setDraft('id-1', 'ls');
@@ -111,7 +111,7 @@ describe('SessionsStore', () => {
       expect(store.activeDraft()).toBe('');
     });
 
-    it('non aggiunge \\r se il testo termina già con \\r o \\n', async () => {
+    it('does not add \\r when the text already ends with \\r or \\n', async () => {
       const store = new SessionsStore();
       await store.createLocal();
       await store.sendActive('a\r');
@@ -119,7 +119,7 @@ describe('SessionsStore', () => {
       expect(writeTerminal.mock.calls.map((c) => c[0].data)).toEqual(['a\r', 'b\n']);
     });
 
-    it('non invia se vuoto, senza sessione, exited o troppo grande', async () => {
+    it('does not send when empty, without a session, exited, or too large', async () => {
       const store = new SessionsStore();
       expect(await store.sendActive('ls')).toBe(false);
       await store.createLocal();
@@ -130,7 +130,7 @@ describe('SessionsStore', () => {
       expect(writeTerminal).not.toHaveBeenCalled();
     });
 
-    it('registra la history assistita solo dopo un invio riuscito', async () => {
+    it('records assisted history only after a successful send', async () => {
       const store = new SessionsStore();
       await store.createLocal();
       expect(await store.sendActive('ls -la')).toBe(true);
@@ -141,7 +141,7 @@ describe('SessionsStore', () => {
       expect(recordHistory).not.toHaveBeenCalled();
     });
 
-    it('un errore history non annulla l’invio', async () => {
+    it('a history error does not undo the send', async () => {
       recordHistory.mockRejectedValueOnce(new Error('history down'));
       const store = new SessionsStore();
       await store.createLocal();
@@ -150,7 +150,7 @@ describe('SessionsStore', () => {
       expect(store.activeDraft()).toBe('');
     });
 
-    it('conserva la bozza se la scrittura fallisce', async () => {
+    it('preserves the draft when writing fails', async () => {
       writeTerminal.mockRejectedValueOnce(new Error('boom'));
       const store = new SessionsStore();
       await store.createLocal();
@@ -159,7 +159,7 @@ describe('SessionsStore', () => {
       expect(store.activeDraft()).toBe('ls');
     });
 
-    it('svuota solo la bozza della sessione attiva', async () => {
+    it('clears only the active session draft', async () => {
       const store = new SessionsStore();
       await store.createLocal();
       await store.createLocal();
@@ -172,7 +172,7 @@ describe('SessionsStore', () => {
     });
   });
 
-  it('etichette dei quattro stati di sync', () => {
+  it('labels for the four sync states', () => {
     expect(SYNC_LABELS).toEqual({
       synced: 'GitHub synced',
       syncing: 'GitHub syncing…',

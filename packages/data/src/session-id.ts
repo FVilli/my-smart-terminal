@@ -38,7 +38,7 @@ export interface AllocatedSession {
   sessionId: string;
   sequence: number;
   label: string;
-  /** Percorso relativo al repo dati, separatore `/`. */
+  /** Path relative to the data repository, using `/` as the separator. */
   relativeDir: string;
   absoluteDir: string;
   sessionFile: string;
@@ -157,7 +157,7 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
         throw new SessionIdError('SESSION_ID_EXHAUSTED');
       }
       const startedAtDate = this.clock();
-      // Prenota l'ID prima di usarlo: un crash lascia al massimo un buco, mai un riuso.
+      // Reserve the ID before using it: a crash can leave a gap, but never causes reuse.
       this.writeCounter(counterFile, sequence, startedAtDate);
       last = sequence;
 
@@ -265,7 +265,7 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
         return nonce;
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
-          // mkdir riuscita ma scrittura owner fallita: non lasciare un lock orfano
+          // mkdir succeeded but writing the owner failed: do not leave an orphaned lock
           if (fs.existsSync(this.lockPath) && this.readOwner() === null) {
             fs.rmSync(this.lockPath, { recursive: true, force: true });
           }
@@ -296,15 +296,15 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
         return parsed as LockOwner;
       }
     } catch {
-      // illeggibile
+      // unreadable
     }
     return null;
   }
 
   /**
-   * Rimuove il lock solo se più vecchio di `staleMs` e con owner morto o illeggibile.
-   * Il recupero rinomina la directory (atomico) e verifica il nonce osservato: un lock
-   * rubato per errore viene ripristinato.
+   * Removes the lock only when it is older than `staleMs` and its owner is dead or unreadable.
+   * Recovery atomically renames the directory and verifies the observed nonce: a lock
+   * reclaimed by mistake is restored.
    */
   private recoverIfStale(): boolean {
     const owner = this.readOwner();
@@ -319,7 +319,7 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
       try {
         ageMs = nowMs - fs.statSync(this.lockPath).mtimeMs;
       } catch {
-        return true; // il lock è sparito: riprova subito
+        return true; // the lock disappeared: retry immediately
       }
       if (ageMs <= this.staleMs) {
         return false;
@@ -329,7 +329,7 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
     try {
       fs.renameSync(this.lockPath, graveyard);
     } catch {
-      return true; // un altro processo l'ha già recuperato o rilasciato
+      return true; // another process already reclaimed or released it
     }
     const moved = (() => {
       try {
@@ -344,7 +344,7 @@ export class FileSessionIdAllocator implements SessionIdAllocator {
         fs.renameSync(graveyard, this.lockPath);
         return false;
       } catch {
-        // il lock è stato già ricreato da altri: il nostro non era recuperabile, scartalo
+        // the lock was recreated by another process: ours was not recoverable, discard it
       }
     }
     fs.rmSync(graveyard, { recursive: true, force: true });

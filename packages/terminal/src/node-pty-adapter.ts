@@ -1,7 +1,7 @@
 import * as pty from 'node-pty';
 import type { PtyAdapter, PtyProcessLike, PtySpawnOptions } from './pty';
 
-/** Adapter nativo: da importare solo dal main process (carica il binding node-pty). */
+/** Native adapter: import only from the main process (loads the node-pty binding). */
 export class NodePtyAdapter implements PtyAdapter {
   spawn(options: PtySpawnOptions): PtyProcessLike {
     const child = pty.spawn(options.file, options.args, {

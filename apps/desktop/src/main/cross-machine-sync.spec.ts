@@ -78,7 +78,7 @@ describe('cross-machine sync -> search', () => {
       (files) => files.includes('history.md'),
     );
 
-    // Il pull avviene nel ciclo di sync di B (scatenato da una sua scrittura): poi il primary riallinea l'indice.
+    // The pull occurs in B's sync cycle (triggered by one of its writes): then the primary resynchronizes the index.
     const dataB = new DataRuntime({ userDataPath: b.userDataPath, env: b.env, allocator: b.runtime.allocator });
     const sessionB = await dataB.createSession('w2', { kind: 'local', cwd: '/tmp' });
     b.runtime.notifyWrite(sessionB.allocation.relativeDir);
@@ -111,7 +111,7 @@ describe('cross-machine sync -> search', () => {
     });
     history.record(1, { sessionId: allocation.sessionId, text: 'echo idle-needle' });
 
-    // beta non scrive mai: solo il fetch periodico integra e riallinea l'indice
+    // beta never writes: only the periodic fetch integrates and resynchronizes the index
     const result = await eventually(
       () => b.runtime.query({ query: 'idle-needle' }),
       (value) => value.entries.length === 1,

@@ -2,8 +2,8 @@ import { Injectable, signal } from '@angular/core';
 import type { SmartTerminalApi, SttStatus, SttTranscribeResult } from '@smart-terminal/contracts';
 
 /**
- * Sottoinsiemi DOM del microfono tipizzati localmente: i test del renderer girano senza lib DOM
- * e sostituiscono `navigator.mediaDevices`/`MediaRecorder` su `globalThis`.
+ * Locally typed microphone DOM subsets: renderer tests run without the DOM library
+ * and replace `navigator.mediaDevices`/`MediaRecorder` on `globalThis`.
  */
 export interface AudioTrackLike {
   stop(): void;
@@ -19,7 +19,7 @@ export interface AudioChunkLike {
 }
 
 export interface MediaRecorderLike {
-  /** Es. `audio/webm;codecs=opus`: i parametri vengono rimossi prima dell'invio. */
+  /** For example, `audio/webm;codecs=opus`: parameters are removed before sending. */
   readonly mimeType: string;
   ondataavailable: ((event: { data: AudioChunkLike }) => void) | null;
   onstop: (() => void) | null;
@@ -36,9 +36,9 @@ interface MediaDevicesScope {
 export type SttPhase = 'idle' | 'recording' | 'transcribing';
 export type SttVoiceError = 'denied' | 'unavailable' | 'unconfigured';
 
-/** Limite di sicurezza: oltre 60 s la registrazione si interrompe da sola. */
+/** Safety limit: recording stops automatically after 60 seconds. */
 export const MAX_RECORDING_MS = 60_000;
-/** `MediaRecorder` emette un chunk ogni 250 ms, così anche un push-to-talk breve produce audio. */
+/** `MediaRecorder` emits a chunk every 250 ms, so even a brief push-to-talk produces audio.
 export const RECORDER_TIMESLICE_MS = 250;
 export const FALLBACK_AUDIO_MIME = 'audio/webm';
 
@@ -58,7 +58,7 @@ export const UNCONFIGURED_STATUS: SttStatus = {
   secureStorage: false,
 };
 
-/** Etichetta sotto il microfono: errore esplicito, poi stato del flusso, poi disponibilità STT. */
+/** Label below the microphone: explicit error, then flow state, then STT availability. */
 export function voiceLabel(status: SttStatus, phase: SttPhase, error: SttVoiceError | null): string {
   if (error === 'denied') {
     return VOICE_LABELS.denied;
@@ -75,13 +75,13 @@ export function voiceLabel(status: SttStatus, phase: SttPhase, error: SttVoiceEr
   return phase === 'recording' ? VOICE_LABELS.recording : phase === 'transcribing' ? VOICE_LABELS.transcribing : VOICE_LABELS.idle;
 }
 
-/** `audio/webm;codecs=opus` -> `audio/webm`: il main accetta solo tipi MIME senza parametri. */
+/** `audio/webm;codecs=opus` -> `audio/webm`: the main process accepts only MIME types without parameters. */
 export function normalizeAudioMime(mimeType: string | undefined): string {
   const base = (mimeType ?? '').split(';')[0]?.trim().toLowerCase() ?? '';
   return base.startsWith('audio/') ? base : FALLBACK_AUDIO_MIME;
 }
 
-/** Il testo dettato si aggiunge alla bozza: nessun invio automatico, resta modificabile. */
+/** Dictated text is appended to the draft: there is no automatic send, and it remains editable. */
 export function appendTranscript(draft: string, transcript: string): string {
   const text = transcript.trim();
   if (text.length === 0) {
@@ -110,8 +110,8 @@ export function sttNotice(reason: SttTranscribeResult['reason']): string {
 }
 
 /**
- * Microfono push-to-talk dell'input assistito.
- * L'audio vive solo in memoria tra `MediaRecorder` e `sttTranscribe`: nessuna registrazione persistente.
+ * Push-to-talk microphone for assisted input.
+ * Audio exists only in memory between `MediaRecorder` and `sttTranscribe`: no persistent recording.
  */
 @Injectable({ providedIn: 'root' })
 export class SttStore {
@@ -148,7 +148,7 @@ export class SttStore {
     }
   }
 
-  /** Il testo dettato arriva qui (anche quando lo stop è automatico a 60 s). */
+  /** Dictated text arrives here (including when recording stops automatically after 60 seconds). */
   onTranscript(listener: (text: string) => void): () => void {
     this.transcriptListeners.add(listener);
     return () => this.transcriptListeners.delete(listener);
@@ -158,7 +158,7 @@ export class SttStore {
     return this.phaseState() === 'idle' && this.statusState().configured;
   }
 
-  /** Avvia la registrazione (pointerdown o toggle da tastiera). */
+  /** Starts recording (pointerdown or keyboard toggle). */
   start(): Promise<void> {
     if (this.startPromise !== null) {
       return this.startPromise;
@@ -203,7 +203,7 @@ export class SttStore {
       return;
     }
     if (this.discard) {
-      // `halt()` arrivato mentre il permesso era in volo: non si registra nulla.
+      // `halt()` arrived while permission was pending: nothing is recorded.
       this.discard = false;
       stopTracks(stream);
       return;
@@ -231,7 +231,7 @@ export class SttStore {
     this.timer = setTimeout(() => void this.stop(), MAX_RECORDING_MS);
   }
 
-  /** Chiude la registrazione e trascrive. Risolve quando il testo è stato emesso (o scartato). */
+  /** Stops recording and transcribes. Resolves when the text has been emitted (or discarded). */
   async stop(): Promise<void> {
     const starting = this.startPromise;
     if (starting !== null) {
@@ -255,7 +255,7 @@ export class SttStore {
     return done;
   }
 
-  /** Interrompe senza trascrivere (cambio tab, destroy, annullo). */
+  /** Stops without transcribing (tab change, destroy, cancellation). */
   halt(): void {
     this.discard = true;
     if (this.recorder !== null) {
@@ -283,7 +283,7 @@ export class SttStore {
   private async finish(): Promise<void> {
     const recorder = this.recorder;
     if (recorder === null) {
-      // onstop arrivato dopo un errore già gestito: niente da trascrivere.
+      // onstop arrived after an already handled error: nothing to transcribe.
       const stray = this.stopped;
       this.stopped = null;
       stray?.();
@@ -379,7 +379,7 @@ function stopTracks(stream: MediaStreamLike | null): void {
     try {
       track.stop();
     } catch {
-      // il track era già chiuso
+      // the track was already closed
     }
   }
 }

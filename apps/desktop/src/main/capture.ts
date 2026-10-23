@@ -20,7 +20,7 @@ const METRICS_SCRIPT = `(() => {
     ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow };
 })()`;
 
-/** Dimensioni finestra da SMART_TERMINAL_WINDOW_WIDTH/HEIGHT (default 1440x900). */
+/** Window dimensions from SMART_TERMINAL_WINDOW_WIDTH/HEIGHT (default 1440x900). */
 export function readWindowSize(): { width: number; height: number } {
   const parse = (value: string | undefined, fallback: number): number => {
     const parsed = Number.parseInt(value ?? '', 10);
@@ -32,7 +32,7 @@ export function readWindowSize(): { width: number; height: number } {
   };
 }
 
-/** Modalità capture (SMART_TERMINAL_CAPTURE=/path.png): salva lo screenshot, stampa le metriche DOM, esce 0 solo senza overflow. */
+/** Capture mode (SMART_TERMINAL_CAPTURE=/path.png): saves a screenshot, prints DOM metrics, and exits 0 only without overflow. */
 export function runCapture(window: BrowserWindow, outputPath: string): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {

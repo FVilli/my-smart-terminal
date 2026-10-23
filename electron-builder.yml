@@ -25,8 +25,8 @@ linux:
   executableName: smart-terminal
   syncDesktopName: true
   maintainer: Federico Villi <fvilli@gmail.com>
-  synopsis: Terminale desktop multi-sessione con Markdown e Git
-  description: Terminale desktop multi-istanza per shell locali e SSH, con history/clipboard Markdown, sync Git e input assistito opzionale.
+  synopsis: Multi-session desktop terminal with Markdown and Git
+  description: Multi-instance desktop terminal for local shells and SSH, with Markdown history/clipboard, Git sync, and optional assisted input.
 deb:
   depends:
     - libgtk-3-0

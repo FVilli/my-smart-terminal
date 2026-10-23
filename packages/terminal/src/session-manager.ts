@@ -20,7 +20,7 @@ export type TerminalErrorCode =
   | 'TERMINAL_SPAWN_FAILED'
   | 'TERMINAL_SESSION_ALLOCATION_FAILED';
 
-/** Errore con solo un codice: nessun path o dettaglio di sistema nel messaggio. */
+/** Error with a code only: no path or system details in the message. */
 export class TerminalError extends Error {
   constructor(readonly code: TerminalErrorCode) {
     super(code);
@@ -30,7 +30,7 @@ export class TerminalError extends Error {
 
 export interface CreateSessionRequest {
   kind: 'local' | 'ssh';
-  /** Obbligatorio (e ammesso solo) con `kind: 'ssh'`. */
+  /** Required (and allowed only) with `kind: 'ssh'`. */
   sshAlias?: string;
   cwd?: string;
   cols?: number;
@@ -40,7 +40,7 @@ export interface CreateSessionRequest {
 export interface SessionInfo {
   sessionId: string;
   kind: 'local' | 'ssh';
-  /** Alias SSH oppure `local`. */
+  /** SSH alias or `local`. */
   target: string;
   pid: number;
   cwd: string;
@@ -58,7 +58,7 @@ export interface SessionManagerOptions {
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
   homeDirectory?: () => string;
-  /** Binario ssh (default: `SMART_TERMINAL_SSH_BINARY` oppure `ssh`). */
+  /** ssh binary (default: `SMART_TERMINAL_SSH_BINARY` or `ssh`). */
   sshBinary?: string;
 }
 
@@ -102,7 +102,7 @@ export class SessionManager {
     return () => set.delete(listener);
   }
 
-  /** Valida la richiesta e risolve i default senza avviare nulla. */
+  /** Validates the request and resolves defaults without starting anything. */
   prepare(request: CreateSessionRequest): { cwd: string; cols: number; rows: number } {
     if (request.kind === 'ssh') {
       if (!isValidSshAlias(request.sshAlias) || request.cwd !== undefined) {
@@ -120,7 +120,7 @@ export class SessionManager {
     return { cwd, cols, rows };
   }
 
-  /** `sessionId` esplicito opzionale (es. `S<n>` assegnato dal data runtime); default: UUID generato. */
+  /** Optional explicit `sessionId` (for example, `S<n>` assigned by the data runtime); default: generated UUID. */
   create(request: CreateSessionRequest, sessionId?: string): SessionInfo {
     const { cwd, cols, rows } = this.prepare(request);
     if (sessionId !== undefined && this.sessions.has(sessionId)) {
@@ -171,7 +171,7 @@ export class SessionManager {
     session.process.resize(cols, rows);
   }
 
-  /** Termina la shell; la rimozione e l'evento exit avvengono all'exit del processo. */
+  /** Terminates the shell; removal and the exit event occur when the process exits. */
   close(sessionId: string): void {
     this.require(sessionId).process.kill();
   }
@@ -181,7 +181,7 @@ export class SessionManager {
       try {
         session.process.kill();
       } catch {
-        // il processo potrebbe essere già terminato
+        // the process may have already exited
       }
     }
   }

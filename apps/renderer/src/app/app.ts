@@ -23,7 +23,7 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 })
 export class App {
   protected readonly store = inject(SessionsStore);
-  /** Tab attivo in attesa di conferma di chiusura (dialogo inline, non bloccante). */
+  /** Active tab awaiting close confirmation (non-blocking inline dialog). */
   protected readonly pendingCloseId = signal<string | null>(null);
 
   protected readonly search = inject(SearchStore);
@@ -31,7 +31,7 @@ export class App {
   protected readonly clipboardCapture = inject(ClipboardCaptureStore);
   protected readonly ai = inject(AiStore);
   protected readonly stt = inject(SttStore);
-  /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
+  /** Coordinator role for this instance (updated by the main process through `app:role-changed`). */
   protected readonly isPrimary = signal(false);
   protected readonly sshAliases = signal<readonly string[]>([]);
 
@@ -39,7 +39,7 @@ export class App {
     void this.store.createLocal();
     this.loadSshAliases();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
-    // Cambio tab: una registrazione in corso viene interrotta, non finisce nella bozza sbagliata.
+    // Tab change: an ongoing recording is interrupted instead of ending up in the wrong draft.
     effect(() => {
       const activeId = this.store.activeId();
       untracked(() => {
@@ -48,7 +48,7 @@ export class App {
         }
       });
     });
-    // Un nuovo `lastSyncAt` (anche letto dal primary via RPC) significa che un pull puo' aver portato dati nuovi.
+    // A new `lastSyncAt` (including one read from the primary through RPC) means a pull may have brought in new data.
     effect(() => {
       const lastSyncAt = this.sync.status().lastSyncAt;
       if (lastSyncAt !== undefined) {
@@ -121,7 +121,7 @@ export class App {
     void this.store.sendActive(text);
   }
 
-  /** Inserisce il testo nella bozza della sessione attiva, senza invio automatico. */
+  /** Inserts text into the active session draft without sending it automatically. */
   protected insertText(text: string): void {
     const id = this.store.activeId();
     if (id !== null) {

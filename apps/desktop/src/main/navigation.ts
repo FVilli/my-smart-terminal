@@ -1,4 +1,4 @@
-/** Navigazione consentita: stessa origin del dev server oppure scheme/host dell'app. */
+/** Allowed navigation: same origin as the dev server or the app's scheme/host. */
 export function isAllowedNavigation(targetUrl: string, devServerUrl: string | undefined, appScheme: string, appHost: string): boolean {
   try {
     const target = new URL(targetUrl);

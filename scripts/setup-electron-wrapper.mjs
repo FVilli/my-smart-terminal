@@ -6,7 +6,7 @@ const shimPath = path.join(binDir, 'electron');
 const wrapper = path.resolve('scripts', 'run-electron.mjs');
 
 if (!fs.existsSync(binDir)) {
-  console.error('[setup-electron-wrapper] node_modules/.bin non trovato: esegui npm install');
+  console.error('[setup-electron-wrapper] node_modules/.bin not found: run npm install');
   process.exit(1);
 }
 
@@ -21,6 +21,6 @@ try {
   fs.writeFileSync(shimPath, script, { mode: 0o755 });
   console.log(`[setup-electron-wrapper] installato ${shimPath}`);
 } catch (error) {
-  console.error('[setup-electron-wrapper] impossibile installare lo shim', error);
+  console.error('[setup-electron-wrapper] unable to install the shim', error);
   process.exit(1);
 }

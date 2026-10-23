@@ -4,7 +4,7 @@ import { syncBadge } from '../session.model';
 
 export const SYNC_STATUS_POLL_MS = 5_000;
 
-/** Stato sync mostrato nel footer: eventi dal primary, polling ogni 5 s (i secondary leggono via RPC) e al focus. */
+/** Sync state shown in the footer: events from the primary, polling every 5 seconds (secondaries read through RPC), and on focus. */
 @Injectable({ providedIn: 'root' })
 export class SyncStatusStore {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
@@ -32,6 +32,6 @@ export class SyncStatusStore {
     void this.api
       .syncStatus()
       .then((status) => this.statusState.set(status))
-      .catch(() => undefined); // un errore IPC non deve cambiare il badge ne' toccare i terminali
+      .catch(() => undefined); // An IPC error must not change the badge or affect terminals
   }
 }

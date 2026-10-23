@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import type { ClipboardCaptureState, ClipboardConfigureRequest, SmartTerminalApi } from '@smart-terminal/contracts';
 
-/** Stato (sintetico) della cattura clipboard opt-in; la fonte di verita' e' il main process. */
+/** (Synthetic) opt-in clipboard capture state; the main process is the source of truth. */
 @Injectable({ providedIn: 'root' })
 export class ClipboardCaptureStore {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
@@ -24,13 +24,13 @@ export class ClipboardCaptureStore {
     void this.run(() => this.api.clipboardClear());
   }
 
-  /** Comunica al main la sessione attiva (cambio tab, focus finestra). */
+  /** Notifies the main process of the active session (tab change, window focus). */
   syncActive(sessionId: string | null): void {
     this.lastActiveId = sessionId;
     void this.run(() => this.api.clipboardSetActive({ sessionId }));
   }
 
-  /** Riallinea sessione attiva e stato (es. al focus della finestra). */
+  /** Resynchronizes the active session and state (for example, on window focus). */
   refresh(): void {
     this.syncActive(this.lastActiveId);
   }

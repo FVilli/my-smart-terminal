@@ -21,7 +21,7 @@ export interface DataRuntimeOptions {
   clock?: () => Date;
   /** Config letta da `config.md`: precedenza env > config > default. */
   config?: AppConfig | undefined;
-  /** Solo test: sostituisce l'allocatore su file. */
+  /** Test only: sostituisce l'allocatore su file. */
   allocator?: SessionIdAllocator;
 }
 
@@ -39,8 +39,8 @@ export interface DataPaths {
 }
 
 /**
- * Percorsi e machine del repo dati. Precedenza: env (`SMART_TERMINAL_DATA_REPO`, `SMART_TERMINAL_MACHINE`) >
- * `config.md` > default (`userData/data`, hostname). `process.env` non viene mai modificato.
+ * Data-repository paths and machine. Precedence: env (`SMART_TERMINAL_DATA_REPO`, `SMART_TERMINAL_MACHINE`) >
+ * `config.md` > default (`userData/data`, hostname). `process.env` is never modified.
  */
 export function resolveDataPaths(
   userDataPath: string,
@@ -61,7 +61,7 @@ export function resolveDataPaths(
 }
 
 /**
- * Collega il main process al repo dati Markdown: risolve percorsi e machine,
+ * Connects the main process to the Markdown data repository: resolves paths and machine,
  * alloca ID/file di sessione e ne finalizza `ended_at`.
  */
 export class DataRuntime {
@@ -90,7 +90,7 @@ export class DataRuntime {
       });
   }
 
-  /** Notificata (con la directory relativa) dopo che `ended_at` e' stato scritto. */
+  /** Notified (with the relative directory) after `ended_at` has been written. */
   onSessionEnded(listener: (sessionDirectory: string) => void): void {
     this.sessionEndedListener = listener;
   }

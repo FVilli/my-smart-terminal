@@ -3,44 +3,44 @@
 
 ## v1.0.0
 
-Prima release utente di My Smart Terminal. Data di rilascio: non specificata.
+First user release of My Smart Terminal. Release date: not specified.
 
-### Funzionalità
+### Features
 
-La release completa i moduli M01–M06:
+This release completes modules M01–M06:
 
-- terminale desktop Electron multi-istanza con tab PTY locali e SSH;
-- sessioni e metadati persistiti in Markdown, contatore per macchina e ricerca;
-- history degli invii assistiti e clipboard opt-in, con pausa, clear e filtri;
-- coordinatore locale primary/secondary, lock con heartbeat, takeover e allocazione sicura degli ID;
-- sincronizzazione Git serializzata, fetch/rebase/push senza force push, stati offline/error e preservazione dei conflitti;
-- onboarding per repository dati, nome macchina, provider AI e STT;
-- correzione AI opzionale per soli refusi, con review prima dell’invio;
-- STT locale/cloud push-to-talk, audio solo in memoria e microfono non bloccante;
-- hardening Electron/IPC, validazione dei path, protezione dei segreti e test runtime.
+- multi-instance Electron desktop terminal with local and SSH PTY tabs;
+- sessions and metadata persisted in Markdown, per-machine counter, and search;
+- assisted-submission history and opt-in clipboard, with pause, clear, and filters;
+- local primary/secondary coordinator, heartbeat lock, takeover, and safe ID allocation;
+- serialized Git synchronization, fetch/rebase/push without force-push, offline/error states, and conflict preservation;
+- onboarding for the data repository, machine name, AI provider, and STT;
+- optional AI correction for typos only, with review before submission;
+- local/cloud push-to-talk STT, audio held in memory only, and non-blocking microphone;
+- Electron/IPC hardening, path validation, secret protection, and runtime tests.
 
-### Installazione e piattaforme
+### Installation and platforms
 
-Sono previsti questi artefatti electron-builder:
+The following electron-builder artifacts are planned:
 
-- Linux: AppImage e `.deb`;
+- Linux: AppImage and `.deb`;
 - macOS: `.dmg`;
-- Windows: installer `.exe`.
+- Windows: `.exe` installer.
 
-Verificare il checksum SHA-256 pubblicato con ciascun artefatto. Gli artefatti sono **non firmati** finché non sono disponibili certificati macOS/Windows (e non va presunta alcuna firma). Non è incluso auto-update in V1: l’aggiornamento è manuale.
+Verify the SHA-256 checksum published with each artifact. Artifacts are **unsigned** until macOS/Windows certificates are available (and no signature should be assumed). V1 includes no auto-update: updates are manual.
 
-### Limiti noti
+### Known limitations
 
-- La shell history nativa non è coperta in generale: vengono registrati gli invii espliciti dell’editor assistito, non keystroke o prompt TUI.
-- I filtri di history/clipboard sono best-effort ed euristici: non riconoscono necessariamente ogni segreto.
-- Le named pipe Windows usano autenticazione a token ma non ACL dedicate.
-- `safeStorage` dipende dal keyring del sistema; su Linux con backend `basic_text` o senza cifratura i token restano solo in memoria.
-- Git può eseguire hook e configurazioni del repository dati: scegliere un repository fidato e non clonare repository non fidati per usarli come repository dati.
-- AI/STT cloud dipendono da rete, provider, permessi microfono e disponibilità del keyring; non sono necessari per il terminale.
-- Non sono disponibili auto-update né firma degli artefatti in questa release.
+- Native shell history is not generally covered: explicit submissions from the assisted editor are recorded, not keystrokes or TUI prompts.
+- History/clipboard filters are best-effort and heuristic: they cannot necessarily identify every secret.
+- Windows named pipes use token authentication but do not have dedicated ACLs.
+- `safeStorage` depends on the system keyring; on Linux with the `basic_text` backend or without encryption, tokens remain in memory only.
+- Git can execute hooks and data-repository configuration: choose a trusted repository and do not clone untrusted repositories for use as data repositories.
+- Cloud AI/STT depends on the network, provider, microphone permissions, and keyring availability; these services are not required for the terminal.
+- Auto-update and artifact signing are not available in this release.
 
-### Migrazione da versioni pre-1.0
+### Migration from pre-1.0 versions
 
-Prima dell’aggiornamento eseguire un backup del repository dati e della configurazione locale. La V1 usa `schema_version: 1` per configurazione e Markdown. La configurazione si trova in `userData/config/config.md` e non viene sincronizzata; token e segreti restano fuori dai Markdown.
+Before upgrading, back up the data repository and local configuration. V1 uses `schema_version: 1` for configuration and Markdown. Configuration is stored in `userData/config/config.md` and is not synchronized; tokens and secrets remain outside Markdown files.
 
-Quando rileva una configurazione invalida, l’app conserva un backup `.bak` dell’ultima versione valida oppure mette il file in `.corrupt`, quindi applica default sicuri. I contenuti Markdown sincronizzati non vengono modificati distruttivamente: verificare il backup e risolvere manualmente eventuali conflitti Git.
+When invalid configuration is detected, the app preserves a `.bak` backup of the last valid version or moves the file to `.corrupt`, then applies safe defaults. Synchronized Markdown content is not modified destructively: check the backup and resolve any Git conflicts manually.

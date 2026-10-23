@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { resetSmokeData, SMOKE_DATA_DIR } from './reset-smoke-data.mjs';
 
-// Prepara config SSH (con Include e wildcard), fake ssh e una chiave decoy che non deve mai essere copiata.
+// Prepares SSH config (with Include and wildcard), fake SSH, and a decoy key that must never be copied.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'st-ssh-smoke-'));
 const sshDir = path.join(root, '.ssh');
 fs.mkdirSync(path.join(sshDir, 'conf.d'), { recursive: true });

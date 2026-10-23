@@ -12,15 +12,15 @@ export interface AiServiceOptions {
   secrets: Pick<SecretStore, 'isSecure' | 'has' | 'get'>;
   fetch?: typeof fetch;
   timeoutMs?: number;
-  /** Seam di test: risposta deterministica, nessuna rete. Attivo solo con SMART_TERMINAL_AI_TEST_MODE=1. */
+  /** Test seam: deterministic response, no network. Active only with SMART_TERMINAL_AI_TEST_MODE=1. */
   testMode?: boolean;
 }
 
 const TEST_CORRECTION = (text: string): string => text.replace(/\bsentance\b/g, 'sentence');
 
 /**
- * Correzione AI lato main: config e token non attraversano mai il confine IPC.
- * Fallback all'originale su provider assente, token mancante, timeout o errore.
+ * Main-process AI correction: config and tokens never cross the IPC boundary.
+ * Falls back to the original on a missing provider/token, timeout, or error.
  */
 export class AiService {
   private readonly fetchFn: typeof fetch | undefined;

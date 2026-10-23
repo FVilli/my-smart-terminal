@@ -71,7 +71,7 @@ describe('SttService', () => {
     const run = vi.fn();
     const fetcher = vi.fn();
     const service = new SttService({ ...stores(config()), testMode: true, run, fetch: fetcher as never });
-    expect(service.status()).toMatchObject({ configured: true, warning: 'Modalità test STT attiva.' });
+    expect(service.status()).toMatchObject({ configured: true, warning: 'STT test mode active.' });
     await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toEqual({
       text: STT_TEST_TEXT,
       skipped: false,

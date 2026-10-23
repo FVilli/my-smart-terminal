@@ -10,7 +10,7 @@ import type { TerminalSessionView } from './session.model';
 
 const MAX_BUFFERED_CHARS = 1_000_000;
 
-/** Stato delle sessioni terminale della finestra (solo in memoria, nessuna persistenza). */
+/** Window terminal session state (in memory only, with no persistence). */
 @Injectable({ providedIn: 'root' })
 export class SessionsStore {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
@@ -21,7 +21,7 @@ export class SessionsStore {
   private readonly creatingState = signal(false);
   private readonly historyRecordedState = signal(0);
 
-  /** Output ricevuto prima che il pannello si agganci (la create risponde dopo i primi dati). */
+  /** Output received before the panel attaches (create responds after the first data arrives). */
   private readonly buffers = new Map<string, string[]>();
   private readonly outputListeners = new Map<string, (data: string) => void>();
 
@@ -29,7 +29,7 @@ export class SessionsStore {
   readonly activeId = this.activeIdState.asReadonly();
   readonly createError = this.createErrorState.asReadonly();
   readonly creating = this.creatingState.asReadonly();
-  /** Incrementa a ogni voce history scritta con successo (la sidebar si riallinea). */
+  /** Increments for each history entry written successfully (the sidebar resynchronizes). */
   readonly historyRecorded = this.historyRecordedState.asReadonly();
   readonly activeSession = computed(
     () => this.sessionsState().find((session) => session.id === this.activeIdState()) ?? null,
@@ -94,7 +94,7 @@ export class SessionsStore {
     }
   }
 
-  /** Chiude il PTY (se ancora vivo) e rimuove il tab; attiva il tab adiacente se era quello attivo. */
+  /** Closes the PTY (if still alive) and removes the tab; activates the adjacent tab if it was active. */
   close(id: string): void {
     const list = this.sessionsState();
     const index = list.findIndex((session) => session.id === id);
@@ -123,7 +123,7 @@ export class SessionsStore {
     this.draftsState.update((drafts) => new Map(drafts).set(id, text));
   }
 
-  /** Invia la bozza alla sessione attiva (aggiunge `\r` se manca); svuota la bozza solo a invio riuscito. */
+  /** Sends the draft to the active session (adds `\r` if missing); clears the draft only after a successful send. */
   async sendActive(text: string): Promise<boolean> {
     const session = this.activeSession();
     if (session === null || session.status !== 'running' || text.length === 0) {
@@ -141,7 +141,7 @@ export class SessionsStore {
     if (this.sessionsState().some((s) => s.id === session.id)) {
       this.setDraft(session.id, '');
     }
-    // Un errore history non annulla l'invio gia' avvenuto al PTY.
+    // A history error does not undo the send that already happened to the PTY.
     void this.api
       .recordHistory({ sessionId: session.id, text })
       .then((result) => {
@@ -159,7 +159,7 @@ export class SessionsStore {
     );
   }
 
-  /** Aggancia il pannello all'output della sessione: rilascia il buffer iniziale, poi inoltra in diretta. */
+  /** Attaches the panel to the session output: flushes the initial buffer, then forwards output live. */
   attachOutput(id: string, listener: (data: string) => void): () => void {
     for (const chunk of this.buffers.get(id) ?? []) {
       listener(chunk);

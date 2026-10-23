@@ -6,7 +6,7 @@ export const SEARCH_DEBOUNCE_MS = 200;
 export const SEARCH_REFRESH_INTERVAL_MS = 15_000;
 const NOTICE_MS = 2_000;
 
-/** Ricerca globale della sidebar (History/Clipboard di tutte le macchine). Gli errori non toccano mai i terminali. */
+/** Global sidebar search (History/Clipboard across all machines). Errors never affect terminals. */
 @Injectable({ providedIn: 'root' })
 export class SearchStore {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
@@ -25,20 +25,20 @@ export class SearchStore {
 
   readonly tab = this.tabState.asReadonly();
   readonly query = this.queryState.asReadonly();
-  /** Vuoto = tutte le macchine. */
+  /** Empty = all machines. */
   readonly machineFilter = this.machineState.asReadonly();
   readonly machines = this.machinesState.asReadonly();
   readonly entries = this.entriesState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
-  /** Esito dell'ultima copia, mostrato per qualche secondo. */
+  /** Result of the last copy, shown for a few seconds. */
   readonly notice = this.noticeState.asReadonly();
 
   constructor() {
     this.api.onSearchRefreshed(() => this.refresh());
   }
 
-  /** Primo caricamento e refresh periodico (ogni 15 s). */
+  /** Initial load and periodic refresh (every 15 seconds). */
   start(): void {
     this.refresh();
     this.intervalTimer ??= setInterval(() => this.refresh(), SEARCH_REFRESH_INTERVAL_MS);
@@ -59,7 +59,7 @@ export class SearchStore {
     this.refresh();
   }
 
-  /** Query case-insensitive con debounce di 200 ms. */
+  /** Case-insensitive query with a 200 ms debounce. */
   setQuery(query: string): void {
     this.queryState.set(query);
     clearTimeout(this.debounceTimer);
@@ -74,7 +74,7 @@ export class SearchStore {
     this.refresh();
   }
 
-  /** Ricarica subito voci e macchine (focus, evento sync, pulsante Aggiorna). */
+  /** Immediately reloads entries and machines (focus, sync event, Refresh button). */
   refresh(): void {
     clearTimeout(this.debounceTimer);
     this.debounceTimer = undefined;
@@ -130,7 +130,7 @@ export class SearchStore {
     try {
       this.machinesState.set((await this.api.searchFacets()).machines);
     } catch {
-      // le macchine restano quelle note: l'errore di ricerca e' gia' segnalato da loadEntries
+      // Keep the known machines: the search error has already been reported by loadEntries
     }
   }
 }

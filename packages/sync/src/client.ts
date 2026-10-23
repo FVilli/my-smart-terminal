@@ -10,7 +10,7 @@ export type CoordinatorClientErrorCode = 'COORDINATOR_UNAVAILABLE' | 'COORDINATO
 export class CoordinatorClientError extends Error {
   constructor(
     readonly code: CoordinatorClientErrorCode,
-    /** Codice RPC restituito dal primary, se presente. */
+    /** RPC code returned by the primary, if present. */
     readonly remoteCode?: string,
   ) {
     super(remoteCode === undefined ? code : `${code}: ${remoteCode}`);
@@ -29,8 +29,8 @@ export interface CoordinatorClientOptions {
 }
 
 /**
- * Client RPC: ogni richiesta apre una connessione (rilegge token e endpoint), quindi
- * un nuovo primary dopo un takeover viene raggiunto senza stato di riconnessione.
+ * RPC client: each request opens a connection (rereads the token and endpoint), so
+ * a new primary after a takeover is reached without reconnection state.
  */
 export class CoordinatorClient implements CoordinatorRequester {
   private readonly endpoint: string;
@@ -110,7 +110,7 @@ function isAllocatedSession(value: unknown): value is AllocatedSession {
   );
 }
 
-/** Alloca gli ID di sessione delegando al primary. */
+/** Allocates session IDs by delegating to the primary. */
 export class RemoteSessionIdAllocator implements SessionIdAllocator {
   constructor(private readonly requester: CoordinatorRequester) {}
 

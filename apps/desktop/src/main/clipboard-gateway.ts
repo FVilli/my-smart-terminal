@@ -1,11 +1,11 @@
 import type { ClipboardCaptureState, ClipboardConfigureRequest, ClipboardSetActiveRequest } from '@smart-terminal/contracts';
 import type { ClipboardGateway } from './ipc';
 
-/** Cattura clipboard vista dal main: eseguita localmente se primary, via RPC altrimenti (vedi `CoordinatorRuntime`). */
+/** Clipboard capture from the main process: performed locally when primary, through RPC otherwise (see `CoordinatorRuntime`). */
 export interface ClipboardBackend {
   clipboardState(): Promise<ClipboardCaptureState>;
   clipboardConfigure(request: ClipboardConfigureRequest): Promise<ClipboardCaptureState>;
-  /** `sessionDirectory` relativa al repo dati, oppure `null` per fermare la cattura. */
+  /** `sessionDirectory` relative to the data repository, or `null` to stop capture. */
   clipboardSetActive(sessionDirectory: string | null): Promise<ClipboardCaptureState>;
   clipboardClear(): Promise<ClipboardCaptureState>;
 }
@@ -13,8 +13,8 @@ export interface ClipboardBackend {
 export type ResolveLiveSession = (senderId: number, sessionId: string) => { sessionDirectory: string } | undefined;
 
 /**
- * Gateway IPC della clipboard: traduce `sessionId` della finestra in `sessionDirectory` (solo sessioni vive della finestra)
- * e delega al backend primary/secondary. Una finestra puo' disattivare solo la sessione che ha attivato.
+ * Clipboard IPC gateway: translates `sessionId` from the window to `sessionDirectory` (only live sessions from the window)
+ * and delegates to the primary/secondary backend. A window can disable only the session it activated.
  */
 export class ClipboardGatewayAdapter implements ClipboardGateway {
   private activeSenderId: number | null = null;

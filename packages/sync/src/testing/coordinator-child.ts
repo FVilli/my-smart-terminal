@@ -1,4 +1,4 @@
-/** Processo figlio dei test multi-processo: avvia un Coordinator e stampa i cambi di ruolo (una riga JSON ciascuno). */
+/** Child process for multi-process tests: starts a Coordinator and prints role changes (one JSON line each). */
 import path from 'node:path';
 import { FileSessionIdAllocator } from '@smart-terminal/data';
 import { Coordinator } from '../coordinator';

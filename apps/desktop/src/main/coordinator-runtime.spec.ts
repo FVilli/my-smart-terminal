@@ -98,7 +98,7 @@ describe('CoordinatorRuntime', () => {
     ]);
     expect(new Set(created.map((c) => c.allocation.sessionId)).size).toBe(3);
 
-    // history scritta dal secondary: ricerca interrogata dal secondary, servita dall'indice del primary
+    // history written by the secondary: search queried by the secondary, served by the primary's index
     const session = created[1]!.allocation;
     const history = new HistoryService({
       dataRepoPath: dataSecondary.dataRepoPath,

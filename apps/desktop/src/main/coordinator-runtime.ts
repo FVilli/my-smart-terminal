@@ -36,11 +36,11 @@ export interface CoordinatorRuntimeOptions {
   hostname?: () => string;
   /** Config letta da `config.md`: precedenza env > config > default. */
   config?: AppConfig | undefined;
-  /** Sorgente testo della clipboard di sistema: letta solo dal primary. */
+  /** System clipboard text source: read only by the primary. */
   clipboardSource: ClipboardTextSource;
-  /** Solo test: intervallo di polling clipboard. */
+  /** Test only: intervallo di polling clipboard. */
   clipboardIntervalMs?: number;
-  /** Solo test: tempi di heartbeat/stale/takeover. */
+  /** Test only: tempi di heartbeat/stale/takeover. */
   timing?: Pick<CoordinatorOptions, 'heartbeatMs' | 'staleMs' | 'takeoverPollMs'>;
 }
 
@@ -81,7 +81,7 @@ interface PrimaryResources {
   clipboard: ClipboardService;
 }
 
-/** Configurazione clipboard voluta da questa istanza: riapplicata quando diventa primary. */
+/** Clipboard configuration desired by this instance: reapplied when it becomes primary. */
 interface ClipboardIntent {
   enabled: boolean;
   paused: boolean;
@@ -91,8 +91,8 @@ interface ClipboardIntent {
 const isUnavailable = (error: unknown): boolean => error instanceof CoordinatorClientError && error.code === 'COORDINATOR_UNAVAILABLE';
 
 /**
- * Allocatore che sceglie a ogni chiamata: file locale se questa istanza e' primary, RPC verso il primary altrimenti.
- * Se il primary non risponde (es. e' appena morto) ripiega sul file allocator, che e' gia' sicuro tra processi.
+ * Allocator that chooses on every call: local file when this instance is primary, RPC to the primary otherwise.
+ * If the primary does not respond (for example, it just died), falls back to the file allocator, which is already safe across processes.
  */
 export class SwitchingSessionIdAllocator implements SessionIdAllocator {
   constructor(
@@ -116,7 +116,7 @@ export class SwitchingSessionIdAllocator implements SessionIdAllocator {
   }
 }
 
-/** Orchestra coordinator, git sync e ricerca nel main process; il ruolo puo' cambiare a runtime senza riavviare la finestra. */
+/** Orchestrates the coordinator, Git sync, and search in the main process; the role can change at runtime without restarting the window. */
 export class CoordinatorRuntime implements ClipboardBackend {
   readonly paths: DataPaths;
   readonly coordinator: Coordinator;
@@ -171,7 +171,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     return this.coordinator.onRoleChange(listener);
   }
 
-  /** Stato sync: locale se primary, altrimenti RPC `sync.status`. Se il primary non risponde restituisce l'ultimo stato noto come `offline`. */
+  /** Sync status: local when primary, otherwise RPC `sync.status`. If the primary does not respond, returns the last known state as `offline`. */
   async syncStatus(): Promise<SyncStatusEvent> {
     const git = this.resources?.git;
     if (this.coordinator.isPrimary && git !== undefined) {
@@ -192,13 +192,13 @@ export class CoordinatorRuntime implements ClipboardBackend {
     return () => this.syncListeners.delete(listener);
   }
 
-  /** Notificato dopo un pull Git che ha cambiato l'indice (solo sul primary). */
+  /** Notified after a Git pull changes the index (primary only). */
   onSearchRefreshed(listener: (event: SearchRefreshedEvent) => void): () => void {
     this.searchRefreshListeners.add(listener);
     return () => this.searchRefreshListeners.delete(listener);
   }
 
-  /** Macchine presenti nell'indice: locale se primary, altrimenti via RPC. */
+  /** Machines present in the index: local when primary, otherwise through RPC. */
   async searchFacets(): Promise<SearchFacetsResult> {
     const resources = this.resources;
     if (this.coordinator.isPrimary && resources !== undefined) {
@@ -238,7 +238,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     );
   }
 
-  /** Fine sessione: pruning della clipboard attiva, indice aggiornato e sync dirty (locale o via RPC `session.end`). */
+  /** Session end: prune active clipboard, update the index, and mark sync dirty (locally or through RPC `session.end`). */
   endSession(sessionDirectory: string): void {
     if (this.clipboardIntent.activeDirectory === sessionDirectory) {
       this.clipboardIntent.activeDirectory = null;
@@ -252,7 +252,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     void this.coordinator.request('session.end', { sessionDirectory }).catch(() => undefined);
   }
 
-  /** Ricerca: indice locale se primary, altrimenti inoltrata al primary via RPC. */
+  /** Search: local index when primary, otherwise forwarded to the primary through RPC. */
   async query(request: SearchQueryRequest): Promise<SearchQueryResult> {
     const resources = this.resources;
     if (this.coordinator.isPrimary && resources !== undefined) {
@@ -261,7 +261,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     return this.coordinator.request<SearchQueryResult>('search.query', { ...request });
   }
 
-  /** Dopo una scrittura history/clipboard/fine sessione di questa istanza: aggiorna l'indice e segnala dirty al primary. */
+  /** After this instance writes history/clipboard or ends a session: update the index and notify the primary that sync is dirty. */
   notifyWrite(sessionDirectory: string): void {
     const resources = this.resources;
     if (this.coordinator.isPrimary && resources !== undefined) {
@@ -276,8 +276,8 @@ export class CoordinatorRuntime implements ClipboardBackend {
   }
 
   /**
-   * Esegue sul ClipboardService se primary, altrimenti via RPC. Se il primary non risponde (takeover in corso) restituisce
-   * lo stato voluto da questa istanza, che verra' applicato quando diventa primary.
+   * Runs on ClipboardService when primary, otherwise through RPC. If the primary does not respond (takeover in progress), returns
+   * this instance's desired state, which is applied when it becomes primary.
    */
   private async clipboardCall(
     local: (clipboard: ClipboardService) => ClipboardCaptureState,
@@ -300,7 +300,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     }
   }
 
-  /** Rilascio sincrono del lock primary per le uscite che non passano da `before-quit` (es. `app.exit`). */
+  /** Synchronous release of the primary lock for exits that do not go through `before-quit` (for example, `app.exit`). */
   releaseLockSync(): void {
     this.coordinator.releaseLockSync();
   }
@@ -369,7 +369,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     };
   }
 
-  /** Il nuovo primary riattiva la cattura secondo lo stato voluto da questa istanza. */
+  /** The new primary resumes capture according to this instance's desired state. */
   private restoreClipboardIntent(clipboard: ClipboardService): void {
     clipboard.configure({ enabled: this.clipboardIntent.enabled, paused: this.clipboardIntent.paused });
     try {

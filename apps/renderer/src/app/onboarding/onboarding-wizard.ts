@@ -22,7 +22,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
   unavailable: 'No microphone available. You can continue without it.',
 };
 
-/** Wizard di primo avvio a tre step (repo dati, AI, STT): overlay non bloccante per il terminale sottostante. */
+/** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -211,7 +211,7 @@ export class OnboardingWizard {
     this.config.update((current) => ({ ...current, ...change }));
   }
 
-  /** Rimuove i campi opzionali vuoti prima dell'invio al main. */
+  /** Removes empty optional fields before sending them to the main process. */
   private payload(): OnboardingConfig {
     const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, ...required } = this.config();
     const optional = {
@@ -219,7 +219,7 @@ export class OnboardingWizard {
       aiBaseUrl,
       aiModel,
       sttModel,
-      // Il comando locale ha senso solo con provider `local`.
+      // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
     };
     const kept = Object.fromEntries(Object.entries(optional).filter(([, value]) => value !== undefined && value.trim() !== ''));
@@ -249,7 +249,7 @@ export class OnboardingWizard {
     this.step.update((current) => (current > 1 ? ((current - 1) as Step) : current));
   }
 
-  /** Salta lo step corrente: provider `none` e nessun token. */
+  /** Skips the current step: `none` provider and no token. */
   protected skipStep(): void {
     if (this.step() === 2) {
       this.patch({ aiProvider: 'none' });
@@ -317,14 +317,14 @@ export class OnboardingWizard {
       }
       return;
     }
-    // Lo stato STT puo' essere cambiato appena salvato: il microfono si riallinea senza riavvio.
+    // STT state may change as soon as it is saved: the microphone resynchronizes without a restart.
     void this.stt.load();
     if (result.restartRequired) {
       this.restartNotice.set(true);
     } else if (result.warnings.length === 0) {
       this.visible.set(false);
     } else {
-      // Mostra il warning keychain prima di chiudere.
+      // Show the keychain warning before closing.
       this.restartNotice.set(false);
       setTimeout(() => this.visible.set(false), 2500);
     }

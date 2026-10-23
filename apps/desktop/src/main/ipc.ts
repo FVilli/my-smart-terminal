@@ -1,6 +1,6 @@
 /**
- * Framework puro (senza dipendenze da Electron) per handler IPC validati.
- * Il binding con ipcMain vive in ipc-electron.ts.
+ * Pure framework (without Electron dependencies) for validated IPC handlers.
+ * The ipcMain binding lives in ipc-electron.ts.
  */
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
@@ -85,10 +85,10 @@ export function isSenderAllowed(sender: SenderInfo, policy: SenderPolicy): boole
 }
 
 export interface ChannelDefinition<Args extends unknown[], Result> {
-  /** Valida gli argomenti grezzi; deve lanciare o restituire false se invalidi. */
+  /** Validates raw arguments; must throw or return false when invalid. */
   validate(args: unknown[]): args is Args;
   handle(sender: SenderInfo, ...args: Args): Result | Promise<Result>;
-  /** Limite del payload serializzato (default `MAX_PAYLOAD_BYTES`); l'audio STT usa un limite dedicato. */
+  /** Serialized payload limit (default `MAX_PAYLOAD_BYTES`); l'audio STT usa un limite dedicato. */
   maxPayloadBytes?: number;
 }
 
@@ -101,7 +101,7 @@ export interface RuntimeEnvironment {
 
 export const noArguments = (args: unknown[]): args is [] => args.length === 0;
 
-/** Operazioni terminale legate alla finestra (senderId) che le richiede. */
+/** Terminal operations associated with the requesting window (senderId). */
 export interface TerminalGateway {
   create(senderId: number, request: TerminalCreateRequest): Promise<TerminalSessionInfo>;
   write(senderId: number, sessionId: string, data: string): void;
@@ -140,7 +140,7 @@ export interface SttGateway {
   transcribe(request: SttTranscribeRequest): SttTranscribeResult | Promise<SttTranscribeResult>;
 }
 
-/** Scrittura di testo nella clipboard di sistema (pulsante Copia). */
+/** Writes text to the system clipboard (Copy button). */
 export interface ClipboardTextWriter {
   writeText(text: string): void;
 }
@@ -441,7 +441,7 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: noArguments,
       handle: () => services.stt.status(),
     },
-    // L'audio viaggia come Uint8Array (structured clone): il limite sale a 10 MiB + margine per l'involucro JSON.
+    // Audio travels as Uint8Array (structured clone): the limit increases to 10 MiB plus overhead for the JSON wrapper.
     [IPC_CHANNELS.sttTranscribe]: {
       validate: validateSttTranscribe,
       handle: (_sender, request) => services.stt.transcribe(request),
@@ -459,7 +459,7 @@ const binaryByteLength = (value: unknown): number | undefined => {
 
 /**
  * Dimensione del payload come lo vede Electron: i buffer binari contano i loro byte reali
- * (`JSON.stringify` li espanderebbe in un array di numeri), il resto viene serializzato.
+ * (`JSON.stringify` would expand them into an array of numbers); the rest is serialized.
  */
 function checkPayloadSize(args: unknown[], limit: number): void {
   let total = 0;
@@ -496,8 +496,8 @@ function checkPayloadSize(args: unknown[], limit: number): void {
 }
 
 /**
- * Esegue un canale: sender -> dimensione -> validazione -> handler.
- * Gli errori non-IpcError vengono mascherati come IPC_INTERNAL.
+ * Executes a channel: sender -> size -> validation -> handler.
+ * Non-IpcError failures are masked as IPC_INTERNAL.
  */
 export async function dispatchIpc(
   definition: ChannelDefinition<never[], unknown> | ChannelDefinition<unknown[], unknown>,

@@ -19,7 +19,7 @@ function isExecutableFile(candidate: string): boolean {
   }
 }
 
-/** Costruisce file+args (mai una stringa shell) per la shell locale dell'utente. */
+/** Builds file+args (never a shell string) for the user's local shell. */
 export function buildLocalShellCommand(
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,

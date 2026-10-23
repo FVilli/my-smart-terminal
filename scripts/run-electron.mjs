@@ -40,8 +40,8 @@ function waitForSocket(socketPath, timeoutMs) {
 }
 
 /**
- * Su Linux avvia gli smoke su un display Xvfb dedicato (:99) per non usare il desktop
- * dell'utente. Disattivabile con SMART_TERMINAL_NO_XVFB=1.
+ * On Linux, runs smoke tests on a dedicated Xvfb display (:99) instead of the user desktop
+ * Disabled with SMART_TERMINAL_NO_XVFB=1.
  */
 let display = process.env['DISPLAY'];
 if (process.platform === 'linux' && process.env['SMART_TERMINAL_NO_XVFB'] !== '1') {
@@ -69,7 +69,7 @@ if (process.platform === 'linux' && process.env['SMART_TERMINAL_NO_XVFB'] !== '1
 
 const childEnv = { ...process.env, ...(display !== undefined ? { DISPLAY: display } : {}) };
 if (process.platform === 'linux') {
-  // Se WAYLAND_DISPLAY resta impostato, Electron ignora DISPLAY e compare sul desktop Wayland dell'utente.
+  // If WAYLAND_DISPLAY remains set, Electron ignores DISPLAY and appears on the user's Wayland desktop.
   delete childEnv['WAYLAND_DISPLAY'];
   childEnv['ELECTRON_OZONE_PLATFORM_HINT'] = 'x11';
   childEnv['GDK_BACKEND'] = 'x11';

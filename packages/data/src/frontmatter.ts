@@ -1,6 +1,6 @@
 /**
- * Sottoinsieme YAML flat per il frontmatter Markdown: `chiave: valore` con
- * stringhe, numeri, booleani e null. Nessun annidamento, lista o multilinea.
+ * Flat YAML subset for Markdown frontmatter: `key: value` with strings, numbers,
+ * booleans, and null. No nesting, lists, or multiline values.
  */
 export type FrontmatterScalar = string | number | boolean | null;
 export type FrontmatterData = Record<string, FrontmatterScalar>;
@@ -44,7 +44,7 @@ export function formatFrontmatterValue(value: FrontmatterScalar): string {
   }
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) {
-      throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'numero non finito');
+      throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'non-finite number');
     }
     return String(value);
   }
@@ -55,7 +55,7 @@ export function formatFrontmatterValue(value: FrontmatterScalar): string {
   ) {
     return value;
   }
-  // Una stringa JSON è anche una stringa YAML double-quoted valida.
+  // A JSON string is also a valid double-quoted YAML string.
   return JSON.stringify(value);
 }
 
@@ -80,23 +80,23 @@ function parseFrontmatterValue(raw: string): FrontmatterScalar {
         return parsed;
       }
     } catch {
-      // gestito sotto
+      // handled below
     }
-    throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'stringa double-quoted non valida');
+    throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'invalid double-quoted string');
   }
   if (text.startsWith("'")) {
     if (text.length < 2 || !text.endsWith("'") || text.slice(1, -1).replace(/''/g, '').includes("'")) {
-      throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'stringa single-quoted non valida');
+      throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'invalid single-quoted string');
     }
     return text.slice(1, -1).replace(/''/g, "'");
   }
   if (/^[[{|>&*!%@`]/.test(text) || / #/.test(text) || text.includes(': ')) {
-    throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'valore non supportato');
+    throw new FrontmatterError('FRONTMATTER_INVALID_VALUE', 'unsupported value');
   }
   return text;
 }
 
-/** Legge frontmatter e body. Un file senza `---` iniziale restituisce `hasFrontmatter: false` e il testo intero come body. */
+/** Reads frontmatter and body. A file without an opening `---` returns `hasFrontmatter: false` and the full text as its body. */
 export function parseFrontmatter(content: string): ParsedFrontmatter {
   const text = content.startsWith('\uFEFF') ? content.slice(1) : content;
   const lines = text.split('\n');
@@ -145,8 +145,8 @@ export function serializeFrontmatter(data: FrontmatterData, body = ''): string {
 }
 
 /**
- * Separa i campi noti da quelli sconosciuti. Con `reject` un campo sconosciuto
- * lancia; con `preserve` viene restituito in `extra` per essere riscritto.
+ * Separates known fields from unknown fields. With `reject`, an unknown field
+ * throws; with `preserve`, it is returned in `extra` for rewriting.
  */
 export function splitKnownFields(
   data: FrontmatterData,

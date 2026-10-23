@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-/** Profondita' massima di `Include` annidati. */
+/** Maximum depth of nested `Include` directives. */
 export const SSH_MAX_INCLUDE_DEPTH = 10;
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_FILES = 200;
@@ -13,7 +13,7 @@ export function isValidSshAlias(alias: unknown): alias is string {
   return typeof alias === 'string' && alias.length > 0 && alias.length <= 255 && !alias.startsWith('-') && ALIAS_PATTERN.test(alias);
 }
 
-/** Divide una riga in token: spazi o `=` come separatori, valori tra virgolette, commento con `#` fuori dalle virgolette. */
+/** Splits a line into tokens: spaces or `=` as separators, quoted values, and `#` comments outside quotes. */
 function tokenize(line: string): string[] {
   const tokens: string[] = [];
   let current = '';
@@ -74,7 +74,7 @@ function globToRegExp(pattern: string): RegExp {
   return new RegExp(`^${source}$`);
 }
 
-/** Espande un path con wildcard `*`/`?` (anche nelle directory intermedie); risultati ordinati lessicalmente. */
+/** Expands a path with `*`/`?` wildcards (including in intermediate directories); results are lexically sorted. */
 function expandGlob(pattern: string): string[] {
   if (!/[*?]/.test(pattern)) {
     return [pattern];
@@ -155,7 +155,7 @@ function readConfigFile(file: string, depth: number, state: ParseState): void {
         }
         break;
       default:
-        // `Match` e tutte le altre direttive non definiscono alias.
+        // `Match` and all other directives do not define aliases.
         break;
     }
   }
@@ -166,7 +166,7 @@ export interface SshConfigLocation {
   homeDirectory?: () => string;
 }
 
-/** Alias `Host` selezionabili da `~/.ssh/config` (o `SMART_TERMINAL_SSH_CONFIG`); sola lettura, mai errori verso il chiamante. */
+/** Selectable `Host` aliases from `~/.ssh/config` (or `SMART_TERMINAL_SSH_CONFIG`); read-only, never throws to the caller. */
 export function listSshAliases(location: SshConfigLocation = {}): string[] {
   const env = location.env ?? process.env;
   const home = (location.homeDirectory ?? os.homedir)();
@@ -184,8 +184,8 @@ export interface SshCommand {
 }
 
 /**
- * Comando `ssh <alias>` come file+args (mai una stringa shell). L'ambiente e' ereditato (incluso `SSH_AUTH_SOCK`);
- * nessuna chiave privata viene letta o copiata: l'autenticazione resta a ssh/agent.
+ * `ssh <alias>` command as file+args (never a shell string). The environment is inherited (including `SSH_AUTH_SOCK`);
+ * no private key is read or copied: authentication remains with ssh/agent.
  */
 export function buildSshCommand(alias: string, env: NodeJS.ProcessEnv, sshBinary?: string): SshCommand {
   if (!isValidSshAlias(alias)) {

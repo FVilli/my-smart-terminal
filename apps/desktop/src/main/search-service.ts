@@ -1,7 +1,7 @@
 import type { SearchQueryRequest, SearchQueryResult } from '@smart-terminal/contracts';
 import { MarkdownSearchIndex } from '@smart-terminal/data';
 
-/** Indice di ricerca volatile del main process: ricostruito all'avvio, aggiornato per sessione. */
+/** Volatile search index in the main process: rebuilt at startup, updated per session. */
 export class SearchService {
   private readonly index: MarkdownSearchIndex;
 
@@ -18,16 +18,16 @@ export class SearchService {
     return this.index.machines();
   }
 
-  /** Dopo una scrittura history/clipboard o a fine sessione. Gli errori non devono interrompere il chiamante. */
+  /** After a history/clipboard write or session end. Errors must not interrupt the caller. */
   upsertSession(sessionDirectory: string): void {
     try {
       this.index.upsertSession(sessionDirectory);
     } catch {
-      // l'indice e' ricostruibile da disco: un fallimento non e' bloccante
+      // the index can be rebuilt from disk: a failure is non-blocking
     }
   }
 
-  /** Rescan incrementale dopo un pull Git. `true` se l'indice e' cambiato; gli errori non sono bloccanti. */
+  /** Incremental rescan after a Git pull. `true` if the index changed; errors are non-blocking. */
   refresh(): boolean {
     try {
       return this.index.refresh();

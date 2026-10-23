@@ -119,16 +119,16 @@ describe('PrimaryElection', () => {
     };
     const isPidAlive = (pid: number): boolean => pid === 111;
     const make = (): PrimaryElection => new PrimaryElection({ coordinatorDir: dir(), staleMs: 1000, isPidAlive, heartbeatMs: 1000 });
-    writeOwner(222, 100); // heartbeat fresco
+    writeOwner(222, 100); // fresh heartbeat
     expect(make().tryAcquire()).toBe('held');
-    writeOwner(111, 5000); // stale ma pid vivo
+    writeOwner(111, 5000); // stale but PID alive
     expect(make().tryAcquire()).toBe('held');
-    writeOwner(222, 5000); // stale e pid morto
+    writeOwner(222, 5000); // stale and PID dead
     const recovering = make();
     expect(recovering.tryAcquire()).toBe('acquired');
     expect(recovering.readOwner()?.nonce).not.toBe('old');
     recovering.release();
-    // owner illeggibile: solo se la directory e' vecchia
+    // unreadable owner: only if the directory is old
     fs.mkdirSync(lock, { recursive: true });
     fs.writeFileSync(path.join(lock, 'owner.json'), '{broken');
     expect(make().tryAcquire()).toBe('held');

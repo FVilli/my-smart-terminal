@@ -76,9 +76,9 @@ const api: SmartTerminalApi = {
 contextBridge.exposeInMainWorld('smartTerminal', api);
 
 /**
- * SEAM DI TEST: `__testInvoke` esiste solo se il main ha avviato la finestra con
- * `--smart-terminal-test-ipc` (SMART_TERMINAL_SMOKE=1 o SMART_TERMINAL_PTY_SMOKE=1). Permette di verificare il rifiuto di
- * canali sconosciuti/payload invalidi. In produzione non viene esposto alcun invoke generico.
+ * TEST SEAM: `__testInvoke` exists only when the main process started the window with
+ * `--smart-terminal-test-ipc` (SMART_TERMINAL_SMOKE=1 o SMART_TERMINAL_PTY_SMOKE=1). Allows testing rejection of
+ * unknown channels/invalid payloads. No generic invoke is exposed in production.
  */
 if (process.argv.includes(TEST_IPC_ARGUMENT)) {
   contextBridge.exposeInMainWorld('__testInvoke', (channel: string, ...args: unknown[]) =>

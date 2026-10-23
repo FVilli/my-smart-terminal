@@ -6,21 +6,21 @@ import { formatIsoWithOffset } from '@smart-terminal/data';
 import type { SyncState, SyncStatus } from '../protocol';
 
 export interface GitEngineOptions {
-  /** Radice del repo dati (contiene `sessions/`). */
+  /** Data repo root (contains `sessions/`). */
   repoPath: string;
   machine: string;
-  /** Remote `origin` opzionale (`SMART_TERMINAL_GIT_REMOTE`). */
+  /** Optional `origin` remote (`SMART_TERMINAL_GIT_REMOTE`). */
   remote?: string;
   /** Default `main` (`SMART_TERMINAL_GIT_BRANCH`). */
   branch?: string;
   clock?: () => Date;
   gitBinary?: string;
   commandTimeoutMs?: number;
-  /** Tentativi totali di fetch/rebase/push quando il push e' rifiutato (default 4). */
+  /** Total fetch/rebase/push attempts when the push is rejected (default 4). */
   maxPushAttempts?: number;
-  /** Backoff base tra i tentativi, raddoppia a ogni retry (default 250 ms). */
+  /** Base backoff between attempts, doubling on each retry (default 250 ms). */
   backoffMs?: number;
-  /** Osserva ogni invocazione git (argomenti inclusi); usato dai test per vietare `--force`. */
+  /** Observes every git invocation (including arguments); used by tests to forbid `--force`. */
   onCommand?: (args: readonly string[]) => void;
   onStatusChange?: (status: SyncStatus) => void;
 }
@@ -47,13 +47,13 @@ const SYNC_DIRECTORY = 'sessions';
 const OFFLINE_PATTERN =
   /could not resolve host|unable to access|network is unreachable|connection (refused|timed out|reset|closed)|operation timed out|could not read from remote|does not appear to be a git repository|unable to connect|temporary failure in name resolution|no route to host|ssh: connect/i;
 const REJECTED_PATTERN = /non-fast-forward|\[rejected\]|fetch first|failed to push some refs|stale info/i;
-const GITIGNORE = ['# Smart Terminal: file temporanei', '*.tmp', '*.lock', '.*.swp', '.DS_Store', ''].join('\n');
+const GITIGNORE = ['# Smart Terminal: temporary files', '*.tmp', '*.lock', '.*.swp', '.DS_Store', ''].join('\n');
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Motore Git seriale basato sul CLI `git` (execFile, mai shell). Stage solo `sessions/`, mai force push.
- * Tutte le operazioni mutanti passano da un mutex in-process: un solo scrittore Git per istanza.
+ * Serial Git engine based on the `git` CLI (execFile, never a shell). Stages only `sessions/`, never force-pushes.
+ * All mutating operations pass through an in-process mutex: one Git writer per instance.
  */
 export class GitEngine {
   private readonly branch: string;
@@ -94,7 +94,7 @@ export class GitEngine {
     return { ...this.current };
   }
 
-  /** Segnala modifiche locali non ancora sincronizzate. Non cambia uno stato `syncing` (viene ricordato). */
+  /** Reports local changes not yet synchronized. Does not change a `syncing` state (the change is remembered). */
   markDirty(): void {
     if (this.current.state === 'syncing') {
       this.dirtyDuringSync = true;
@@ -107,7 +107,7 @@ export class GitEngine {
     return this.serialize(() => this.initLocked());
   }
 
-  /** Commit locale di `sessions/` + fetch/rebase/push. Non lancia: l'esito e' nello stato restituito. */
+  /** Local commit of `sessions/` + fetch/rebase/push. Does not throw: the outcome is in the returned state. */
   syncOnce(): Promise<SyncStatus> {
     return this.serialize(async () => {
       this.dirtyDuringSync = false;
@@ -129,7 +129,7 @@ export class GitEngine {
     });
   }
 
-  /** Solo `git fetch origin`: nessun commit/rebase/push. Aggiorna offline/errore; se il remote torna raggiungibile segna `dirty` per ritentare il push. */
+  /** Only `git fetch origin`: no commit/rebase/push. Updates offline/error; if the remote becomes reachable again, marks `dirty` to retry the push. */
   fetchOnly(): Promise<SyncStatus> {
     return this.serialize(async () => {
       if (!this.hasRemote) {
@@ -156,9 +156,9 @@ export class GitEngine {
   }
 
   /**
-   * Fetch + integrazione dei commit remoti (solo rebase fast-forward-like, mai commit/push).
-   * Se ci sono modifiche tracked non committate non integra (lo fara' il prossimo `syncOnce`).
-   * Su conflitto: `rebase --abort`, stato `error`, file preservati. Non lancia.
+   * Fetch + integration of remote commits (fast-forward-like rebase only, never commit/push).
+   * If there are uncommitted tracked changes, do not integrate them (the next `syncOnce` will do so).
+   * On conflict: `rebase --abort`, `error` state, files preserved. Does not throw.
    */
   integrateRemote(): Promise<{ changed: boolean; status: SyncStatus }> {
     return this.serialize(async () => {
@@ -211,7 +211,7 @@ export class GitEngine {
     return after.stdout.trim() !== before.stdout.trim();
   }
 
-  /** Remote raggiungibile: esce da offline/error (dirty se restano modifiche locali o commit da pushare) e registra `lastSyncAt` se e' cambiato qualcosa. */
+  /** Remote reachable: exits offline/error (dirty if local changes or commits remain to push) and records `lastSyncAt` if anything changed. */
   private async markReachable(changed: boolean): Promise<void> {
     const { state } = this.current;
     if (state === 'offline' || state === 'error') {
@@ -333,7 +333,7 @@ export class GitEngine {
     }
   }
 
-  /** init+remote deterministico: se il repo e' senza commit e il remote ha il branch, lo adotta senza sovrascrivere file locali. */
+  /** Deterministic init+remote: if the repo has no commits and the remote has the branch, adopt it without overwriting local files. */
   private async configureRemote(remote: string): Promise<void> {
     const current = await this.run(['remote', 'get-url', 'origin']);
     if (current.code !== 0) {
@@ -349,7 +349,7 @@ export class GitEngine {
       await this.git(['fetch', 'origin']);
     } catch (error) {
       if (error instanceof GitEngineError && error.kind === 'offline') {
-        return; // il primo sync adotterà il remote quando raggiungibile
+        return; // the first sync will adopt the remote when reachable
       }
       throw error;
     }
@@ -412,7 +412,7 @@ export class GitEngine {
     }
   }
 
-  /** @returns `false` se il push e' stato rifiutato perche' non fast-forward. */
+  /** @returns `false` if the push was rejected because it was not fast-forward. */
   private async push(): Promise<boolean> {
     if ((await this.run(['rev-parse', '--verify', '--quiet', 'HEAD'])).code !== 0) {
       return true;

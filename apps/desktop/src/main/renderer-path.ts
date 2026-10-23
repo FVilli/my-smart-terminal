@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-/** Risolve una richiesta del protocol handler dentro il renderer, rifiutando traversal, null byte e URI invalidi. */
+/** Resolves a protocol-handler request inside the renderer, rejecting traversal, null bytes, and invalid URIs. */
 export function resolveRendererPath(rendererRoot: string, pathname: string): string | null {
   let requested: string;
   try {

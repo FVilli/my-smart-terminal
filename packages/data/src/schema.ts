@@ -271,7 +271,7 @@ function parseLogHeader(content: string, options: ParseOptions): { header: Event
   return { header, extra, body };
 }
 
-/** Crea i tre documenti iniziali di una sessione (history e clipboard senza eventi). */
+/** Creates the three initial session documents (history and clipboard without events). */
 export function createSessionDocuments(meta: SessionMeta): SessionDocuments {
   const header: EventLogHeader = {
     schema_version: SCHEMA_VERSION,
@@ -287,7 +287,7 @@ export function createSessionDocuments(meta: SessionMeta): SessionDocuments {
 }
 
 // ---------------------------------------------------------------------------
-// Eventi (sezioni `## <ISO8601> · <event-id>` con metadati `chiave: valore` e blocco fenced `text`)
+// Events (sections `## <ISO8601> · <event-id>` with `key: value` metadata and a fenced `text` block)
 
 const EVENT_SEPARATOR = ' · ';
 
@@ -412,7 +412,7 @@ export function parseHistoryDocument(content: string, options: ParseOptions = {}
   return { header, extraFields: extra, events };
 }
 
-/** Idempotente per id: se l'evento è già presente restituisce il contenuto invariato. */
+/** Idempotent by ID: returns unchanged content when the event is already present. */
 export function appendHistoryEvent(content: string, event: HistoryEvent): string {
   const existing = parseHistoryDocument(content);
   const section = renderEvent(
@@ -451,7 +451,7 @@ export function parseClipboardDocument(content: string, options: ParseOptions = 
   return { header, extraFields: extra, events };
 }
 
-/** Idempotente per id e per hash: un duplicato restituisce il contenuto invariato. */
+/** Idempotent by ID and hash: a duplicate returns unchanged content. */
 export function appendClipboardEvent(content: string, event: ClipboardEvent): string {
   const existing = parseClipboardDocument(content);
   if (event.type !== 'text' || !/^[0-9a-f]{64}$/.test(event.hash)) {
@@ -477,7 +477,7 @@ export function appendClipboardEvent(content: string, event: ClipboardEvent): st
 
 let temporaryCounter = 0;
 
-/** Scrive un file in modo atomico: tmp nella stessa directory + fsync + rename. */
+/** Writes a file atomically: temporary file in the same directory, then fsync and rename. */
 export function writeFileAtomic(filePath: string, content: string): void {
   const directory = path.dirname(filePath);
   temporaryCounter += 1;

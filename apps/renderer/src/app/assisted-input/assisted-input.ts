@@ -79,7 +79,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 })
 export class AssistedInput implements OnDestroy {
   readonly draft = input('');
-  /** Sessione attiva assente o non running: editing, invio e microfono bloccati. */
+  /** No active session or the session is not running: editing, sending, and microphone are disabled. */
   readonly disabled = input(false);
   readonly draftChange = output<string>();
   readonly submitted = output<string>();
@@ -115,7 +115,7 @@ export class AssistedInput implements OnDestroy {
     }
   }
 
-  /** Push-to-talk: premere il pulsante registra, rilasciarlo (o uscire) trascrive nella bozza. */
+  /** Push-to-talk: pressing the button records; releasing it (or leaving) transcribes into the draft. */
   protected startRecording(): void {
     void this.voice.start();
   }
@@ -124,7 +124,7 @@ export class AssistedInput implements OnDestroy {
     void this.voice.stop();
   }
 
-  /** Click da tastiera (Invio/Spazio): `detail === 0`, quindi toggle accessibile; il tap del mouse è già gestito. */
+  /** Keyboard click (Enter/Space): `detail === 0`, so use the accessible toggle; mouse taps are already handled. */
   protected toggleRecording(event: MouseEvent): void {
     if (event.detail > 0) {
       return;
@@ -136,7 +136,7 @@ export class AssistedInput implements OnDestroy {
     }
   }
 
-  /** Aggiunge il testo dettato alla bozza: nessun invio automatico. */
+  /** Appends dictated text to the draft: there is no automatic send. */
   private insertTranscript(text: string): void {
     this.notice.set(null);
     this.draftChange.emit(appendTranscript(this.draft(), text));

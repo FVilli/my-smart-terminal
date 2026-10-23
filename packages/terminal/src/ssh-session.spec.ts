@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { PtyAdapter, PtyProcessLike } from './pty';
 import { SessionManager, TerminalError } from './session-manager';
 
-/** Adapter di test: avvia davvero il binario (file + args) con child_process, senza PTY. */
+/** Test adapter: actually starts the binary (file + args) with child_process, without a PTY. */
 const childProcessAdapter: PtyAdapter = {
   spawn(options): PtyProcessLike {
     const child = spawn(options.file, options.args, { env: options.env, cwd: options.cwd, stdio: ['pipe', 'pipe', 'pipe'], shell: false });

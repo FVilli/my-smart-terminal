@@ -4,13 +4,13 @@ import type { SidebarTab } from '../session.model';
 
 const PREVIEW_MAX_CHARS = 160;
 
-/** Anteprima su una riga: spazi/a capo compressi e testo troncato. */
+/** One-line preview: whitespace is collapsed and text is truncated. */
 export function previewText(text: string): string {
   const flat = text.replace(/\s+/g, ' ').trim();
   return flat.length > PREVIEW_MAX_CHARS ? `${flat.slice(0, PREVIEW_MAX_CHARS)}…` : flat;
 }
 
-/** `2026-01-01T10:00:00+02:00` -> `2026-01-01 10:00:00` (ora della macchina di origine). */
+/** `2026-01-01T10:00:00+02:00` -> `2026-01-01 10:00:00` (time on the originating machine). */
 export function shortTimestamp(timestamp: string): string {
   return timestamp.slice(0, 19).replace('T', ' ');
 }
@@ -158,7 +158,7 @@ export function shortTimestamp(timestamp: string): string {
 export class SidebarPanel {
   readonly activeTab = input<SidebarTab>('clipboard');
   readonly query = input('');
-  /** Vuoto = tutte le macchine. */
+  /** Empty = all machines. */
   readonly machineFilter = input('');
   readonly machines = input<readonly string[]>([]);
   readonly entries = input<readonly SearchResultEntry[]>([]);

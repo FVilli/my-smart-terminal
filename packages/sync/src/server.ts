@@ -19,7 +19,7 @@ const IDLE_TIMEOUT_MS = 30_000;
 
 const UNIX_SOCKET_MAX_PATH = 100;
 
-/** Directory del socket: usa userData se il path resta sotto il limite sockaddr, altrimenti una dir privata in temp. */
+/** Socket directory: use userData if the path stays below the sockaddr limit; otherwise use a private temporary directory. */
 export function coordinatorSocketDirectory(userDataPath: string, platform: NodeJS.Platform = process.platform): string {
   const coordinatorDir = path.join(userDataPath, 'coordinator');
   if (platform === 'win32') {
@@ -57,7 +57,7 @@ export interface CoordinatorServerOptions {
   platform?: NodeJS.Platform;
 }
 
-/** Server RPC locale: Unix socket (dir 0700, socket 0600) o named pipe, protetto da token casuale. */
+/** Local RPC server: Unix socket (directory 0700, socket 0600) or named pipe, protected by a random token. */
 export class CoordinatorServer {
   readonly endpoint: string;
   readonly startedAt = new Date().toISOString();
@@ -77,7 +77,7 @@ export class CoordinatorServer {
     this.tokenFile = tokenPath(options.userDataPath);
   }
 
-  /** Va chiamato solo da chi detiene il lock primary: socket e token residui sono sovrascritti. */
+  /** Call only while holding the primary lock: stale sockets and tokens are overwritten. */
   async start(): Promise<void> {
     fs.mkdirSync(this.socketDirectory, { recursive: true, mode: 0o700 });
     fs.mkdirSync(this.coordinatorDirectory, { recursive: true, mode: 0o700 });
@@ -120,7 +120,7 @@ export class CoordinatorServer {
     if (server !== undefined) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
-    // Un nuovo primary potrebbe aver gia' sostituito socket/token: li rimuoviamo solo se sono ancora i nostri.
+    // A new primary may have already replaced the socket/token: remove them only if they are still ours.
     try {
       if (fs.readFileSync(this.tokenFile, 'utf8') === this.token) {
         fs.rmSync(this.tokenFile, { force: true });
@@ -129,7 +129,7 @@ export class CoordinatorServer {
         }
       }
     } catch {
-      // gia' rimossi
+      // already removed
     }
   }
 

@@ -38,12 +38,12 @@ function normalizeSegment(raw: string, maxLength: number, fallback: string): str
   return normalized.length > 0 ? normalized : fallback;
 }
 
-/** Normalizza un hostname in un segmento di percorso sicuro (minuscolo, senza slash, `.`/`..`, max 64). */
+/** Normalizes a hostname into a safe path segment (lowercase, no slashes, `.`/`..`, max 64). */
 export function normalizeMachine(hostname: string): string {
   return normalizeSegment(hostname, MAX_MACHINE_LENGTH, 'unknown-machine');
 }
 
-/** Normalizza `local` o un alias SSH in un segmento di percorso sicuro (max 48). */
+/** Normalizes `local` or an SSH alias into a safe path segment (max 48). */
 export function normalizeDestination(destination: string): string {
   return normalizeSegment(destination, MAX_DESTINATION_LENGTH, 'unknown-destination');
 }
@@ -58,7 +58,7 @@ export function isValidDestination(value: string): boolean {
 
 const pad = (value: number, width = 2): string => String(value).padStart(width, '0');
 
-/** Timestamp locale per il nome directory: `YYYY-MM-DD_HH.mm`. */
+/** Local timestamp for the directory name: `YYYY-MM-DD_HH.mm`. */
 export function formatLocalTimestamp(date: Date): string {
   if (Number.isNaN(date.getTime())) {
     throw new SessionPathError('PATH_INVALID_TIMESTAMP');
@@ -66,7 +66,7 @@ export function formatLocalTimestamp(date: Date): string {
   return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_${pad(date.getHours())}.${pad(date.getMinutes())}`;
 }
 
-/** ISO 8601 locale con offset (`2026-10-22T10:05:03+02:00`), precisione al secondo. */
+/** Local ISO 8601 timestamp with offset (`2026-10-22T10:05:03+02:00`), with second precision. */
 export function formatIsoWithOffset(date: Date): string {
   if (Number.isNaN(date.getTime())) {
     throw new SessionPathError('PATH_INVALID_TIMESTAMP');
@@ -130,7 +130,7 @@ export function parseSessionDirectoryName(name: string): SessionDirectoryParts |
   return { timestamp: match[1] ?? '', sequence, destination };
 }
 
-/** Percorso relativo al repo dati con separatore `/`: `sessions/<machine>/<directory>`. */
+/** Data-repository-relative path using `/` as the separator: `sessions/<machine>/<directory>`. */
 export function buildSessionRelativeDir(machine: string, startedAt: Date, sequence: number, destination: string): string {
   if (!isValidMachine(machine)) {
     throw new SessionPathError('PATH_INVALID_MACHINE');
@@ -145,7 +145,7 @@ export function machineDirectory(dataRepoPath: string, machine: string): string 
   return path.join(dataRepoPath, SESSIONS_DIRECTORY, machine);
 }
 
-/** Risolve un percorso relativo dentro `root`; rifiuta assoluti e traversal. */
+/** Resolves a relative path inside `root`; rejects absolute paths and traversal. */
 export function resolveInside(root: string, relative: string): string {
   const base = path.resolve(root);
   const resolved = path.resolve(base, relative);
@@ -169,7 +169,7 @@ export function sessionFilePaths(absoluteDir: string): SessionFilePaths {
   };
 }
 
-/** Rifiuta componenti simbolici sotto la radice: un symlink in sessions/ non deve far uscire le scritture. */
+/** Rejects symlink components below the root: a symlink in sessions/ must not escape writes. */
 export function assertNoSymlinkComponents(root: string, relative: string): void {
   const base = path.resolve(root);
   let current = base;
@@ -188,7 +188,7 @@ export function assertNoSymlinkComponents(root: string, relative: string): void 
   }
 }
 
-/** Valida un percorso relativo di sessione e lo risolve dentro il repo dati. */
+/** Validates a session-relative path and resolves it inside the data repository. */
 export function resolveSessionDirectory(dataRepoPath: string, relativeDir: string): string {
   const segments = relativeDir.split('/');
   const [root, machine, directory] = segments;

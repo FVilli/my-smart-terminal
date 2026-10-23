@@ -6,7 +6,7 @@ import { CoordinatorServer } from './server';
 
 export type CoordinatorRole = 'stopped' | 'primary' | 'secondary';
 
-/** Risorse create quando l'istanza diventa primary; `stop` e' chiamato quando smette di esserlo. */
+/** Resources created when the instance becomes primary; `stop` is called when it ceases to be one. */
 export interface PrimaryHandle {
   services: CoordinatorServices;
   stop(): Promise<void> | void;
@@ -17,7 +17,7 @@ export interface CoordinatorOptions {
   createPrimary: () => Promise<PrimaryHandle> | PrimaryHandle;
   heartbeatMs?: number;
   staleMs?: number;
-  /** Intervallo con cui un secondary riprova l'elezione. */
+  /** Interval at which a secondary retries the election. */
   takeoverPollMs?: number;
   isPidAlive?: (pid: number) => boolean;
   clock?: () => Date;
@@ -25,7 +25,7 @@ export interface CoordinatorOptions {
 
 type RoleListener = (role: CoordinatorRole) => void;
 
-/** Elezione, server (se primary), client (sempre) e takeover automatico. Non blocca mai l'avvio come secondary. */
+/** Election, server (if primary), client (always), and automatic takeover. Never blocks startup as a secondary. */
 export class Coordinator {
   readonly client: CoordinatorClient;
   private readonly election: PrimaryElection;
@@ -83,7 +83,7 @@ export class Coordinator {
     });
   }
 
-  /** Rilascio sincrono del solo lock (per `process.on('exit')`); socket e token residui sono sovrascritti dal prossimo primary. */
+  /** Synchronous release of only the lock (for `process.on('exit')`); stale sockets and tokens are overwritten by the next primary. */
   releaseLockSync(): void {
     this.stopped = true;
     this.clearPoll();

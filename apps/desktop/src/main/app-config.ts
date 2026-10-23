@@ -14,7 +14,7 @@ import { AI_PROVIDERS, STT_PROVIDERS, type AiProvider, type SttProvider } from '
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
-/** Configurazione locale (`config.md`): mai segreti, solo preferenze e riferimenti. */
+/** Local configuration (`config.md`): never secrets, only preferences and references. */
 export interface AppConfig {
   machineName: string;
   dataRepoPath: string;
@@ -24,7 +24,7 @@ export interface AppConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
-  /** Percorso assoluto dell'eseguibile STT locale (mai una stringa di shell). */
+  /** Absolute path to the local STT executable (mai una stringa di shell). */
   sttCommand?: string;
   syncDebounceMs?: number;
   syncMaxWaitMs?: number;
@@ -58,14 +58,14 @@ const KNOWN_KEYS = [
 
 const hasControlCharacters = (value: string): boolean => [...value].some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127);
 
-/** Validatori condivisi tra parser del file e wizard: restituiscono `true` se il valore e' accettabile. */
+/** Validators shared by the file parser and wizard: return `true` when the value is acceptable. */
 export const configValidators = {
   machineName: (value: string): boolean => value.trim().length > 0 && value.length <= 64 && !hasControlCharacters(value) && isValidMachine(normalizeMachine(value)),
   dataRepoPath: (value: string): boolean => value.length > 0 && value.length <= 4096 && !hasControlCharacters(value) && path.isAbsolute(value),
-  /** Remote Git: URL/scp-like, senza opzioni (`-`), controlli e credenziali con password incorporate. */
+  /** Remote Git: URL/scp-like, without options (`-`), control characters, or embedded password credentials. */
   dataRepoRemote: (value: string): boolean =>
     value.length > 0 && value.length <= 2048 && !value.startsWith('-') && !hasControlCharacters(value) && !/\s/.test(value) && !/^[A-Za-z][A-Za-z0-9+.-]*:\/\/[^/@]*:[^/@]*@/.test(value),
-  /** URL http(s) senza credenziali o query (potrebbero contenere segreti). */
+  /** HTTP(S) URL without credentials or query parameters (which could contain secrets). */
   aiBaseUrl: (value: string): boolean => {
     if (value.length > 2048 || hasControlCharacters(value)) {
       return false;
@@ -78,7 +78,7 @@ export const configValidators = {
     }
   },
   modelName: (value: string): boolean => value.length > 0 && value.length <= 128 && !hasControlCharacters(value),
-  /** Eseguibile locale: percorso assoluto, nessun argomento o metacarattere di shell. */
+  /** Local executable: absolute path, no arguments or shell metacharacters. */
   sttCommand: (value: string): boolean =>
     value.length > 0 && value.length <= 4096 && !hasControlCharacters(value) && path.isAbsolute(value),
 };
@@ -178,7 +178,7 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.syncFetchIntervalMs !== undefined && { sync_fetch_interval_ms: config.syncFetchIntervalMs }),
     ...(config.clipboardEnabled !== undefined && { clipboard_enabled: config.clipboardEnabled }),
   };
-  // Rilegge cio' che sta per scrivere: un config non rileggibile non deve mai arrivare su disco.
+  // Reads back what it is about to write: an unreadable config must never reach disk.
   const content = serializeFrontmatter(data);
   parseAppConfig(content);
   return content;
@@ -189,7 +189,7 @@ export type ConfigLoadResult =
   | { status: 'missing' }
   | { status: 'corrupt' };
 
-/** Percorso di `config.md`: `SMART_TERMINAL_CONFIG_PATH` oppure `userData/config/config.md`. */
+/** Path to `config.md`: `SMART_TERMINAL_CONFIG_PATH` oppure `userData/config/config.md`. */
 export function resolveConfigPath(userDataPath: string, env: NodeJS.ProcessEnv = process.env): string {
   const override = env['SMART_TERMINAL_CONFIG_PATH'];
   return path.resolve(override !== undefined && override.length > 0 ? override : path.join(userDataPath, 'config', 'config.md'));
@@ -229,12 +229,12 @@ export class AppConfigStore {
     return this.recover(content);
   }
 
-  /** File corrotto: lo conserva come `.corrupt` e ripristina il backup solo se a sua volta valido. */
+  /** Corrupt file: preserves it as `.corrupt` and restores the backup only if it is also valid. */
   private recover(corruptContent: string): ConfigLoadResult {
     try {
       writeFileAtomic(this.corruptPath, corruptContent);
     } catch {
-      // la quarantena e' best effort
+      // quarantine is best effort
     }
     try {
       const backup = fs.readFileSync(this.backupPath, 'utf8');
@@ -254,7 +254,7 @@ export class AppConfigStore {
       parseAppConfig(previous);
       writeFileAtomic(this.backupPath, previous);
     } catch {
-      // nessun precedente valido da salvare
+      // no valid previous version to preserve
     }
     writeFileAtomic(this.filePath, content);
   }

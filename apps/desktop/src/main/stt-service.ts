@@ -9,7 +9,7 @@ export interface SttServiceOptions {
   fetch?: typeof fetch;
   run?: SttProcessRunner;
   timeoutMs?: number;
-  /** Seam di test: trascrizione deterministica, nessun adapter/rete/file. Attivo solo con SMART_TERMINAL_STT_TEST_MODE=1. */
+  /** Test seam: deterministic transcription, no adapter/network/file. Active only with SMART_TERMINAL_STT_TEST_MODE=1. */
   testMode?: boolean;
 }
 
@@ -24,8 +24,8 @@ const skipped = (reason: NonNullable<SttTranscribeResult['reason']>): SttTranscr
 });
 
 /**
- * STT lato main: config e token non attraversano mai il confine IPC e l'audio vive solo in memoria.
- * Non lancia mai: ogni errore diventa un risultato `skipped` con motivo stabile.
+ * Main-process STT: config and tokens never cross the IPC boundary and audio lives only in memory.
+ * Never throws: every error becomes a `skipped` result with a stable reason.
  */
 export class SttService {
   private readonly testMode: boolean;
@@ -37,7 +37,7 @@ export class SttService {
   status(): SttStatus {
     const config = this.currentConfig();
     const secureStorage = this.options.secrets.isSecure();
-    const testWarning = 'Modalità test STT attiva.';
+    const testWarning = 'STT test mode active.';
     if (config === undefined || config.sttProvider === 'none') {
       return {
         configured: false,

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const releaseDir = path.resolve('release');
 if (!fs.existsSync(releaseDir)) {
-  console.error('[checksums] release/ non esiste: esegui prima il packaging');
+  console.error('[checksums] release/ does not exist: run packaging first');
   process.exit(1);
 }
 const files = fs

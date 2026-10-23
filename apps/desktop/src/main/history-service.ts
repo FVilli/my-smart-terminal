@@ -12,17 +12,17 @@ import {
 } from '@smart-terminal/data';
 
 export interface HistorySessionRef {
-  /** Directory sessione relativa al repo dati: `sessions/<machine>/<dir>`. */
+  /** Session directory relative to the data repository: `sessions/<machine>/<dir>`. */
   sessionDirectory: string;
 }
 
 export interface HistoryServiceOptions {
   dataRepoPath: string;
-  /** Risolve la sessione appartenente alla finestra `senderId`; `undefined` se non esiste. */
+  /** Resolves the session belonging to window `senderId`; `undefined` when it does not exist. */
   resolveSession(senderId: number, sessionId: string): HistorySessionRef | undefined;
   clock?: () => Date;
   newId?: () => string;
-  /** Notificata dopo una scrittura riuscita (es. aggiornamento dell'indice di ricerca). */
+  /** Notified after a successful write (for example, a search-index update). */
   onRecorded?(sessionDirectory: string): void;
 }
 
@@ -33,7 +33,7 @@ export class HistoryError extends Error {
   }
 }
 
-/** Registra solo invii espliciti dall'editor assistito (source `assisted`). */
+/** Records only explicit submissions from the assisted editor (source `assisted`). */
 export class HistoryService {
   private readonly clock: () => Date;
   private readonly newId: () => string;

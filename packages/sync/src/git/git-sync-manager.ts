@@ -7,15 +7,15 @@ export interface GitSyncManagerOptions extends GitEngineOptions {
   maxWaitMs?: number;
   fetchIntervalMs?: number;
   timers?: SyncSchedulerOptions['timers'];
-  /** Tempo massimo di attesa del flush finale in `stop()` (default 5 s). */
+  /** Maximum wait time for the final flush in `stop()` (default 5 s). */
   flushTimeoutMs?: number;
-  /** Invocato dopo un fetch periodico che ha integrato commit remoti. */
+  /** Called after a periodic fetch that integrated remote commits. */
   onRemoteIntegrated?: (result: { changed: boolean }) => void;
 }
 
 const DEFAULT_FLUSH_TIMEOUT_MS = 5_000;
 
-/** Possiede `GitEngine` e `SyncScheduler` del primary: `markDirty` passa dal debounce, il fetch periodico parte con `start()`. */
+/** Owns the primary's `GitEngine` and `SyncScheduler`: `markDirty` goes through debounce, and periodic fetch starts with `start()`. */
 export class GitSyncManager {
   private readonly engine: GitEngine;
   private readonly scheduler: SyncScheduler;
@@ -33,7 +33,7 @@ export class GitSyncManager {
           onRemoteIntegrated?.({ changed });
         }
         if (status.state === 'dirty') {
-          this.scheduler.notifyDirty(); // remote tornato raggiungibile: ritenta il push
+          this.scheduler.notifyDirty(); // remote reachable again: retry the push
         }
         return status;
       },
@@ -48,12 +48,12 @@ export class GitSyncManager {
     try {
       await this.engine.initIfNeeded();
     } catch {
-      // l'errore e' riportato dal primo syncOnce(): l'avvio dell'app non deve dipendere da Git
+      // the error is reported by the first syncOnce(): app startup must not depend on Git
     }
     this.scheduler.start();
   }
 
-  /** Solo `git fetch origin` (nessuna integrazione); il timer usa `integrateRemote`. */
+  /** Only `git fetch origin` (no integration); the timer uses `integrateRemote`. */
   fetchOnly(): Promise<SyncStatus> {
     return this.engine.fetchOnly();
   }
@@ -71,12 +71,12 @@ export class GitSyncManager {
     this.scheduler.notifyDirty();
   }
 
-  /** Sync immediato dei dirty pendenti (chiusura sessione/app). */
+  /** Immediate sync of pending dirty state (session/app close). */
   flush(): Promise<void> {
     return this.scheduler.flush();
   }
 
-  /** Flush best-effort con timeout, poi ferma i timer. Non lancia e non blocca oltre `flushTimeoutMs`. */
+  /** Best-effort flush with timeout, then stop timers. Does not throw or block beyond `flushTimeoutMs`. */
   async stop(): Promise<void> {
     let timer: NodeJS.Timeout | undefined;
     const timeout = new Promise<void>((resolve) => {

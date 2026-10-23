@@ -4,7 +4,7 @@ export type SessionStatus = 'starting' | 'running' | 'exited' | 'error';
 export interface TerminalSessionView {
   readonly id: string;
   readonly label: string;
-  /** Macchina/destinazione mostrata nel tab (es. `host/local`). */
+  /** Machine/destination shown in the tab (for example, `host/local`). */
   readonly target: string;
   readonly machine: string;
   readonly sessionDirectory: string;
@@ -16,7 +16,7 @@ export interface TerminalSessionView {
 }
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'error';
-/** Stato del badge nel footer: `unconfigured` quando non esiste un remote Git. */
+/** Footer badge state: `unconfigured` when no Git remote exists. */
 export type SyncBadgeState = SyncState | 'unconfigured';
 export type SidebarTab = 'clipboard' | 'history';
 
@@ -29,7 +29,7 @@ export const SYNC_LABELS: Record<SyncState, string> = {
 
 export const SYNC_UNCONFIGURED_LABEL = 'Repository not configured';
 
-/** Badge del footer dallo stato del primary: `dirty` (modifiche in attesa) e' mostrato come `syncing`. */
+/** Footer badge derived from the primary state: `dirty` (pending changes) is shown as `syncing`. */
 export function syncBadge(
   state: 'synced' | 'dirty' | 'syncing' | 'offline' | 'error',
   remoteConfigured: boolean,

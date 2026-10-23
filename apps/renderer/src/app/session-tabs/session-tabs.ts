@@ -111,7 +111,7 @@ export class SessionTabs {
   readonly createSsh = output<string>();
   /** Alias `Host` letti da `~/.ssh/config`. */
   readonly sshAliases = input<readonly string[]>([]);
-  /** Il menu `+` e' stato aperto: il genitore rilegge gli alias. */
+  /** The `+` menu was opened: the parent rereads the aliases. */
   readonly menuOpened = output<void>();
 
   protected readonly menuOpen = signal(false);

@@ -1,4 +1,4 @@
-/** Processo di supporto per i test di concorrenza: alloca N sessioni e stampa gli ID su stdout (JSON). */
+/** Helper process for concurrency tests: allocates N sessions and prints their IDs to stdout (JSON). */
 import { FileSessionIdAllocator } from './session-id';
 
 const [dataRepoPath, machine, lockDir, count] = process.argv.slice(2);

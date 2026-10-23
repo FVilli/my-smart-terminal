@@ -8,14 +8,14 @@ export interface SyncSchedulerTimers {
 }
 
 export interface SyncSchedulerOptions {
-  /** Sync completo (commit sessions + fetch/rebase/push). */
+  /** Complete sync (commit sessions + fetch/rebase/push). */
   sync(): Promise<unknown>;
-  /** Solo fetch: nessun commit/push. */
+  /** Fetch only: no commit/push. */
   fetch(): Promise<unknown>;
   debounceMs?: number;
   maxWaitMs?: number;
   fetchIntervalMs?: number;
-  /** Timer iniettabili; default: `setTimeout`/`clearTimeout` globali (compatibili con i fake timers). */
+  /** Injectable timers; default: global `setTimeout`/`clearTimeout` (compatible with fake timers). */
   timers?: SyncSchedulerTimers;
   onStatus?: (event: { kind: 'sync' | 'fetch'; result: unknown }) => void;
   onError?: (error: unknown, kind: 'sync' | 'fetch') => void;
@@ -27,8 +27,8 @@ const defaultTimers: SyncSchedulerTimers = {
 };
 
 /**
- * Pianifica i sync del primary: debounce dall'ultima modifica, max wait dalla prima modifica non ancora sincronizzata,
- * un solo sync alla volta (coalescing) e fetch periodico che non si sovrappone al sync.
+ * Schedules primary syncs: debounce from the last change, max wait from the first unsynchronized change,
+ * only one sync at a time (coalescing), and periodic fetches that do not overlap syncs.
  */
 export class SyncScheduler {
   private readonly debounceMs: number;
@@ -59,7 +59,7 @@ export class SyncScheduler {
     if (this.stopped) return;
     this.pending = true;
     if (this.syncRun !== undefined) {
-      return; // coalescing: il passaggio extra parte a fine sync
+      return; // coalescing: the extra pass starts when the sync finishes
     }
     this.clearTimer('debounceTimer');
     this.debounceTimer = this.timers.setTimeout(() => this.trigger(), this.debounceMs);
@@ -72,7 +72,7 @@ export class SyncScheduler {
     this.scheduleFetch();
   }
 
-  /** Esegue subito il sync se c'e' un dirty pendente e attende quello in corso. */
+  /** Runs sync immediately if dirty is pending and waits for the current sync. */
   async flush(): Promise<void> {
     if (this.pending && this.syncRun === undefined && !this.stopped) {
       this.trigger();
@@ -80,7 +80,7 @@ export class SyncScheduler {
     await this.syncRun;
   }
 
-  /** Cancella i timer e attende l'eventuale sync/fetch in corso; nessun nuovo sync parte dopo. */
+  /** Cancels timers and waits for any current sync/fetch; no new sync starts afterward. */
   async stop(): Promise<void> {
     this.stopped = true;
     this.clearTimer('debounceTimer');

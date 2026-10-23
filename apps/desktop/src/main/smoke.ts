@@ -116,7 +116,7 @@ const PTY_SCRIPT = `(async () => {
   return { ...result, exitEvent: exitEvent !== null };
 })()`;
 
-/** Smoke attivo con SMART_TERMINAL_SMOKE=1 (IPC) o SMART_TERMINAL_PTY_SMOKE=1 (PTY): stampa il risultato ed esce con 0/1. */
+/** Active smoke test with SMART_TERMINAL_SMOKE=1 (IPC) o SMART_TERMINAL_PTY_SMOKE=1 (PTY): prints the result and exits with 0/1. */
 export function runSmoke(window: BrowserWindow, mode: 'ipc' | 'pty' = 'ipc'): void {
   if (mode === 'pty') {
     window.webContents.once('did-finish-load', () => {
@@ -191,7 +191,7 @@ const TABS_SCRIPT = `(async () => {
   return result;
 })()`;
 
-/** Verifica nel repo dati temporaneo: counter.md, due directory sessione con i tre file, S1 chiusa con ended_at. */
+/** Verifies in the temporary data repository: counter.md, two session directories with the three files, S1 closed with ended_at. */
 function verifyTabsDataRepo(): boolean {
   const repo = process.env['SMART_TERMINAL_DATA_REPO'];
   if (repo === undefined || repo.length === 0) {
@@ -218,7 +218,7 @@ function verifyTabsDataRepo(): boolean {
   }
 }
 
-/** Smoke UI attivo con SMART_TERMINAL_TABS_SMOKE=1: crea/seleziona/chiude tab via DOM e verifica terminal:list. */
+/** Active UI smoke test with SMART_TERMINAL_TABS_SMOKE=1: creates/selects/closes tabs through the DOM and verifies terminal:list. */
 export function runTabsSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {
@@ -305,7 +305,7 @@ const EDITOR_SCRIPT = `(async () => {
   return result;
 })()`;
 
-/** Smoke UI attivo con SMART_TERMINAL_EDITOR_SMOKE=1: scrive nella textarea assistita, invia e verifica output e bozze per tab. */
+/** Active UI smoke test with SMART_TERMINAL_EDITOR_SMOKE=1: types in the assisted textarea, submits, and verifies output and per-tab drafts. */
 export function runEditorSmoke(window: BrowserWindow): void {
   runUiSmoke(window, EDITOR_SCRIPT, 'SMART_TERMINAL_EDITOR_SMOKE_RESULT', async () => {
     const found = await pollUntil(() => {
@@ -399,7 +399,7 @@ const SIDEBAR_SCRIPT = `(async () => {
   return result;
 })()`;
 
-/** Smoke UI attivo con SMART_TERMINAL_SIDEBAR_SMOKE=1: cambia tab sidebar e verifica aria-selected, placeholder e footer. */
+/** Active UI smoke test with SMART_TERMINAL_SIDEBAR_SMOKE=1: switches sidebar tabs and verifies aria-selected, placeholder e footer. */
 export function runSidebarSmoke(window: BrowserWindow): void {
   runUiSmoke(window, SIDEBAR_SCRIPT, 'SMART_TERMINAL_SIDEBAR_SMOKE_RESULT');
 }
@@ -465,7 +465,7 @@ function readAllClipboardEvents(): ReturnType<typeof parseClipboardDocument>['ev
   });
 }
 
-/** Smoke attivo con SMART_TERMINAL_CLIPBOARD_SMOKE=1: abilita la cattura via UI, scrive nella clipboard Electron e verifica clipboard.md. */
+/** Active smoke test with SMART_TERMINAL_CLIPBOARD_SMOKE=1: enables capture through the UI, writes to the Electron clipboard, and verifies clipboard.md. */
 
 const AI_SCRIPT = `(async () => {
   const api = window.smartTerminal;
@@ -505,12 +505,12 @@ const AI_SCRIPT = `(async () => {
     result.shellDraftUnchanged = textarea().value === 'git status';
     result.noAutoSend = (await api.search({ query: 'git status' })).entries.length === 0;
   } finally {
-    // nessuna pulizia necessaria
+    // no cleanup required
   }
   return result;
 })()`;
 
-/** Smoke AI attivo con SMART_TERMINAL_AI_SMOKE=1: richiede SMART_TERMINAL_AI_TEST_MODE=1 e config provider. */
+/** Active AI smoke test with SMART_TERMINAL_AI_SMOKE=1: requires SMART_TERMINAL_AI_TEST_MODE=1 e provider configuration. */
 export function runAiSmoke(window: BrowserWindow): void {
   runUiSmoke(window, AI_SCRIPT, 'SMART_TERMINAL_AI_SMOKE_RESULT');
 }
@@ -542,7 +542,7 @@ const STT_SCRIPT = `(async () => {
   result.statusConfigured = status.configured === true && status.provider === 'local';
   result.micIdleLabel = mic().disabled === false && voiceLabel() === 'Voice ready';
 
-  // 1. Permesso negato: messaggio localizzato, terminale e invio restano usabili.
+  // 1. Permission denied: localized message, terminal, and submission remain usable.
   navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
   mic().click();
   result.deniedMessage = await waitFor(() => voiceLabel() === 'Microphone denied', 4000);
@@ -552,7 +552,7 @@ const STT_SCRIPT = `(async () => {
   setText('');
   await sleep(50);
 
-  // 2. Stream sintetico (nessun audio reale): push-to-talk start/stop e testo nella bozza.
+  // 2. Synthetic stream (no real audio): push-to-talk start/stop and draft text.
   const context = new AudioContext();
   const destination = context.createMediaStreamDestination();
   const oscillator = context.createOscillator();
@@ -567,14 +567,14 @@ const STT_SCRIPT = `(async () => {
   result.labelBackToIdle = await waitFor(() => voiceLabel() === 'Voice ready', 4000);
   try { oscillator.stop(); void context.close(); } catch {}
 
-  // 3. Il testo arriva nella bozza editabile e non viene inviato.
+  // 3. The text arrives in the editable draft and is not submitted.
   setText('edited test transcript');
   await sleep(100);
   result.transcriptEditable = textarea().value === 'edited test transcript';
   await sleep(500);
   result.notSent = (await api.search({ query: 'test transcript' })).entries.length === 0 && textarea().value.length > 0;
 
-  // 4. Nessun overflow del layout con l'etichetta vocale.
+  // 4. No layout overflow with the voice label.
   const host = document.querySelector('app-assisted-input');
   const row = document.querySelector('app-assisted-input .row');
   result.noOverflow = host.scrollWidth <= host.clientWidth && row.scrollWidth <= row.clientWidth;
@@ -583,7 +583,7 @@ const STT_SCRIPT = `(async () => {
 
 const AUDIO_FILE_PATTERN = /\.(webm|wav|mp3|ogg|m4a|aac|flac|opus)$/i;
 
-/** Nessun file audio (e nessun file oltre la configurazione) nella userData dopo una trascrizione. */
+/** No audio files (and no files beyond configuration) in userData after transcription. */
 function hasNoAudioArtifacts(directory: string): boolean {
   try {
     return !fs
@@ -594,7 +594,7 @@ function hasNoAudioArtifacts(directory: string): boolean {
   }
 }
 
-/** Smoke STT attivo con SMART_TERMINAL_STT_SMOKE=1: richiede SMART_TERMINAL_STT_TEST_MODE=1 e un provider configurato. */
+/** Active STT smoke test with SMART_TERMINAL_STT_SMOKE=1: requires SMART_TERMINAL_STT_TEST_MODE=1 e un provider configurato. */
 export function runSttSmoke(window: BrowserWindow): void {
   runUiSmoke(window, STT_SCRIPT, 'SMART_TERMINAL_STT_SMOKE_RESULT', async () => ({
     noAudioFileInUserData: hasNoAudioArtifacts(app.getPath('userData')),
@@ -674,7 +674,7 @@ const SEARCH_SCRIPT = `(async () => {
   return result;
 })()`;
 
-/** Smoke attivo con SMART_TERMINAL_SEARCH_SMOKE=1: invio assistito, ricerca via API e ricostruzione indice in una nuova istanza. */
+/** Active smoke test with SMART_TERMINAL_SEARCH_SMOKE=1: assisted submission, API search, and index rebuild in a new instance. */
 export function runSearchSmoke(window: BrowserWindow): void {
   runUiSmoke(window, SEARCH_SCRIPT, 'SMART_TERMINAL_SEARCH_SMOKE_RESULT', () => {
     const repo = process.env['SMART_TERMINAL_DATA_REPO'];
@@ -690,7 +690,7 @@ export function runSearchSmoke(window: BrowserWindow): void {
 const SYNC_UI_REMOTE_MACHINE = 'remote-box';
 const SYNC_UI_REMOTE_PROMPT = 'REMOTE_BOX_PROMPT echo from another machine';
 
-/** Prima dell'avvio del coordinator: scrive nel repo dati una sessione di un'altra macchina (come se arrivasse da un pull). */
+/** Before starting the coordinator: writes a session from another machine to the data repository (as if received by a pull). */
 export function seedSyncUiSmokeData(dataRepoPath: string): void {
   const startedAt = '2026-01-01T09:00:00+00:00';
   const directory = path.join(dataRepoPath, 'sessions', SYNC_UI_REMOTE_MACHINE, '2026-01-01_09.00_S1_local');
@@ -820,7 +820,7 @@ const SYNC_UI_CLIPBOARD_SCRIPT = `(async () => {
   return result;
 })()`;
 
-/** Smoke attivo con SMART_TERMINAL_SYNC_UI_SMOKE=1: History/Clipboard globali, filtro macchina, Copia/Inserisci e footer sync. */
+/** Active smoke test with SMART_TERMINAL_SYNC_UI_SMOKE=1: Global History/Clipboard, machine filter, Copy/Paste, and sync footer. */
 export function runSyncUiSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {
@@ -883,7 +883,7 @@ const SSH_UI_SCRIPT = `(async () => {
       (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: '-oProxyCommand=evil' }))) &&
       (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: 'a b' }))) &&
       (await rejects(() => api.createTerminal({ kind: 'ssh', sshAlias: 'a;b' })));
-    // Un ssh che fallisce non deve toccare le altre tab.
+    // A failed SSH connection must not affect the other tabs.
     q('session-plus')[0].click();
     await sleep(100);
     q('session-new-ssh').find((b) => b.getAttribute('data-alias') === 'smoke-fail').click();
@@ -920,8 +920,8 @@ function anyFileContains(directory: string, marker: string): boolean {
 }
 
 /**
- * Smoke attivo con SMART_TERMINAL_SSH_SMOKE=1 (preparato da scripts/ssh-smoke.mjs: config SSH, fake ssh e chiave decoy).
- * Il fake ssh scrive su SMART_TERMINAL_SSH_SMOKE_LOG gli argomenti ricevuti.
+ * Active smoke test with SMART_TERMINAL_SSH_SMOKE=1 (prepared by scripts/ssh-smoke.mjs: SSH config, fake SSH, and a decoy key).
+ * The fake SSH writes received arguments to SMART_TERMINAL_SSH_SMOKE_LOG.
  */
 export function runSshSmoke(window: BrowserWindow): void {
   runUiSmoke(window, SSH_UI_SCRIPT, 'SMART_TERMINAL_SSH_SMOKE_RESULT', async () => {
@@ -937,7 +937,7 @@ export function runSshSmoke(window: BrowserWindow): void {
         const meta = parseSessionDocument(fs.readFileSync(path.join(dir, 'session.md'), 'utf8')).meta;
         sshMetaOk ||= meta.kind === 'ssh' && meta.ssh_alias === 'smoke-host';
       } catch {
-        // directory non sessione
+        // non-session directory
       }
     }
     return {

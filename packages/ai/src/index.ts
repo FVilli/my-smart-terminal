@@ -41,7 +41,7 @@ export interface AiProviderAdapter {
 export function isShellCommand(text: string): boolean {
   const value = text.trim();
   if (!value) return false;
-  // Operatori di shell o inizio riga che è chiaramente un comando/eseguibile.
+  // Shell operators or a line start that is clearly a command/executable.
   const startsAsCommand =
     /^(?:sudo\s+)?(?:\.{1,2}\/|\/|~\/)/.test(value) ||
     /^(?:sudo\s+)?(?:cd|ls|pwd|cat|grep|find|awk|sed|ssh|scp|git|npm|npx|node|python\w*|bash|sh|chmod|mkdir|rm|cp|mv|docker|curl|wget|make|tar|exit|export)(?:\s|$)/i.test(value) ||
@@ -50,7 +50,7 @@ export function isShellCommand(text: string): boolean {
 }
 
 export function buildCorrectionPrompt(text: string): string {
-  return `Correggi esclusivamente i refusi nel testo. Preserva esattamente codice, path, URL, comandi, flag, nomi di file e significato. Rispondi solo con il testo corretto, senza spiegazioni o aggiunte.\n\n--- INIZIO TESTO ---\n${text}\n--- FINE TESTO ---`;
+  return `Correct only the typos in the text. Preserve code, paths, URLs, commands, flags, file names, and meaning exactly. Reply only with the corrected text, without explanations or additions.\n\n--- BEGIN TEXT ---\n${text}\n--- END TEXT ---`;
 }
 
 function endpoint(provider: AiProvider, baseUrl?: string): string {

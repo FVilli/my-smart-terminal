@@ -3,9 +3,9 @@ import { createChannelMap, dispatchIpc, type IpcServices } from './ipc';
 import type { TerminalHost } from './terminal-host';
 
 /**
- * Registra i canali una sola volta per processo. La policy del sender viene
- * valutata a ogni chiamata, così le finestre aperte in seguito (es. macOS
- * activate) restano client validi senza duplicare gli handler ipcMain.
+ * Registers channels once per process. The sender policy is
+ * evaluated on every call, so windows opened later (for example, macOS
+ * activate) remain valid clients without duplicating ipcMain handlers.
  */
 export function registerIpcHandlers(
   getSenderIds: () => ReadonlySet<number>,
@@ -42,7 +42,7 @@ export function registerIpcHandlers(
   }
 }
 
-/** Registra una finestra come client IPC autorizzato e la rimuove alla chiusura. */
+/** Registers a window as an authorized IPC client and removes it when closed. */
 export function trackIpcWindow(window: BrowserWindow, senderIds: Set<number>, terminals: TerminalHost): void {
   const senderId = window.webContents.id;
   senderIds.add(senderId);

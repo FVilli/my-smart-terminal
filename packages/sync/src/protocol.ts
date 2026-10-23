@@ -26,11 +26,11 @@ export interface RemoteSyncStatus extends SyncStatus {
   remoteConfigured: boolean;
 }
 
-/** Stato della cattura clipboard posseduta dal primary. */
+/** State of clipboard capture owned by the primary. */
 export interface ClipboardRpcState {
   enabled: boolean;
   paused: boolean;
-  /** ISO 8601 dell'ultimo evento scritto dal primary. */
+  /** ISO 8601 timestamp of the last event written by the primary. */
   lastEventAt: string | null;
 }
 
@@ -40,23 +40,23 @@ export interface PingResult {
   role: 'primary';
 }
 
-/** Servizi esposti dal primary tramite RPC. */
+/** Services exposed by the primary through RPC. */
 export interface CoordinatorServices {
   allocate(request: AllocateSessionRequest): Promise<AllocatedSession>;
   searchQuery(query: SearchQuery): SearchEntry[];
   searchUpsert(sessionDirectory: string): void;
   searchRefresh(): void;
-  /** Macchine presenti nell'indice, ordinate. */
+  /** Machines present in the index, sorted. */
   searchFacets(): string[];
   clipboardState(): ClipboardRpcState;
   clipboardConfigure(config: { enabled: boolean; paused: boolean }): ClipboardRpcState;
-  /** `sessionDirectory` e' gia' validato come `sessions/<machine>/<dir>`; `null` ferma la cattura attiva. */
+  /** `sessionDirectory` is already validated as `sessions/<machine>/<dir>`; `null` stops active capture. */
   clipboardSetActive(sessionDirectory: string | null): ClipboardRpcState;
   clipboardClear(): ClipboardRpcState;
-  /** Sessione terminata: pruning del registry del primary (clipboard attiva), indice e dirty. */
+  /** Session ended: prune the primary registry (active clipboard), index, and dirty state. */
   sessionEnd(sessionDirectory: string): void;
   syncStatus(): RemoteSyncStatus;
-  /** Marca dirty: il sync parte dallo scheduler (debounce/max wait). */
+  /** Marks dirty: the scheduler starts the sync (debounce/max wait). */
   syncDirty(): void;
 }
 
@@ -123,7 +123,7 @@ function checkKeys(params: Record<string, unknown>, required: string[], optional
 const isBoundedString = (value: unknown, allowEmpty = false): value is string =>
   typeof value === 'string' && value.length <= MAX_FIELD_LENGTH && (allowEmpty || value.length > 0) && !value.includes('\0');
 
-/** `sessions/<machine>/<directory di sessione>`: forma verificata, nessun accesso al filesystem. */
+/** `sessions/<machine>/<session directory>`: validated form, no filesystem access. */
 function isSessionDirectory(value: unknown): value is string {
   if (!isBoundedString(value)) return false;
   const segments = value.split('/');
@@ -176,7 +176,7 @@ function parseSearchParams(params: Record<string, unknown>): SearchQuery {
   return result;
 }
 
-/** Valida la riga JSON e restituisce la richiesta, senza controllare il token. */
+/** Validates the JSON line and returns the request without checking the token. */
 export function parseRequestLine(line: string): RpcRequest {
   let value: unknown;
   try {
@@ -203,7 +203,7 @@ export function isRpcMethod(method: string): method is RpcMethod {
   return (RPC_METHODS as readonly string[]).includes(method);
 }
 
-/** Esegue un metodo whitelisted. I `params` sono validati rigorosamente prima di toccare i servizi. */
+/** Executes a whitelisted method. `params` are strictly validated before touching services. */
 export async function dispatchRpc(
   method: string,
   params: Record<string, unknown>,
@@ -279,7 +279,7 @@ export async function dispatchRpc(
 
 const KNOWN_FAILURE_CODES: readonly string[] = ['SESSION_ID_INVALID_REQUEST', 'SESSION_ID_LOCK_TIMEOUT', 'SESSION_ID_EXHAUSTED'];
 
-/** Trasforma qualsiasi errore in una risposta sanificata: mai stack, path o messaggi interni. */
+/** Transforms any error into a sanitized response: never expose stacks, paths, or internal messages. */
 export function sanitizeError(error: unknown): { code: RpcErrorCode; message: string } {
   const code = (error as { code?: unknown } | null)?.code;
   if (error instanceof RpcFailure) {

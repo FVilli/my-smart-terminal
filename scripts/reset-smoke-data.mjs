@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** Directory dati temporanea usata dagli smoke test (SMART_TERMINAL_DATA_REPO), ricreata vuota a ogni run. */
+/** Temporary data directory used by smoke tests (SMART_TERMINAL_DATA_REPO), recreated empty on every run. */
 export const SMOKE_DATA_DIR = path.resolve('.smoke-data');
 
 export function resetSmokeData() {

@@ -19,7 +19,7 @@ afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
 
-/** Eseguibile reale: scrive su stdout gli argomenti e la lunghezza dell'audio letto da stdin. */
+/** Real executable: writes the arguments and the length of audio read from stdin to stdout. */
 function fakeSttScript(name: string, body: string): string {
   const file = path.join(tempRoot, name);
   fs.writeFileSync(file, body, { mode: 0o755 });
@@ -47,7 +47,7 @@ describe('LocalSttAdapter', () => {
     const adapter = new LocalSttAdapter(command);
     const text = await adapter.transcribe({ audio: audio(32), mimeType: 'audio/webm' }, { timeoutMs: 5000 });
     expect(text).toBe('32');
-    // Nessun file audio temporaneo: la directory dello script resta identica.
+    // No temporary audio file: the script directory remains unchanged.
     expect(fs.readdirSync(tempRoot).sort()).toEqual(before);
   });
 
@@ -178,8 +178,8 @@ describe('transcribeAudio orchestrator', () => {
       command: '/opt/stt',
       audio: audio(12),
       mimeType: 'audio/webm',
-      run: async () => ({ stdout: '  testo locale \n' }),
+      run: async () => ({ stdout: '  local text \n' }),
     });
-    expect(result).toEqual({ text: 'testo locale', skipped: false });
+    expect(result).toEqual({ text: 'local text', skipped: false });
   });
 });

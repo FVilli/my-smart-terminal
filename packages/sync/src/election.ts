@@ -17,7 +17,7 @@ export interface PrimaryLockOwner {
 export interface PrimaryElectionOptions {
   /** `userData/coordinator`. */
   coordinatorDir: string;
-  /** Chiamata una sola volta se heartbeat o ownership falliscono dopo l'acquisizione. */
+  /** Called once if the heartbeat or ownership fails after acquisition. */
   onLost?: () => void;
   pid?: number;
   clock?: () => Date;
@@ -52,9 +52,9 @@ function parseOwner(raw: string): PrimaryLockOwner | undefined {
 }
 
 /**
- * Elezione del primary tramite lock directory `primary.lock` (mkdir atomico) con heartbeat.
- * Un lock e' stale se l'heartbeat e' piu' vecchio di `staleMs` e il pid non e' vivo, oppure se
- * l'owner e' illeggibile e la directory non viene toccata da `staleMs`.
+ * Election of the primary through the `primary.lock` directory (atomic mkdir) with a heartbeat.
+ * A lock is stale if its heartbeat is older than `staleMs` and its PID is not alive, or if
+ * the owner is unreadable and the directory has not been touched for `staleMs`.
  */
 export class PrimaryElection {
   readonly lockPath: string;
@@ -92,7 +92,7 @@ export class PrimaryElection {
     }
   }
 
-  /** Sincrono e non bloccante: non attende mai il primary corrente. */
+  /** Synchronous and non-blocking: never waits for the current primary. */
   tryAcquire(): AcquireResult {
     if (this.owner !== undefined) {
       return 'acquired';
@@ -131,7 +131,7 @@ export class PrimaryElection {
     return true;
   }
 
-  /** Rimuove il lock se stale tramite rename atomico, verificando il nonce osservato. */
+  /** Removes a stale lock via atomic rename, verifying the observed nonce. */
   private recoverIfStale(): boolean {
     const observed = this.readOwner();
     const now = this.clock().getTime();
@@ -147,18 +147,18 @@ export class PrimaryElection {
           return false;
         }
       } catch {
-        return true; // il lock e' sparito nel frattempo: riprova mkdir
+        return true; // the lock disappeared in the meantime: retry mkdir
       }
     }
     const graveyard = `${this.lockPath}.stale-${randomUUID()}`;
     try {
       fs.renameSync(this.lockPath, graveyard);
     } catch {
-      return false; // un altro processo ha gia' recuperato o rilasciato
+      return false; // another process has already recovered or released it
     }
     const moved = parseOwner(this.safeRead(path.join(graveyard, OWNER_FILE)) ?? '');
     if (moved?.nonce !== observed?.nonce) {
-      // Abbiamo spostato un lock diverso da quello giudicato stale: tentiamo di ripristinarlo.
+      // We moved a lock different from the one deemed stale: try to restore it.
       try {
         fs.renameSync(graveyard, this.lockPath);
       } catch {
@@ -211,7 +211,7 @@ export class PrimaryElection {
     }
   }
 
-  /** Rilascia il lock solo se l'owner su disco ha il nostro nonce. */
+  /** Releases the lock only if the on-disk owner has our nonce. */
   release(): void {
     const owner = this.owner;
     this.stopTimer();

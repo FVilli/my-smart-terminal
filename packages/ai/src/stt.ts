@@ -18,7 +18,7 @@ export interface SttAdapter {
   transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<string>;
 }
 
-/** Esecuzione di un processo con audio su stdin (mai shell, mai file audio su disco). */
+/** Runs a process with audio on stdin (never a shell, never an audio file on disk). */
 export type SttProcessRunner = (
   file: string,
   args: readonly string[],
@@ -30,7 +30,7 @@ export const STT_DEFAULT_TIMEOUT_MS = 30_000;
 
 const AUDIO_MIME_PATTERN = /^audio\/[a-z0-9][a-z0-9.+-]{0,63}$/i;
 
-/** `audio/*` con sottotipo plausibile: niente parametri, path o stringhe di controllo. */
+/** `audio/*` with a plausible subtype: no parameters, paths, or control characters. */
 export function isAudioMimeType(value: unknown): value is string {
   return typeof value === 'string' && AUDIO_MIME_PATTERN.test(value);
 }
@@ -47,7 +47,7 @@ function isTimeoutError(error: unknown): boolean {
   return error.name === 'AbortError' || killed || /timed?\s?out/i.test(error.message);
 }
 
-/** `execFile` come runner predefinito: argomenti separati, nessuna shell, stdin con i byte audio. */
+/** `execFile` as the default runner: separate arguments, no shell, stdin containing audio bytes. */
 export const execFileSttRunner: SttProcessRunner = (file, args, input, timeoutMs) =>
   new Promise((resolve, reject) => {
     const child = execFile(
@@ -66,7 +66,7 @@ export const execFileSttRunner: SttProcessRunner = (file, args, input, timeoutMs
     child.stdin?.end(Buffer.from(input));
   });
 
-/** STT locale: comando assoluto eseguibile, audio via stdin, nessun file temporaneo. */
+/** Local STT: absolute executable command, audio via stdin, no temporary files. */
 export class LocalSttAdapter implements SttAdapter {
   constructor(
     private readonly command: string,
@@ -94,7 +94,7 @@ function transcriptionEndpoint(baseUrl?: string): string {
   return `${(baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '')}/audio/transcriptions`;
 }
 
-/** STT cloud OpenAI-compatible: multipart su `<base>/audio/transcriptions`, modello `whisper-1` di default. */
+/** OpenAI-compatible cloud STT: multipart to `<base>/audio/transcriptions`, default model `whisper-1`. */
 export class OpenAiSttAdapter implements SttAdapter {
   constructor(private readonly options: OpenAiSttOptions) {}
 
@@ -129,9 +129,9 @@ export class OpenAiSttAdapter implements SttAdapter {
 
 export interface TranscribeAudioRequest extends SttRequest {
   provider: SttProvider;
-  /** Token cloud (`stt:cloud`), letto dal main. */
+  /** Cloud token (`stt:cloud`), read by the main process. */
   token?: string;
-  /** Comando assoluto per il provider locale. */
+  /** Absolute command for the local provider. */
   command?: string;
   baseUrl?: string;
   model?: string;
@@ -141,8 +141,8 @@ export interface TranscribeAudioRequest extends SttRequest {
 }
 
 /**
- * Orchestratore STT: non lancia mai e non registra audio/token nei risultati.
- * Gli errori diventano `skipped` con un motivo stabile usato dal renderer per il messaggio.
+ * STT orchestrator: never throws and never includes audio/token in results.
+ * Errors become `skipped` with a stable reason used by the renderer for the message.
  */
 export async function transcribeAudio(request: TranscribeAudioRequest): Promise<SttResult> {
   const skipped = (reason: SttSkipReason): SttResult => ({ text: '', skipped: true, reason });

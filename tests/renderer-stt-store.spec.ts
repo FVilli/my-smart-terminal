@@ -150,10 +150,10 @@ describe('SttStore', () => {
     const request = sttTranscribe.mock.calls[0]?.[0];
     expect(request?.audio).toBeInstanceOf(Uint8Array);
     expect(request?.audio.byteLength).toBe(48);
-    // I parametri del codec vengono rimossi: il main accetta solo `audio/*` senza parametri.
+    // Codec parameters are removed: the main process accepts only `audio/*` without parameters.
     expect(request?.mimeType).toBe('audio/webm');
     expect(received).toEqual(['test transcript']);
-    // La trascrizione non invia nulla al PTY né in history.
+    // Transcription sends nothing to the PTY or to history.
     expect(writeTerminal).not.toHaveBeenCalled();
     expect(recordHistory).not.toHaveBeenCalled();
   });

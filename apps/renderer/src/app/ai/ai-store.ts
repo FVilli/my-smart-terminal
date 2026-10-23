@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type { AiStatus, CorrectionResult, SmartTerminalApi } from '@smart-terminal/contracts';
 
-/** Stato della correzione AI nel renderer: il token e le chiamate provider restano nel main. */
+/** AI correction state in the renderer: the token and provider calls remain in the main process. */
 @Injectable({ providedIn: 'root' })
 export class AiStore {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;

@@ -1,6 +1,6 @@
 /**
- * Filtro best-effort per testo che sembra contenere segreti. Non è una garanzia:
- * riduce il rischio di scrivere credenziali evidenti in history/clipboard Markdown.
+ * Best-effort filter for text that appears to contain secrets. This is not a guarantee:
+ * it reduces the risk of writing obvious credentials to Markdown history/clipboard.
  */
 const SENSITIVE_PATTERNS: readonly RegExp[] = [
   /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY(?: BLOCK)?-----/,

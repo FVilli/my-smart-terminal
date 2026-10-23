@@ -24,7 +24,7 @@ import { TerminalHost } from './terminal-host';
 const APP_SCHEME = 'smart-terminal';
 const APP_HOST = 'bundle';
 
-// Override test della directory utente: va impostato prima di qualunque `app.getPath('userData')`.
+// Test override for the user directory: must be set before any `app.getPath('userData')`.
 const userDataOverride = process.env['SMART_TERMINAL_USER_DATA'];
 if (userDataOverride !== undefined && userDataOverride.length > 0) {
   app.setPath('userData', path.resolve(userDataOverride));
@@ -171,7 +171,7 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath('userData');
-  // Il microfono e' l'unico permesso concesso (verifica nel wizard); tutto il resto e' negato.
+  // The microphone is the only permitted permission (checked in the wizard); everything else is denied.
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
     const mediaTypes = (details as { mediaTypes?: string[] }).mediaTypes ?? [];
     callback(permission === 'media' && mediaTypes.length > 0 && mediaTypes.every((type) => type === 'audio'));
@@ -187,7 +187,7 @@ app.whenReady().then(async () => {
   }
   coordinatorRuntime = runtime;
   await runtime.start();
-  // Le uscite via app.exit() (smoke, crash controllati) non emettono before-quit: rilascia comunque il lock primary.
+  // Exits through app.exit() (smoke tests, controlled crashes) do not emit before-quit: release the primary lock anyway.
   process.on('exit', () => runtime.releaseLockSync());
   runtime.onRoleChanged(() => {
     if (e2eMode === 'same-machine' || e2eMode === 'cross-machine') {

@@ -2,7 +2,7 @@
   "name": "my-smart-terminal",
   "version": "1.0.0",
   "private": true,
-  "description": "Terminale desktop multi-istanza con sessioni Markdown e sync Git",
+  "description": "Multi-instance desktop terminal with Markdown sessions and Git sync",
   "workspaces": [
     "apps/desktop",
     "apps/renderer",

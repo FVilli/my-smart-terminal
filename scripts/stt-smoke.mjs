@@ -4,8 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { resetSmokeData, SMOKE_DATA_DIR } from './reset-smoke-data.mjs';
 
-// Prepara userData/config con provider STT `local` e comando assoluto (l'eseguibile Node stesso):
-// nessun token, nessuna rete. Lo smoke sostituisce getUserMedia e usa SMART_TERMINAL_STT_TEST_MODE.
+// Prepares userData/config with the `local` STT provider and an absolute command (the Node executable itself):
+// no token, no network. The smoke test replaces getUserMedia and uses SMART_TERMINAL_STT_TEST_MODE.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'st-stt-smoke-'));
 const userData = path.join(root, 'ud');
 const repo = path.join(root, 'data');

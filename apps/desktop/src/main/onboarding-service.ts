@@ -22,10 +22,10 @@ export interface OnboardingServiceOptions {
   hostname?: () => string;
   store: AppConfigStore;
   secrets: SecretStore;
-  /** Percorsi effettivamente in uso da questa istanza (per `restartRequired`). */
+  /** Paths actually used by this instance (per `restartRequired`). */
   runningPaths: DataPaths;
   runningRemote: string | undefined;
-  /** Esito della lettura di config.md all'avvio. */
+  /** Result of reading config.md at startup. */
   initialLoad: ConfigLoadResult;
 }
 
@@ -43,7 +43,7 @@ const MESSAGES = {
   sttToken: 'Invalid token.',
 } as const;
 
-/** Il percorso esiste ed e' una directory scrivibile, oppure l'antenato esistente piu' vicino lo e' (quindi e' creabile). */
+/** The path exists and is a writable directory, or its nearest existing ancestor is writable (so it can be created). */
 export function isWritableOrCreatable(target: string): boolean {
   let current = target;
   for (let depth = 0; depth < 64; depth += 1) {
@@ -71,7 +71,7 @@ export function isWritableOrCreatable(target: string): boolean {
 const isOptionalText = (value: unknown, valid: (text: string) => boolean): boolean =>
   value === undefined || (typeof value === 'string' && valid(value));
 
-/** Validazione completa del payload del wizard (tipi, enum, URL, path); messaggi fissi e sanificati. */
+/** Complete validation of the wizard payload (types, enums, URLs, paths); fixed, sanitized messages. */
 export function validateOnboardingConfig(config: unknown, fieldChecks = true): OnboardingValidationResult {
   const errors: Record<string, string> = {};
   if (typeof config !== 'object' || config === null) {
@@ -103,7 +103,7 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
 
 const empty = (value: string | undefined): string | undefined => (value === undefined || value.trim().length === 0 ? undefined : value.trim());
 
-/** Logica main del wizard: stato, validazione, salvataggio config.md + token (mai restituiti). */
+/** Main wizard logic: state, validation, config.md + token saving (never returned). */
 export class OnboardingService {
   private config: AppConfig | undefined;
   private reason: 'missing' | 'corrupt' | 'valid';
@@ -234,7 +234,7 @@ export class OnboardingService {
     return { ok: true, errors: {}, restartRequired, warnings };
   }
 
-  /** Salta il wizard: scrive la configurazione con i valori predefiniti (nessuna cifratura/rete richiesta). */
+  /** Skips the wizard: writes the configuration with default values (no encryption/network required). */
   skip(): OnboardingSaveResult {
     return this.save({ config: this.config !== undefined ? this.toOnboardingConfig(this.config) : this.defaults() });
   }

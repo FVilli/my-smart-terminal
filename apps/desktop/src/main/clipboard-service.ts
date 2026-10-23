@@ -10,13 +10,13 @@ export interface ClipboardServiceOptions {
   dataRepoPath: string;
   source: ClipboardTextSource;
   onRecorded?(sessionDirectory: string): void;
-  /** Solo test: intervallo di polling. */
+  /** Test only: intervallo di polling. */
   intervalMs?: number;
 }
 
 /**
- * Cattura clipboard posseduta dal primary: una sola istanza (e un solo timer) per macchina.
- * La sessione attiva e' identificata dalla directory relativa `sessions/<machine>/<dir>`, validata dentro il repo dati.
+ * Clipboard capture owned by the primary: one instance (and one timer) per machine.
+ * The active session is identified by the relative directory `sessions/<machine>/<dir>`, validated inside the data repository.
  */
 export class ClipboardService {
   private readonly recorder: ClipboardRecorder;
@@ -44,7 +44,7 @@ export class ClipboardService {
     return { enabled, paused, lastEventAt };
   }
 
-  /** `true` se il timer di polling e' in esecuzione. */
+  /** `true` when the polling timer is running. */
   get polling(): boolean {
     return this.recorder.state().polling;
   }
@@ -54,7 +54,7 @@ export class ClipboardService {
     return this.state();
   }
 
-  /** Lancia se `sessionDirectory` non e' una directory di sessione valida dentro il repo dati. */
+  /** Throws if `sessionDirectory` is not a valid session directory inside the data repository. */
   setActive(sessionDirectory: string | null): ClipboardCaptureState {
     if (sessionDirectory !== null) {
       resolveSessionDirectory(this.options.dataRepoPath, sessionDirectory);
@@ -68,7 +68,7 @@ export class ClipboardService {
     return this.state();
   }
 
-  /** Pruning: se la sessione terminata era quella attiva, la cattura smette di scrivere in essa. */
+  /** Pruning: if the ended session was active, capture stops writing to it. */
   sessionEnded(sessionDirectory: string): void {
     if (this.recorder.state().activeSessionId === sessionDirectory) {
       this.recorder.setActiveSession(null);
