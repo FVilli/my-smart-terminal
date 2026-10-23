@@ -11,6 +11,13 @@ This guide takes you from the first launch to a working local or SSH session. Sh
 
 > **Download status:** GitHub Release publication is the remaining step. Do not assume that installers are already published or signed. If you are using a local Linux build, verify the SHA-256 checksum supplied with it; v1 artifacts are unsigned and there is no auto-update.
 
+## Launch the application
+
+- **Linux AppImage**: run the AppImage directly (make it executable with `chmod +x` if needed).
+- **Linux .deb**: open **Smart Terminal** from the applications menu, or run `"/opt/Smart Terminal/smart-terminal"`.
+- **macOS**: open **Smart Terminal** from Applications; if Gatekeeper blocks the unsigned build, use the Finder Open context menu.
+- **Windows**: launch **Smart Terminal** from the Start menu after running the installer.
+
 ## First launch: three onboarding steps
 
 The first launch opens **Initial setup**. The wizard has three steps. You may skip the optional AI and STT steps; skipping them does not disable the terminal.

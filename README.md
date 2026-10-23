@@ -87,9 +87,13 @@ chmod +x "release/Smart Terminal-1.0.0-linux-x86_64.AppImage"
 
 # or Debian package
 sudo dpkg -i "release/Smart Terminal-1.0.0-linux-amd64.deb"
+
+# Launch after installing the .deb:
+"/opt/Smart Terminal/smart-terminal"
+# or open "Smart Terminal" from the applications menu
 ```
 
-If FUSE is unavailable: `--appimage-extract-and-run`. Always verify the SHA-256 checksum in `release/SHA256SUMS`.
+If FUSE is unavailable: `"./Smart Terminal-1.0.0-linux-x86_64.AppImage" --appimage-extract-and-run`. Always verify the SHA-256 checksum in `release/SHA256SUMS`.
 
 ## First run
 

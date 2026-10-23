@@ -27,6 +27,8 @@ The following electron-builder artifacts are planned:
 - macOS: `.dmg`;
 - Windows: `.exe` installer.
 
+After installing on Linux, launch **Smart Terminal** from the applications menu or run `"/opt/Smart Terminal/smart-terminal"`; the AppImage runs directly. On macOS open the app from Applications, on Windows from the Start menu.
+
 Verify the SHA-256 checksum published with each artifact. Artifacts are **unsigned** until macOS/Windows certificates are available (and no signature should be assumed). V1 includes no auto-update: updates are manual.
 
 ### Known limitations

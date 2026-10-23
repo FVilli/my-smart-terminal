@@ -32,6 +32,19 @@ v1.0.0 status:
 
 If the release is not yet visible, Linux artifacts are in the repository's `release/` directory. V1 artifacts are **unsigned** until certificates are available, so the operating system may show a warning. Always verify the SHA-256 checksum published with the artifact (`release/SHA256SUMS`). V1 has no auto-update: updates are manual.
 
+### Launching after installation
+
+- **AppImage**: run the file directly (after `chmod +x`). No installation step is required.
+- **.deb**: after `sudo dpkg -i "Smart Terminal-1.0.0-linux-amd64.deb"`, open **Smart Terminal** from the applications menu, or run:
+
+  ```bash
+  "/opt/Smart Terminal/smart-terminal"
+  ```
+
+  The package installs the desktop entry `smart-terminal.desktop` and the executable under `/opt/Smart Terminal/`; it does not add a `/usr/bin` command, so use the quoted path or the menu entry.
+- **macOS**: open the downloaded `.dmg`, drag **Smart Terminal** to Applications, then open it from Applications. Because the build is unsigned, use Finder's Open context menu if Gatekeeper blocks the first launch.
+- **Windows**: run the downloaded installer, then launch **Smart Terminal** from the Start menu.
+
 Development features require Node.js 24, Git, and OpenSSH. SSH uses the system client and `~/.ssh/config`.
 
 ## 3. First launch and onboarding
@@ -110,7 +123,7 @@ The repository can be a Git clone with configurable remote and branch. The coord
 - **Stale lock**: after a crash, the new primary recovers the lock when the previous process is no longer alive; wait for takeover and do not manually delete files while the app is active.
 - **Missing keyring**: on Linux, the token is not persisted and can be used only in memory for the session; configure a secure keyring for persistent cloud use.
 - **Logs**: look for Electron process output and app logs in the user data directory; logs must not contain tokens, audio, or AI text. Interface errors are sanitized.
-- **AppImage and FUSE**: if the AppImage does not start, run `./My-Smart-Terminal.AppImage --appimage-extract-and-run`.
+- **AppImage and FUSE**: if the AppImage does not start, run `"Smart Terminal-1.0.0-linux-x86_64.AppImage" --appimage-extract-and-run`.
 
 ## 8. V1 limits and compatibility
 
