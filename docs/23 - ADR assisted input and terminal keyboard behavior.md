@@ -3,12 +3,12 @@ title: "ADR: assisted input and terminal keyboard behavior"
 type: adr
 project: smart-terminal
 created: 2026-10-23
-status: proposed
+status: accepted
 ---
 
 # ADR: assisted input and terminal keyboard behavior
 
-**Status:** Proposed — pending user approval  
+**Status:** Accepted — approved by the user on 2026-10-23  
 **Date:** 2026-10-23
 
 ## Context

@@ -17,7 +17,7 @@ Challenge the decision for terminal compatibility, accessibility, safety and non
 ## Constrained implementation
 - Independent reviewer reads docs/24 and docs/23 and the current implementation evidence; checks that the ADR does not claim impossible Enter interception, protects TUI/SSH behavior, distinguishes histories, and is understandable.
 - Apply documentation fixes; record the review outcome in the task.
-- Present the decision to the user for explicit approval; do not close M12 before approval.
+- Present the decision to the user for explicit approval; do not close M12 before approval. (Approved 2026-10-23.)
 - Define the handoff criteria for a future implementation milestone (tests/smokes, focus UX, no PTY interception).
 
 ## Acceptance criteria
@@ -37,3 +37,8 @@ Do not implement the decision or publish a release.
 - Applied corrections: defined focus transition (`Ctrl/Cmd+Shift+E` to composer, Escape back to terminal with draft preserved, explicit click, visible focus, no key stealing); clarified that the app adds no rewriting to xterm `onData` (browser/xterm translation and paste happen before); changed history wording to “eligible for asynchronous app history” and documented filtering/failure; added concrete accessibility/focus assertions.
 - Updated `docs/08` from an undefined newline shortcut to the existing Enter/Shift+Enter behavior and terminal key ownership.
 - ADR remains **Proposed** pending explicit user approval; M12 must not close before approval and no implementation is authorized by this review.
+
+## Approval
+- User explicitly approved Option B on 2026-10-23.
+- ADR status changed to **Accepted**; no implementation, runtime behavior, or release change was made.
+- M12 decision is closed; future work requires a separate implementation milestone with the ADR test plan.
