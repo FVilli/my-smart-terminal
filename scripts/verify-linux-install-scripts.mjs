@@ -32,8 +32,8 @@ try {
   writeCommand('update-desktop-database', `printf 'desktop-cache\\n' >> '${log}'`);
   writeCommand('gtk-update-icon-cache', `printf 'icon-cache\\n' >> '${log}'`);
   const artifacts = {
-    'Smart.Terminal-1.2.1-linux-amd64.deb': 'deb fixture',
-    'Smart.Terminal-1.2.1-linux-x86_64.AppImage': 'app fixture',
+    'Smart.Terminal-1.2.2-linux-amd64.deb': 'deb fixture',
+    'Smart.Terminal-1.2.2-linux-x86_64.AppImage': 'app fixture',
     'icon.png': 'icon fixture',
   };
   const sums = Object.entries(artifacts).filter(([n]) => n !== 'icon.png').map(([name, value]) => `${crypto.createHash('sha256').update(value).digest('hex')}  ${name}`).join('\n');
@@ -47,7 +47,7 @@ try {
   const deb = spawnSync('sh', ['-s'], { cwd: root, env, input: Buffer.from(installer), encoding: 'utf8' });
   const debCalls = fs.readFileSync(log, 'utf8').split('\n').filter(Boolean);
   const sudoCalls = debCalls.filter((line) => line.startsWith('sudo:'));
-  if (deb.status !== 0 || sudoCalls.length !== 1 || !/^sudo:apt-get install -y \/tmp\/[^/]+\/Smart\.Terminal-1\.2\.1-linux-amd64\.deb$/.test(sudoCalls[0]) || debCalls.some((line) => line.startsWith('apt:'))) fail(`Deb install failed or did not use exactly sudo apt-get install -y: ${deb.stderr}${deb.stdout}; calls=${debCalls.join('\n')}`);
+  if (deb.status !== 0 || sudoCalls.length !== 1 || !/^sudo:apt-get install -y \/tmp\/[^/]+\/Smart\.Terminal-1\.2\.2-linux-amd64\.deb$/.test(sudoCalls[0]) || debCalls.some((line) => line.startsWith('apt:'))) fail(`Deb install failed or did not use exactly sudo apt-get install -y: ${deb.stderr}${deb.stdout}; calls=${debCalls.join('\n')}`);
   fs.writeFileSync(log, '');
   const app = spawnSync('sh', ['-s', '--', '--appimage'], { cwd: root, env, input: Buffer.from(installer), encoding: 'utf8' });
   if (app.status !== 0) fail(`AppImage install failed (${app.status}): ${app.stderr}${app.stdout}`);

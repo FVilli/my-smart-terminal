@@ -1,6 +1,20 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.2.2
+
+Hotfix release.
+
+### Fixed
+
+- Terminal text can be selected and copied with Ctrl+Shift+C, Cmd+C or Ctrl+Insert through the main-process clipboard.
+- The Settings gear now reopens after Save and after dismissing the restart notice; the settings store is reset on every close path.
+
+### Verification
+
+- Added terminal-copy shortcut/copy tests and a second-open-after-Save assertion in the settings smoke.
+- Patch release; no data migration required.
+
 ## v1.2.1
 
 Hotfix release.

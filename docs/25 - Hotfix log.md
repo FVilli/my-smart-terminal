@@ -27,3 +27,5 @@ Milestones remain for planned work; hotfixes are tracked by issue + this log + p
 | --- | --- | --- | --- | --- |
 | HF-20261023-01 | 1.2.1 | Window title showed only `Smart Terminal`; version was not visible. | Prevented `page-title-updated` from replacing the versioned title and reasserted it after load. | `versionedWindowTitle` in settings smoke. |
 | HF-20261023-02 | 1.2.1 | Header gear appeared to do nothing while settings state was loading. | Settings dialog opens immediately in edit mode before awaiting IPC, then populates state; closes on IPC failure. | Settings smoke `opened`/tabs; manual packaged-app check. |
+| HF-20261023-03 | 1.2.2 | Terminal text selection could not be copied. | Added Ctrl+Shift+C, Cmd+C and Ctrl+Insert copy through the main-process clipboard, preserving terminal SIGINT behavior. | terminal-copy unit tests; editor/PTY smokes. |
+| HF-20261023-04 | 1.2.2 | Settings gear worked only the first time. | Reset SettingsStore on every close path (save, warnings, restart notice) and added second-open regression assertion. | settings-smoke `reopenedAfterSave`. |

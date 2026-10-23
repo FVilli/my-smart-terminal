@@ -16,7 +16,7 @@ This guide covers downloading, installing, updating, and removing Smart Terminal
 - A practical supported macOS version is a recent, maintained macOS release. The current package does not specify a minimum macOS version; compatibility with older releases is not guaranteed.
 - An internet connection to download the app.
 
-The macOS download for v1.2.1 is `Smart.Terminal-1.2.1-mac-arm64.dmg`. Find it on the [official latest release page](https://github.com/FVilli/my-smart-terminal/releases/latest), along with `SHA256SUMS`.
+The macOS download for v1.2.2 is `Smart.Terminal-1.2.2-mac-arm64.dmg`. Find it on the [official latest release page](https://github.com/FVilli/my-smart-terminal/releases/latest), along with `SHA256SUMS`.
 
 ## Download, verify, and open the disk image
 
@@ -24,7 +24,7 @@ Open **Terminal.app**, paste the following helper, and press Return. It download
 
 ```bash
 set -euo pipefail
-VERSION="1.2.1"
+VERSION="1.2.2"
 BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
 DMG="Smart.Terminal-${VERSION}-mac-arm64.dmg"
 DEST="$HOME/Downloads"

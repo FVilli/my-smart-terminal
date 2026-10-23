@@ -15,6 +15,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { SessionsStore } from './sessions-store';
 import { AppearanceStore } from './appearance/appearance-store';
+import { copyTerminalSelection, isTerminalCopyShortcut } from './terminal-copy';
 
 const TERMINAL_THEME = {
   background: '#171e25',
@@ -111,6 +112,14 @@ export class TerminalPanel implements OnDestroy {
     terminal.open(this.host().nativeElement);
     this.terminal = terminal;
     this.fitAddon = fitAddon;
+    terminal.attachCustomKeyEventHandler((event) => {
+      if (!isTerminalCopyShortcut(event)) return true;
+      const selection = terminal.getSelection();
+      if (selection.length === 0) return true;
+      event.preventDefault();
+      void copyTerminalSelection(selection, (value) => window.smartTerminal.clipboardWrite(value));
+      return false;
+    });
 
     this.disposers.push(this.store.attachOutput(id, (data) => terminal.write(data)));
 

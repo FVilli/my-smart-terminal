@@ -52,7 +52,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               <footer>
                 <button type="button" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
-                <button type="button" data-testid="onboarding-close" (click)="visible.set(false)">Later</button>
+                <button type="button" data-testid="onboarding-close" (click)="dismiss()">Later</button>
               </footer>
             </div>
           } @else {
@@ -323,6 +323,10 @@ export class OnboardingWizard {
   }
 
   private async openFromSettings(): Promise<void> {
+    this.restartNotice.set(false);
+    this.errors.set({});
+    this.warnings.set([]);
+    this.confirmDiscard.set(false);
     this.editMode.set(true);
     this.visible.set(true);
     this.step.set(1);
@@ -370,11 +374,15 @@ export class OnboardingWizard {
     this.confirmDiscard.set(false);
   }
 
-  private close(): void {
-    this.appearance.set(this.state()?.config.terminalFont ?? 'jetbrains');
+  private dismiss(): void {
     this.visible.set(false);
     this.editMode.set(false);
     this.settings.close();
+  }
+
+  private close(): void {
+    this.appearance.set(this.state()?.config.terminalFont ?? 'jetbrains');
+    this.dismiss();
   }
 
   private isDirty(): boolean {
@@ -617,12 +625,13 @@ export class OnboardingWizard {
     this.appearance.set(this.payload().terminalFont ?? 'jetbrains');
     if (result.restartRequired) {
       this.restartNotice.set(true);
+      this.settings.close();
     } else if (result.warnings.length === 0) {
-      this.visible.set(false);
+      this.dismiss();
     } else {
       // Show the keychain warning before closing.
       this.restartNotice.set(false);
-      setTimeout(() => this.visible.set(false), 2500);
+      setTimeout(() => this.dismiss(), 2500);
     }
   }
 

@@ -633,7 +633,8 @@ const SETTINGS_SCRIPT = `(async () => {
   click('onboarding-discard'); await waitFor(() => !q('onboarding-overlay'));
   click('settings-open'); await waitFor(() => !!q('onboarding-overlay'));
   result.savedValuesReloaded = q('onboarding-machine')?.value === 'settings-smoke';
-  click('onboarding-cancel'); await waitFor(() => !q('onboarding-overlay'));
+  click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open'); result.reopenedAfterSave = await waitFor(() => !!q('onboarding-overlay'));
   return result;
 })()`;
 /** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */
