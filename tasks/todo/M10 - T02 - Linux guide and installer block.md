@@ -8,7 +8,7 @@ milestone: "M10"
 depends_on: "M09"
 deliverables: "Linux installation/uninstallation guide with safe copy-paste install and removal commands"
 ---
-<!-- gsynchro:v1 id=m10-t02-linux-guide registered=2026-10-23T15:35:00.000Z -->
+<!-- gsynchro:v1 id=83c549f3-0cca-4bcb-a7a4-95fa9be40687 registered=2026-10-23T13:29:31.213Z -->
 
 # M10 - T02 - Linux guide and copy-paste installer
 

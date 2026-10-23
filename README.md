@@ -63,40 +63,11 @@ Real screenshots from the English build (1440×872 content area, Xvfb capture):
 - **Multi-instance**: primary/secondary coordinator per machine, recoverable lock, and atomic session IDs.
 - **Privacy by design**: tokens in the keychain, no secrets in shared Markdown, and non-blocking AI/STT.
 
-## Download
+## Install Smart Terminal
 
-> **v1.1.0 — published, unsigned artifacts, no auto-update.**
-
-**Download: https://github.com/FVilli/my-smart-terminal/releases/latest**
-
-| Platform | Artifact |
-| --- | --- |
-| Ubuntu / Linux x86_64 | `Smart.Terminal-1.1.0-linux-x86_64.AppImage`, `Smart.Terminal-1.1.0-linux-amd64.deb` |
-| macOS Apple Silicon | `Smart.Terminal-1.1.0-mac-arm64.dmg` |
-| Windows x64 | `Smart.Terminal-1.1.0-win-x64.exe` |
-| All platforms | `SHA256SUMS` |
-
-Linux quick start:
-
-```bash
-VERSION=1.1.0
-BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
-
-# AppImage (no installation)
-curl -LO "${BASE}/Smart.Terminal-${VERSION}-linux-x86_64.AppImage"
-chmod +x "Smart.Terminal-${VERSION}-linux-x86_64.AppImage"
-"./Smart.Terminal-${VERSION}-linux-x86_64.AppImage"
-
-# or Debian package
-curl -LO "${BASE}/Smart.Terminal-${VERSION}-linux-amd64.deb"
-sudo dpkg -i "Smart.Terminal-${VERSION}-linux-amd64.deb"
-
-# Launch after installing the .deb:
-"/opt/Smart Terminal/smart-terminal"
-# or open "Smart Terminal" from the applications menu
-```
-
-If FUSE is unavailable: `"./Smart.Terminal-1.1.0-linux-x86_64.AppImage" --appimage-extract-and-run`. Download `SHA256SUMS` from the same release and verify artifacts before use. macOS builds are currently arm64 (Apple Silicon); Windows builds are x64.
+- [Windows installation guide](docs/20%20-%20Windows%20installation%20guide.md)
+- [Linux installation guide](docs/21%20-%20Linux%20installation%20guide.md)
+- [macOS installation guide](docs/22%20-%20macOS%20installation%20guide.md)
 
 ## First run
 

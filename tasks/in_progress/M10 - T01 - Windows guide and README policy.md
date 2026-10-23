@@ -8,7 +8,7 @@ milestone: "M10"
 depends_on: "M09"
 deliverables: "Windows installation/uninstallation guide and README installation-link policy"
 ---
-<!-- gsynchro:v1 id=m10-t01-windows-readme registered=2026-10-23T15:35:00.000Z -->
+<!-- gsynchro:v1 id=cd25b643-b258-4950-b12b-499f579f9048 registered=2026-10-23T13:29:31.212Z -->
 
 # M10 - T01 - Windows guide and README policy
 

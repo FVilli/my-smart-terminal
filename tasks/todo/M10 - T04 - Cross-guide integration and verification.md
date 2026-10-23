@@ -8,7 +8,7 @@ milestone: "M10"
 depends_on: "M10-T01, M10-T02, M10-T03"
 deliverables: "Cross-guide cleanup, README verification, link/script checks and independent review"
 ---
-<!-- gsynchro:v1 id=m10-t04-integration-review registered=2026-10-23T15:35:00.000Z -->
+<!-- gsynchro:v1 id=d8d38de6-851b-4a4e-9fc4-82b909a9eb34 registered=2026-10-23T13:29:31.214Z -->
 
 # M10 - T04 - Cross-guide integration and verification
 

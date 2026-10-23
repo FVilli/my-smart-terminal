@@ -7,7 +7,7 @@ id: "M10"
 goal: "Make installation and removal understandable and safe for non-expert users on Windows, Linux and macOS, with one authoritative guide per OS and only three installation links in README."
 depends_on: "M09"
 ---
-<!-- gsynchro:v1 id=m10-beginner-installation-guides registered=2026-10-23T15:35:00.000Z -->
+<!-- gsynchro:v1 id=ff802efc-78ed-4236-90df-93ed8e72aa87 registered=2026-10-23T13:29:31.216Z -->
 
 # M10 - Beginner-friendly installation and removal guides
 

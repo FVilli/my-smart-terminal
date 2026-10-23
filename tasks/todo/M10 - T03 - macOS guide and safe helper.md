@@ -8,7 +8,7 @@ milestone: "M10"
 depends_on: "M09"
 deliverables: "Apple Silicon macOS installation/uninstallation guide with safe download/checksum helper"
 ---
-<!-- gsynchro:v1 id=m10-t03-macos-guide registered=2026-10-23T15:35:00.000Z -->
+<!-- gsynchro:v1 id=f21ba249-970d-4d1f-aa45-322c8eca89ca registered=2026-10-23T13:29:31.214Z -->
 
 # M10 - T03 - macOS guide and safe download helper
 
