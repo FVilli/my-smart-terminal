@@ -60,11 +60,15 @@ for (const [platform, pattern] of requiredPaths) {
   if (!pattern.test(read(file))) fail(`${file} must document ${platform} user-data path ${pattern}.`);
 }
 
-const unsafe = [/\bxattr\s+-d(?:r)?\b/i, /\bspctl\s+--master-disable\b/i, /\bcurl\b[^\n|]*\|\s*(?:bash|sh)\b/i];
+const unsafe = [/\bxattr\s+-d(?:r)?\b/i, /\bspctl\s+--master-disable\b/i];
+const allowedPipedInstall = /^curl\s+-fsSL\s+https:\/\/raw\.githubusercontent\.com\/FVilli\/my-smart-terminal\/v[0-9.]+\/(?:install|uninstall)\.sh\s*\|\s*sh(?:\s+-s\s+--\s+--(?:deb|appimage))?\s*$/;
 for (const file of guides) {
   const text = read(file);
   for (const pattern of unsafe) if (pattern.test(text)) fail(`${file} contains unsafe command ${pattern}.`);
   for (const line of text.split(/\r?\n/)) {
+    if (/\bcurl\b[^\n|]*\|\s*(?:bash|sh)\b/.test(line) && /https?:\/\//.test(line) && !allowedPipedInstall.test(line.trim())) {
+      fail(`${file} contains a curl-to-shell command that is not the pinned Smart Terminal installer.`);
+    }
     if (/\brm\s+-rf\b/.test(line) && !/rm\s+-rf\s+(?:"\$TMP"|'\$TMP'|\$TMP)(?:['"\s]|$)/.test(line)) {
       fail(`${file} contains potentially destructive rm -rf command: ${line.trim()}`);
     }

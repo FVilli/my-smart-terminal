@@ -32,3 +32,9 @@ docs/21; README; docs/12; docs/14; M11 scripts.
 
 ## Do not
 Do not change app behavior or delete user data; do not put a fourth install link in README's install section.
+
+## Outcome
+- Rewrote docs/21 around the pinned v1.1.1 one-command installer/uninstaller, with `--deb`/`--appimage`, inspect-first alternative, Ubuntu menu/icon behavior, manual fallback, data preservation and troubleshooting.
+- Removed the competing long installation blocks; kept only a short manual fallback.
+- Updated the installation-doc verifier to allow only the exact pinned FVilli/my-smart-terminal install/uninstall URLs, while still rejecting arbitrary curl-to-shell commands.
+- README installation section remains exactly three OS links; docs checks and 10 Bash blocks pass.

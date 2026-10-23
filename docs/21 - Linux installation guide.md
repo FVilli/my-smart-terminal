@@ -7,104 +7,104 @@ created: 2026-10-23
 
 # Install Smart Terminal on Linux
 
-Smart Terminal v1.1.0 is available for 64-bit x86_64 Linux. Ubuntu and Debian users should use the `.deb` package. Users of other Linux distributions can try the AppImage. Downloading requires an internet connection; you do not need root access to run the app. The `.deb` install command asks for administrator access only to install the package.
+Smart Terminal v1.1.1 supports 64-bit x86_64 Linux. The installer chooses the `.deb` package on Debian or Ubuntu and the AppImage on other distributions. You need an internet connection and a normal user account.
 
-The release assets are unsigned. These commands check that each downloaded file matches the SHA-256 checksum published alongside it; this checks download integrity, but does not prove who built or signed the files. Smart Terminal has no automatic updates.
+Release artifacts are unsigned. The installer verifies the SHA-256 checksum published with the release; this checks download integrity, but does not prove who built or signed the files. There are no automatic updates.
 
-## Recommended: Ubuntu or Debian `.deb`
+## Recommended: one-command install
 
-Copy and paste this block into a terminal. When a newer release is available, replace `VERSION` with that release version and use its matching asset names.
-
-```bash
-set -euo pipefail
-# Replace VERSION when a newer release exists.
-VERSION="1.1.0"
-BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
-DEB="Smart.Terminal-${VERSION}-linux-amd64.deb"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-cd "$TMP"
-
-curl -fL -o "$DEB" "$BASE/$DEB"
-curl -fL -o SHA256SUMS "$BASE/SHA256SUMS"
-# The checksum validates download integrity; release artifacts are unsigned.
-if ! grep -F "  $DEB" SHA256SUMS > expected.sha256; then
-  echo "Could not find checksum for $DEB in SHA256SUMS" >&2
-  exit 1
-fi
-sha256sum -c expected.sha256
-sudo apt install -y "./$DEB"
-```
-
-`apt` installs the package's declared dependencies. Do not run the whole block as root; only the package installation uses `sudo`.
-
-## Other distributions: AppImage
-
-The AppImage is for x86_64. This downloads and checks it, keeps it in `~/Applications`, and runs it without installing it. Change `VERSION` and the filename together for a newer release.
+The simplest method is:
 
 ```bash
-set -euo pipefail
-VERSION="1.1.0"
-BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
-APPIMAGE="Smart.Terminal-${VERSION}-linux-x86_64.AppImage"
-DEST="$HOME/Applications"
-mkdir -p "$DEST"
-cd "$DEST"
-
-curl -fL -o "$APPIMAGE" "$BASE/$APPIMAGE"
-curl -fL -o SHA256SUMS "$BASE/SHA256SUMS"
-if ! grep -F "  $APPIMAGE" SHA256SUMS > expected.sha256; then
-  echo "Could not find checksum for $APPIMAGE in SHA256SUMS" >&2
-  exit 1
-fi
-sha256sum -c expected.sha256
-chmod +x "$APPIMAGE"
-"./$APPIMAGE"
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/install.sh | sh
 ```
 
-If the AppImage cannot start because FUSE is unavailable, use this command instead of the final run command above:
+This downloads the v1.1.1 release, verifies the SHA-256 checksum of the downloaded artifact, and installs it. On Debian or Ubuntu, it uses `sudo` only when `apt-get` installs the `.deb` package. On other distributions, it installs a per-user AppImage in `~/.local/bin` and creates a per-user XDG applications-menu entry and icon. The icon uses the new Smart Terminal branding.
+
+This command downloads and immediately executes a remote script. Run it only if you trust the repository and its release process. To inspect the script first, use:
 
 ```bash
-"$HOME/Applications/Smart.Terminal-1.1.0-linux-x86_64.AppImage" --appimage-extract-and-run
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/install.sh -o /tmp/smart-terminal-install.sh
+less /tmp/smart-terminal-install.sh
+sh /tmp/smart-terminal-install.sh
 ```
 
-FUSE requirements vary by distribution; consult your distribution's guidance rather than installing a package name intended for a different system. The AppImage needs no installation and stays in `~/Applications` so you can run it again. It uses the same local user data as the `.deb` version.
+The script refuses to run as root and supports Linux x86_64 only.
 
-## Launch and first run
+### Choose the package type
 
-After installing the `.deb`, open **Smart Terminal** from your applications menu, or run:
+Auto mode is the default: it chooses `.deb` on Debian or Ubuntu, and AppImage otherwise. You can choose explicitly:
 
 ```bash
-"/opt/Smart Terminal/smart-terminal"
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/install.sh | sh -s -- --deb
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/install.sh | sh -s -- --appimage
 ```
 
-The AppImage can be launched by opening the file in your file manager or running it from a terminal. On first launch, the setup links explain choosing a data repository and machine name, and optional AI and speech settings. See the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md) for details.
+`--deb` requires Debian or Ubuntu with `apt-get` and `dpkg`. `--appimage` is for x86_64 Linux and installs the AppImage for your user. Do not use `--appimage` while the `my-smart-terminal` `.deb` package is installed.
 
-## Update
+## Menu entry and icon
 
-There is no automatic updater. For a newer `.deb`, repeat the download, checksum, and install steps above with its version and matching filename. Installing a newer version preserves your local settings and data. For an AppImage, download and checksum the newer file, then replace your old AppImage; your local data is still kept separately.
+The `.deb` package automatically creates the **Smart Terminal** applications-menu entry and installs its icon on Ubuntu and Debian.
 
-## Uninstall
+The AppImage branch creates a per-user XDG `.desktop` entry under your user data directory and installs the icon there. The entry may not appear until you log out and back in. The AppImage executable is installed as `~/.local/bin/smart-terminal`; your desktop environment may need `~/.local/bin` on your `PATH` for terminal launches. Both installation paths use the new Smart Terminal branding.
 
-To remove the `.deb` package, run:
+After installation, start the app from the applications menu. For the AppImage, you can also run:
+
+```bash
+"$HOME/.local/bin/smart-terminal"
+```
+
+## Remove Smart Terminal
+
+Run the matching one-command uninstaller as your normal user:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/uninstall.sh | sh
+```
+
+This removes the installed package when a `.deb` is present, or removes the script-installed per-user AppImage, menu entry, and icon. It preserves `~/.config/my-smart-terminal`, your sessions, and any external data repositories.
+
+This also executes a remote script. Inspect it first if you prefer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.1.1/uninstall.sh -o /tmp/smart-terminal-uninstall.sh
+less /tmp/smart-terminal-uninstall.sh
+sh /tmp/smart-terminal-uninstall.sh
+```
+
+If the uninstaller is unavailable and you installed the `.deb`, the manual fallback is:
 
 ```bash
 sudo apt remove -y my-smart-terminal
 ```
 
-This removes the installed `my-smart-terminal` package. `apt remove` and `apt purge` do not remove Smart Terminal's user data. Do not use purge expecting it to erase local settings or sessions.
+This fallback does not remove your user data. For an AppImage installed by other means, remove that AppImage and its desktop entry and icon manually.
 
-For an AppImage, close Smart Terminal, then delete the AppImage file and any `.desktop` shortcut you created yourself.
+## Update
+
+There is no automatic updater. After a newer release is published, rerun the install command with the newer release tag in the raw URL. The `.deb` is installed again, or the AppImage replaces the script-installed copy. Configuration, sessions, and external repositories are preserved.
+
+## Manual fallback for troubleshooting
+
+If the script cannot run, use the [release page](https://github.com/FVilli/my-smart-terminal/releases/latest). Download the matching x86_64 `.deb` and `SHA256SUMS`, verify the package's SHA-256 checksum, then install it on Debian or Ubuntu:
+
+```bash
+grep -F "  Smart.Terminal-1.1.1-linux-amd64.deb" SHA256SUMS > expected.sha256
+sha256sum -c expected.sha256
+sudo apt install -y ./Smart.Terminal-1.1.1-linux-amd64.deb
+```
+
+For another distribution, download the matching x86_64 AppImage, verify it with `SHA256SUMS`, make it executable with `chmod +x`, and run it. This manual path does not create the script's per-user menu entry and icon automatically.
 
 ## Where your data is kept
 
 | Location | What it contains | What removal does |
 | --- | --- | --- |
-| Installed app (`.deb`) or AppImage file | The application files. | Package removal removes the `.deb` application; deleting an AppImage removes that file. |
-| `~/.config/my-smart-terminal` (or `$XDG_CONFIG_HOME/my-smart-terminal`) | Local configuration, secrets, installation and coordinator information, and the default data repository in its `data/` subfolder. | App uninstall does not remove this folder. Removing it can delete local settings and sessions. |
-| External data repository, if selected | Session and other repository data at the location you chose. | Separate from the application and user-data folder; uninstall does not remove it. |
+| Installed `.deb` or AppImage file | Application files. | Package removal or the uninstaller removes application files; it does not remove user data. |
+| `~/.config/my-smart-terminal` (or `$XDG_CONFIG_HOME/my-smart-terminal`) | Local configuration, secrets, installation and coordinator information, and the default data repository in its `data/` subfolder. | The installer and uninstaller preserve this folder. Removing it can delete local settings and sessions. |
+| External data repository, if selected | Session and other repository data at the location you chose. | Separate from the application; installation and removal do not remove it. |
 
-The app may be using an external repository you selected during setup. That repository is separate and is not affected by the optional cleanup below. The default repository inside the user-data folder may contain sessions.
+The default repository inside the user-data folder may contain sessions. An external repository is separate and is not affected by uninstalling the application.
 
 ### Optional local-data cleanup
 
@@ -114,15 +114,16 @@ Only do this if you want to remove local settings and, if present, the default d
 mv "$HOME/.config/my-smart-terminal" "$HOME/.config/my-smart-terminal-backup"
 ```
 
-If you use a custom `XDG_CONFIG_HOME`, the folder is under that location instead of `$HOME/.config`. Do not run cleanup while the app is open. Never remove an external repository unless you have separately backed it up and are sure you no longer need it.
+If you use a custom `XDG_CONFIG_HOME`, the folder is under that location instead of `$HOME/.config`. Never remove an external repository unless you have separately backed it up and are sure you no longer need it.
 
 ## Troubleshooting
 
-- **Permission denied when running the AppImage:** make it executable with `chmod +x "./Smart.Terminal-1.1.0-linux-x86_64.AppImage"`, then run it again.
-- **`apt` reports dependency errors:** use `sudo apt install -y "./Smart.Terminal-1.1.0-linux-amd64.deb"` from the folder containing the downloaded package. This lets `apt` resolve declared dependencies. Check your network and supported distribution if it still fails.
-- **FUSE or AppImage sandbox error:** try the `--appimage-extract-and-run` command above. Do not disable system security settings to work around it.
-- **No applications-menu entry:** confirm the `.deb` install completed, then try `"/opt/Smart Terminal/smart-terminal"` in a terminal. You can also log out and back in to refresh the menu.
-- **Missing data or settings:** check whether you selected an external data repository in setup. The default data is under `~/.config/my-smart-terminal/data`; external data is at the path you chose.
-- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [latest release page](https://github.com/FVilli/my-smart-terminal/releases/latest), and verify again. If it still fails, do not use that download.
+- **No applications-menu entry:** for the `.deb`, confirm installation completed. For the AppImage, log out and back in to refresh the menu; also check the per-user XDG applications directory and `~/.local/share/icons`.
+- **Permission denied when running an AppImage:** the script normally sets the installed file executable. For a manually downloaded file, run `chmod +x path/to/Smart.Terminal-1.1.1-linux-x86_64.AppImage`.
+- **`apt` reports dependency errors:** run `sudo apt install -y ./Smart.Terminal-1.1.1-linux-amd64.deb` from the folder containing the downloaded package so `apt` can resolve dependencies.
+- **FUSE or AppImage sandbox error:** try `"$HOME/.local/bin/smart-terminal" --appimage-extract-and-run` for the script-installed AppImage, or add `--appimage-extract-and-run` to the manually downloaded file command. Do not disable system security settings to work around it.
+- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [release page](https://github.com/FVilli/my-smart-terminal/releases/latest), and verify again. If it still fails, do not use that download.
+- **Missing data or settings:** check whether you selected an external data repository during setup. The default data is under `~/.config/my-smart-terminal/data`; external data is at the path you chose.
+- **Remote-script caution:** `curl | sh` runs code received from the network and the artifacts are not signed. Inspect the script first if that trust decision is not acceptable.
 
 **Other platforms:** [Windows installation guide](20%20-%20Windows%20installation%20guide.md) · [macOS installation guide](22%20-%20macOS%20installation%20guide.md)
