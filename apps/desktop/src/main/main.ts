@@ -8,13 +8,14 @@ import { listSshAliases } from '@smart-terminal/terminal';
 import { readWindowSize, runCapture } from './capture';
 import { isAllowedNavigation } from './navigation';
 import { resolveRendererPath } from './renderer-path';
-import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runSettingsSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSttSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
+import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runRemoteSetupSmoke, runSettingsSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSttSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
 import { AppConfigStore, resolveConfigPath } from './app-config';
 import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
 import { OnboardingService } from './onboarding-service';
 import { AiService } from './ai-service';
 import { SttService } from './stt-service';
 import { SecretStore } from './secret-store';
+import { InstallationStore } from './installation-store';
 import { DataRuntime } from './data-runtime';
 import { ClipboardGatewayAdapter } from './clipboard-gateway';
 import { electronClipboardSource } from './electron-clipboard';
@@ -56,6 +57,7 @@ const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
 const sshSmokeTest = process.env['SMART_TERMINAL_SSH_SMOKE'] === '1';
 const onboardingSmokeTest = process.env['SMART_TERMINAL_ONBOARDING_SMOKE'] === '1';
 const settingsSmokeTest = process.env['SMART_TERMINAL_SETTINGS_SMOKE'] === '1';
+const remoteSetupSmokeTest = process.env['SMART_TERMINAL_REMOTE_SETUP_SMOKE'] === '1';
 const e2eMode = process.env['SMART_TERMINAL_E2E_MODE'];
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
@@ -167,6 +169,10 @@ function createWindow(): BrowserWindow {
     runSettingsSmoke(window);
   }
 
+  if (remoteSetupSmokeTest) {
+    runRemoteSetupSmoke(window);
+  }
+
   if (smokeTest || ptySmokeTest) {
     runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');
   }
@@ -216,6 +222,7 @@ app.whenReady().then(async () => {
 
   const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator, config });
   const secrets = new SecretStore(path.join(userDataPath, 'secrets'), safeStorage);
+  const installation = new InstallationStore(userDataPath).loadOrCreate();
   const onboarding = new OnboardingService({
     userDataPath,
     env: process.env,
@@ -224,6 +231,10 @@ app.whenReady().then(async () => {
     runningPaths: runtime.paths,
     runningRemote: resolveGitRemote(process.env, config),
     initialLoad: configLoad,
+    installation,
+    appVersion: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
   });
   const host = new TerminalHost(new NodePtyAdapter(), dataRuntime);
   terminalHost = host;

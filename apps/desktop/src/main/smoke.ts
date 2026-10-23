@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { app, clipboard, type BrowserWindow } from 'electron';
@@ -657,6 +658,43 @@ const SETTINGS_SCRIPT = `(async () => {
 })()`;
 
 /** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */
+
+const REMOTE_SETUP_SCRIPT = `(async () => {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs = 20000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(100); }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
+  const result = {};
+  result.settings = await waitFor(() => !!q('settings-open'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  result.testButton = await waitFor(() => !!q('onboarding-test-remote'));
+  click('onboarding-test-remote');
+  result.resultVisible = await waitFor(() => !!q('onboarding-remote-result'), 30000);
+  result.resultSuccessful = await waitFor(() => (q('onboarding-remote-result')?.textContent ?? '').includes('pushed'), 30000);
+  result.commitShown = (q('onboarding-remote-result')?.textContent ?? '').includes('commit');
+  return result;
+})()`;
+
+/** Remote registration smoke, enabled by SMART_TERMINAL_REMOTE_SETUP_SMOKE=1. */
+export function runRemoteSetupSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, REMOTE_SETUP_SCRIPT, 'SMART_TERMINAL_REMOTE_SETUP_SMOKE_RESULT', async () => {
+    const bare = process.env['SMART_TERMINAL_REMOTE_SETUP_BARE'] ?? '';
+    let remoteFile = false;
+    try {
+      const files = execFileSync('git', ['--git-dir', bare, 'ls-tree', '-r', '--name-only', 'main'], { encoding: 'utf8' });
+      remoteFile = files.split('\n').some((line) => /^instances\/.*\.md$/.test(line));
+    } catch {
+      remoteFile = false;
+    }
+    return { remoteFile };
+  });
+}
+
 export function runSettingsSmoke(window: BrowserWindow): void {
   runUiSmoke(window, SETTINGS_SCRIPT, 'SMART_TERMINAL_SETTINGS_SMOKE_RESULT');
 }

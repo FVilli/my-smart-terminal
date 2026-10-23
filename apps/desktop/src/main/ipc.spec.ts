@@ -49,6 +49,7 @@ const services: IpcServices = {
     validate: vi.fn(() => ({ ok: true, errors: {} })),
     save: vi.fn(() => ({ ok: true, errors: {}, restartRequired: false, warnings: [] })),
     skip: vi.fn(() => ({ ok: true, errors: {}, restartRequired: false, warnings: [] })),
+    testRemote: vi.fn(() => Promise.resolve({ ok: true, committed: true, pushed: true, localOnly: false, state: 'synced' as const })),
     secretsStatus: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
     logout: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
   },

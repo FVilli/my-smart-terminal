@@ -5,6 +5,7 @@ import {
   type AiProvider,
   type OnboardingConfig,
   type OnboardingSaveResult,
+  type RemoteSetupResult,
   type OnboardingState,
   type SmartTerminalApi,
   type SttProvider,
@@ -67,6 +68,25 @@ const MIC_MESSAGES: Record<MicState, string> = {
                     <input data-testid="onboarding-remote" [value]="config().dataRepoRemote ?? ''" (input)="patch({ dataRepoRemote: value($event) })" />
                   </label>
                   @if (errors()['dataRepoRemote']; as message) { <p class="error" data-testid="onboarding-error-remote">{{ message }}</p> }
+                  <div class="test-row">
+                    <button type="button" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
+                      {{ testingRemote() ? 'Testing…' : 'Test repository' }}
+                    </button>
+                    <span class="hint">Verifies a real commit and push by registering this installation.</span>
+                  </div>
+                  @if (remoteResult(); as result) {
+                    <p class="remote-result" [class.ok]="result.ok" [class.error]="!result.ok" data-testid="onboarding-remote-result" role="status">
+                      @if (result.ok) {
+                        @if (result.localOnly) {
+                          Repository verified locally ({{ result.commit?.slice(0, 8) }}); no remote configured. This is a local-only commit.
+                        } @else {
+                          Repository verified: commit {{ result.commit?.slice(0, 8) }} pushed to the remote.
+                        }
+                      } @else {
+                        Repository test failed: {{ result.error }}. {{ result.committed ? 'A local commit was kept; fix the remote and retry to push it.' : 'Nothing was committed.' }}
+                      }
+                    </p>
+                  }
                 </div>
               }
               @case (2) {
@@ -170,6 +190,11 @@ const MIC_MESSAGES: Record<MicState, string> = {
     button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     [data-testid='onboarding-mic-check'] { margin-top: 12px; }
+    .test-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .test-row .hint { flex: 1; min-width: 180px; }
+    .remote-result { margin: 8px 0 0; font-size: 12px; line-height: 1.45; }
+    .remote-result.ok { color: var(--accent); }
+    .remote-result.error { color: var(--danger); }
     .confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text); }
     .confirm span { flex: 1; }
   `,
@@ -193,6 +218,8 @@ export class OnboardingWizard {
   protected readonly micState = signal<MicState>('idle');
   protected readonly editMode = signal(false);
   protected readonly confirmDiscard = signal(false);
+  protected readonly testingRemote = signal(false);
+  protected readonly remoteResult = signal<RemoteSetupResult | null>(null);
   private initialSnapshot = '';
 
   constructor() {
@@ -287,6 +314,21 @@ export class OnboardingWizard {
 
   protected patch(change: Partial<OnboardingConfig>): void {
     this.config.update((current) => ({ ...current, ...change }));
+    if ('dataRepoPath' in change || 'dataRepoRemote' in change || 'machineName' in change) {
+      this.remoteResult.set(null);
+    }
+  }
+
+  protected async testRemoteRepository(): Promise<void> {
+    this.testingRemote.set(true);
+    this.remoteResult.set(null);
+    try {
+      this.remoteResult.set(await this.api.setupTestRemote(this.payload()));
+    } catch {
+      this.remoteResult.set({ ok: false, committed: false, pushed: false, localOnly: false, state: 'error', error: 'Repository test could not run' });
+    } finally {
+      this.testingRemote.set(false);
+    }
   }
 
   /** Removes empty optional fields before sending them to the main process. */

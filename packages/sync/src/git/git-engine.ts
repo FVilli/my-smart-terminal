@@ -43,7 +43,7 @@ export class GitEngineError extends Error {
 }
 
 const MAX_BUFFER = 8 * 1024 * 1024;
-const SYNC_DIRECTORY = 'sessions';
+const SYNC_DIRECTORIES = ['sessions', 'instances'] as const;
 const OFFLINE_PATTERN =
   /could not resolve host|unable to access|network is unreachable|connection (refused|timed out|reset|closed)|operation timed out|could not read from remote|does not appear to be a git repository|unable to connect|temporary failure in name resolution|no route to host|ssh: connect/i;
 const REJECTED_PATTERN = /non-fast-forward|\[rejected\]|fetch first|failed to push some refs|stale info/i;
@@ -107,7 +107,72 @@ export class GitEngine {
     return this.serialize(() => this.initLocked());
   }
 
-  /** Local commit of `sessions/` + fetch/rebase/push. Does not throw: the outcome is in the returned state. */
+  /** Explicitly commits one instance registration file and pushes it when a remote is configured. */
+  testRemote(relativePath: string, content: string): Promise<{ committed: boolean; commit?: string; pushed: boolean; localOnly: boolean; state: SyncState; error?: string }> {
+    return this.serialize(async () => {
+      let commit: string | undefined;
+      let committed = false;
+      try {
+        if (!/^instances\/[A-Za-z0-9][A-Za-z0-9._-]*\.md$/.test(relativePath)) throw new GitEngineError('git', 'Invalid instance path');
+        if (!this.initialised) await this.initLocked();
+        const dirty = await this.git(['status', '--porcelain', '--untracked-files=no']);
+        for (const line of dirty.stdout.split('\n').filter(Boolean)) {
+          const file = line.slice(3).replace(/^.* -> /, '');
+          if (!SYNC_DIRECTORIES.some((dir) => file === dir || file.startsWith(`${dir}/`))) {
+            throw new GitEngineError('git', 'Tracked changes outside sessions/ and instances/ must be committed or discarded first');
+          }
+        }
+        let offlineBeforeCommit: string | undefined;
+        if (this.hasRemote) {
+          try {
+            await this.git(['fetch', 'origin']);
+            await this.rebaseOntoRemote();
+          } catch (error) {
+            if (error instanceof GitEngineError && error.kind === 'offline') {
+              offlineBeforeCommit = error.message;
+            } else {
+              throw error;
+            }
+          }
+        }
+        const target = path.resolve(this.options.repoPath, relativePath);
+        if (!target.startsWith(`${path.resolve(this.options.repoPath)}${path.sep}`)) throw new GitEngineError('git', 'Invalid instance path');
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        const previous = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : undefined;
+        if (previous === content) return { committed: false, pushed: false, localOnly: !this.hasRemote, state: this.current.state };
+        fs.writeFileSync(target, content, 'utf8');
+        await this.git(['add', '--', relativePath]);
+        const staged = await this.git(['diff', '--cached', '--name-only', '--', relativePath]);
+        if (!staged.stdout.trim()) return { committed: false, pushed: false, localOnly: !this.hasRemote, state: this.current.state };
+        await this.git(['commit', '--no-verify', '-m', `instances: register ${path.basename(relativePath, '.md')}`, '--', relativePath]);
+        commit = (await this.git(['rev-parse', 'HEAD'])).stdout.trim();
+        committed = true;
+        if (!this.hasRemote) return { committed: true, commit, pushed: false, localOnly: true, state: 'synced' };
+        if (offlineBeforeCommit !== undefined) {
+          return { committed: true, commit, pushed: false, localOnly: false, state: 'offline', error: offlineBeforeCommit };
+        }
+        for (let attempt = 1; ; attempt += 1) {
+          try {
+            await this.git(['fetch', 'origin']);
+            await this.rebaseOntoRemote();
+            if (await this.push()) return { committed: true, commit, pushed: true, localOnly: false, state: 'synced' };
+          } catch (error) {
+            if (error instanceof GitEngineError && error.kind === 'offline') {
+              return { committed: true, commit, pushed: false, localOnly: false, state: 'offline', error: error.message };
+            }
+            throw error;
+          }
+          if (attempt >= this.maxPushAttempts) throw new GitEngineError('git', 'Push rejected after retries');
+          await sleep(this.backoffMs * 2 ** (attempt - 1));
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unexpected git error';
+        return { committed, ...(commit !== undefined && { commit }), pushed: false, localOnly: !this.hasRemote, state: error instanceof GitEngineError && error.kind === 'offline' ? 'offline' : 'error', error: message };
+      }
+    });
+  }
+
+  /** Local commit of `sessions/` + `instances/` + fetch/rebase/push. Does not throw: the outcome is in the returned state. */
   syncOnce(): Promise<SyncStatus> {
     return this.serialize(async () => {
       this.dirtyDuringSync = false;
@@ -216,7 +281,7 @@ export class GitEngine {
     const { state } = this.current;
     if (state === 'offline' || state === 'error') {
       const { lastError: _cleared, ...rest } = this.current;
-      const local = await this.run(['status', '--porcelain', '--', SYNC_DIRECTORY]);
+      const local = await this.run(['status', '--porcelain', '--', ...SYNC_DIRECTORIES]);
       const hasHead = (await this.run(['rev-parse', '--verify', '--quiet', 'HEAD'])).code === 0;
       const ahead = hasHead && (await this.remoteBranchExists()) ? await this.run(['rev-list', '--count', `origin/${this.branch}..HEAD`]) : undefined;
       const pending = local.stdout.trim().length > 0 || (ahead !== undefined && ahead.stdout.trim() !== '0');
@@ -309,7 +374,7 @@ export class GitEngine {
 
   private async initLocked(): Promise<void> {
     const { repoPath } = this.options;
-    fs.mkdirSync(path.join(repoPath, SYNC_DIRECTORY), { recursive: true });
+    for (const directory of SYNC_DIRECTORIES) fs.mkdirSync(path.join(repoPath, directory), { recursive: true });
     if (!fs.existsSync(path.join(repoPath, '.git'))) {
       await this.git(['init', '-b', this.branch]);
     }
@@ -383,13 +448,20 @@ export class GitEngine {
   }
 
   private async commitSessions(): Promise<void> {
-    await this.git(['add', '--', SYNC_DIRECTORY]);
-    const staged = await this.git(['diff', '--cached', '--name-only', '--', SYNC_DIRECTORY]);
+    const directories = SYNC_DIRECTORIES.filter((directory) => this.hasFiles(path.join(this.options.repoPath, directory)));
+    if (directories.length === 0) return;
+    await this.git(['add', '--', ...directories]);
+    const staged = await this.git(['diff', '--cached', '--name-only', '--', ...directories]);
     if (staged.stdout.trim().length === 0) {
       return;
     }
     const message = `sessions: ${this.options.machine} ${formatIsoWithOffset(this.clock())}`;
-    await this.git(['commit', '--no-verify', '-m', message, '--', SYNC_DIRECTORY]);
+    await this.git(['commit', '--no-verify', '-m', message, '--', ...directories]);
+  }
+
+  private hasFiles(directory: string): boolean {
+    if (!fs.existsSync(directory)) return false;
+    return fs.readdirSync(directory, { withFileTypes: true }).some((entry) => entry.isDirectory() ? this.hasFiles(path.join(directory, entry.name)) : true);
   }
 
   private async rebaseOntoRemote(): Promise<void> {

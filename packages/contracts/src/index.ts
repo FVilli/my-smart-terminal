@@ -24,6 +24,7 @@ export const IPC_CHANNELS = {
   onboardingValidate: 'onboarding:validate',
   onboardingSave: 'onboarding:save',
   onboardingSkip: 'onboarding:skip',
+  setupTestRemote: 'setup:test-remote',
   secretsStatus: 'secrets:status',
   secretsLogout: 'secrets:logout',
   appRelaunch: 'app:relaunch',
@@ -248,6 +249,20 @@ export interface OnboardingValidateRequest {
   config: OnboardingConfig;
 }
 
+export interface RemoteSetupResult {
+  ok: boolean;
+  /** The instance registration was committed locally. */
+  committed: boolean;
+  /** The commit reached the configured remote. */
+  pushed: boolean;
+  /** No remote configured: local commit only. */
+  localOnly: boolean;
+  state: 'synced' | 'offline' | 'error';
+  commit?: string;
+  path?: string;
+  error?: string;
+}
+
 export interface OnboardingValidationResult {
   ok: boolean;
   /** Field (`machineName`, `dataRepoPath`, ...) -> fixed, sanitized message. */
@@ -351,6 +366,7 @@ export interface SmartTerminalApi {
   onboardingSave(request: OnboardingSaveRequest): Promise<OnboardingSaveResult>;
   /** Skips the wizard by saving a configuration with default values. */
   onboardingSkip(): Promise<OnboardingSaveResult>;
+  setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;

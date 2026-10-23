@@ -26,8 +26,10 @@ import {
   type HistoryRecordRequest,
   type HistoryRecordResult,
   type IpcChannel,
+  type OnboardingConfig,
   type OnboardingSaveRequest,
   type OnboardingSaveResult,
+  type RemoteSetupResult,
   type OnboardingState,
   type OnboardingValidateRequest,
   type OnboardingValidationResult,
@@ -151,6 +153,7 @@ export interface SshGateway {
 
 export interface OnboardingGateway {
   state(): OnboardingState;
+  testRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   validate(config: unknown): OnboardingValidationResult;
   save(request: OnboardingSaveRequest): OnboardingSaveResult;
   skip(): OnboardingSaveResult;
@@ -322,6 +325,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.onboardingValidate]: ChannelDefinition<[OnboardingValidateRequest], OnboardingValidationResult>;
   [IPC_CHANNELS.onboardingSave]: ChannelDefinition<[OnboardingSaveRequest], OnboardingSaveResult>;
   [IPC_CHANNELS.onboardingSkip]: ChannelDefinition<[], OnboardingSaveResult>;
+  [IPC_CHANNELS.setupTestRemote]: ChannelDefinition<[OnboardingValidateRequest], RemoteSetupResult>;
   [IPC_CHANNELS.secretsStatus]: ChannelDefinition<[], SecretsStatus>;
   [IPC_CHANNELS.secretsLogout]: ChannelDefinition<[SecretsLogoutRequest], SecretsStatus>;
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
@@ -416,6 +420,10 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.onboardingSkip]: {
       validate: noArguments,
       handle: () => services.onboarding.skip(),
+    },
+    [IPC_CHANNELS.setupTestRemote]: {
+      validate: validateOnboardingValidate,
+      handle: (_sender, { config }) => services.onboarding.testRemote(config),
     },
     [IPC_CHANNELS.secretsStatus]: {
       validate: noArguments,

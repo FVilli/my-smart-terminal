@@ -43,6 +43,26 @@ afterEach(() => {
 });
 
 describe('GitEngine', () => {
+  it('commits and pushes only an instance registration and refuses tracked dirt outside allowed paths', async () => {
+    const { repo, engine } = machineRepo('instance');
+    const result = await engine.testRemote('instances/host-123.md', 'registration');
+    expect(result).toMatchObject({ committed: true, pushed: true, localOnly: false, state: 'synced' });
+    expect(git(root, '--git-dir', remote, 'show', 'main:instances/host-123.md')).toBe('registration');
+    fs.writeFileSync(path.join(repo, 'outside.txt'), 'outside');
+    git(repo, 'add', 'outside.txt');
+    git(repo, 'commit', '-m', 'outside');
+    fs.writeFileSync(path.join(repo, 'outside.txt'), 'dirty');
+    const refused = await engine.testRemote('instances/host-123.md', 'changed');
+    expect(refused.error).toContain('outside sessions/ and instances/');
+    expect(git(repo, 'show', 'HEAD:outside.txt')).toBe('outside');
+  });
+
+  it('creates local-only instance registration when no remote exists', async () => {
+    const { repo, engine } = machineRepo('local', { remote: undefined });
+    const result = await engine.testRemote('instances/local-id.md', 'registration');
+    expect(result).toMatchObject({ committed: true, pushed: false, localOnly: true });
+    expect(git(repo, 'show', 'HEAD:instances/local-id.md')).toBe('registration');
+  });
   it('initialises a repo with sessions/, local identity and .gitignore', async () => {
     const { repo, engine } = machineRepo('a');
     await engine.initIfNeeded();

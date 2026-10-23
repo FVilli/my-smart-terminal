@@ -39,6 +39,10 @@ function setup(options: { backend?: string; env?: NodeJS.ProcessEnv } = {}) {
     runningPaths: resolveDataPaths(userDataPath, env, hostname, config),
     runningRemote: config?.dataRepoRemote,
     initialLoad,
+    installation: { installationId: '00000000-0000-4000-8000-000000000001', createdAt: '2026-10-23T00:00:00.000Z' },
+    appVersion: '1.0.0',
+    platform: 'linux',
+    arch: 'x64',
   });
   return { service, store, secrets, userDataPath, hostname };
 }

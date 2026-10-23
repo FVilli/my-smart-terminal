@@ -8,6 +8,7 @@ import {
   type OnboardingConfig,
   type OnboardingSaveRequest,
   type OnboardingSaveResult,
+  type RemoteSetupResult,
   type OnboardingState,
   type OnboardingValidationResult,
   type SecretsStatus,
@@ -15,6 +16,8 @@ import {
 import { configValidators, type AppConfig, type AppConfigStore, type ConfigLoadResult } from './app-config';
 import { resolveDataPaths, type DataPaths } from './data-runtime';
 import { isValidSecretKey, isValidSecretToken, type SecretStore } from './secret-store';
+import { InstanceRegistrar } from './instance-registration';
+import type { InstallationIdentity } from './installation-store';
 
 export interface OnboardingServiceOptions {
   userDataPath: string;
@@ -27,6 +30,10 @@ export interface OnboardingServiceOptions {
   runningRemote: string | undefined;
   /** Result of reading config.md at startup. */
   initialLoad: ConfigLoadResult;
+  installation: InstallationIdentity;
+  appVersion: string;
+  platform: string;
+  arch: string;
 }
 
 const MESSAGES = {
@@ -159,6 +166,25 @@ export class OnboardingService {
 
   validate(config: unknown): OnboardingValidationResult {
     return validateOnboardingConfig(config);
+  }
+
+  /** Explicit setup check: writes and pushes a non-sensitive instance registration. */
+  async testRemote(config: OnboardingConfig): Promise<RemoteSetupResult> {
+    const validation = validateOnboardingConfig(config);
+    if (!validation.ok) {
+      return { ok: false, committed: false, pushed: false, localOnly: !config.dataRepoRemote, state: 'error', error: 'Invalid configuration' };
+    }
+    const registrar = new InstanceRegistrar({
+      dataRepoPath: path.resolve(config.dataRepoPath),
+      ...(config.dataRepoRemote !== undefined && config.dataRepoRemote.trim().length > 0 ? { remote: config.dataRepoRemote.trim() } : {}),
+      machine: config.machineName,
+      installationId: this.options.installation.installationId,
+      installationCreatedAt: this.options.installation.createdAt,
+      appVersion: this.options.appVersion,
+      platform: this.options.platform,
+      arch: this.options.arch,
+    });
+    return registrar.register();
   }
 
   save(request: OnboardingSaveRequest): OnboardingSaveResult {
