@@ -1,0 +1,7 @@
+<div class="terminal-host" #host></div>
+@if (errorMessage(); as message) {
+  <p class="terminal-status terminal-status--error" role="alert">{{ message }}</p>
+}
+@if (exited()) {
+  <p class="terminal-status" role="status">Sessione terminata. L'input è disabilitato.</p>
+}

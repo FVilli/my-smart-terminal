@@ -26,3 +26,10 @@ Input/output e resize PTY funzionano; exit gestito.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `packages/terminal` (interfacce PTY, shell locale file+args, `SessionManager` testabile), adapter nativo `@smart-terminal/terminal/node-pty`, host per finestra con cleanup, canali/eventi terminale validati, API preload tipizzata, componente Angular xterm con fit/resize/exit, smoke PTY.
+- Verifica: 41 test Vitest, lint, typecheck, build, `test:ipc-smoke` e `test:pty-smoke` con output `created/promptOutput/markerSeen/resizeOk/listed/exited/exitEvent=true`.
+- Deviazioni documentate: limite payload IPC portato a 128 KiB (i validatori mantengono 64 KiB sui dati write); `handle(sender, ...)` per selezionare il manager della finestra; eventi separati in `IPC_EVENTS`; `rebuild:native` lascia `node-pty` compilato per Electron (i test unitari non caricano il binding).
+- Contratti e comandi registrati in `docs/11 - Contratti IPC e verifica runtime.md`.

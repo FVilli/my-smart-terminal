@@ -21,6 +21,9 @@
       "@smart-terminal/terminal": [
         "./packages/terminal/src/index.ts"
       ],
+      "@smart-terminal/terminal/node-pty": [
+        "./packages/terminal/src/node-pty-adapter.ts"
+      ],
       "@smart-terminal/data": [
         "./packages/data/src/index.ts"
       ],

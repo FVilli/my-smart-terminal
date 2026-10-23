@@ -3,7 +3,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { TEST_IPC_ARGUMENT } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
+import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { runSmoke } from './smoke';
+import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
 const APP_HOST = 'bundle';
@@ -22,7 +24,9 @@ protocol.registerSchemesAsPrivileged([
 
 const devServerUrl = process.env['SMART_TERMINAL_DEV_SERVER_URL'];
 const smokeTest = process.env['SMART_TERMINAL_SMOKE'] === '1';
+const ptySmokeTest = process.env['SMART_TERMINAL_PTY_SMOKE'] === '1';
 const ipcSenderIds = new Set<number>();
+const terminalHost = new TerminalHost(new NodePtyAdapter());
 
 function registerAppProtocol(): void {
   const rendererRoot = path.join(__dirname, '..', 'renderer', 'browser');
@@ -60,7 +64,7 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
-      additionalArguments: smokeTest ? [TEST_IPC_ARGUMENT] : [],
+      additionalArguments: smokeTest || ptySmokeTest ? [TEST_IPC_ARGUMENT] : [],
     },
   });
 
@@ -80,10 +84,10 @@ function createWindow(): BrowserWindow {
     void window.loadURL(`${APP_SCHEME}://${APP_HOST}/index.html`);
   }
 
-  trackIpcWindow(window, ipcSenderIds);
+  trackIpcWindow(window, ipcSenderIds, terminalHost);
 
-  if (smokeTest) {
-    runSmoke(window);
+  if (smokeTest || ptySmokeTest) {
+    runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');
   }
 
   return window;
@@ -91,7 +95,7 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   registerAppProtocol();
-  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`);
+  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`, terminalHost);
   createWindow();
 
   app.on('activate', () => {
@@ -100,6 +104,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+app.on('before-quit', () => terminalHost.closeAll());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

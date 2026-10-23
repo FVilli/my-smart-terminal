@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@smart-terminal/contracts': resolvePath('./packages/contracts/src/index.ts'),
+      '@smart-terminal/terminal/node-pty': resolvePath('./packages/terminal/src/node-pty-adapter.ts'),
       '@smart-terminal/terminal': resolvePath('./packages/terminal/src/index.ts'),
       '@smart-terminal/data': resolvePath('./packages/data/src/index.ts'),
       '@smart-terminal/sync': resolvePath('./packages/sync/src/index.ts'),

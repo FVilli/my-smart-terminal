@@ -1,5 +1,6 @@
 import { app, ipcMain, type BrowserWindow } from 'electron';
 import { createChannelMap, dispatchIpc } from './ipc';
+import type { TerminalHost } from './terminal-host';
 
 /**
  * Registra i canali una sola volta per processo. La policy del sender viene
@@ -10,12 +11,16 @@ export function registerIpcHandlers(
   getSenderIds: () => ReadonlySet<number>,
   devServerUrl: string | undefined,
   appOrigin: string,
+  terminals: TerminalHost,
 ): void {
-  const channels = createChannelMap({
-    appVersion: app.getVersion(),
-    platform: process.platform,
-    isPackaged: app.isPackaged,
-  });
+  const channels = createChannelMap(
+    {
+      appVersion: app.getVersion(),
+      platform: process.platform,
+      isPackaged: app.isPackaged,
+    },
+    terminals,
+  );
 
   for (const [channel, definition] of Object.entries(channels)) {
     ipcMain.handle(channel, (event, ...args: unknown[]) =>
@@ -34,8 +39,10 @@ export function registerIpcHandlers(
 }
 
 /** Registra una finestra come client IPC autorizzato e la rimuove alla chiusura. */
-export function trackIpcWindow(window: BrowserWindow, senderIds: Set<number>): void {
+export function trackIpcWindow(window: BrowserWindow, senderIds: Set<number>, terminals: TerminalHost): void {
   const senderId = window.webContents.id;
   senderIds.add(senderId);
+  terminals.attach(window.webContents);
+  window.once('close', () => terminals.closeAllForWindow(senderId));
   window.once('closed', () => senderIds.delete(senderId));
 }
