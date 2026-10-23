@@ -30,3 +30,7 @@ README.md; docs/12; docs/14; electron-builder.yml; docs/18.
 
 ## Do not
 Do not add app changes, signing claims, Intel support, or destructive cleanup.
+
+## Outcome
+- Added `docs/22 - macOS installation guide.md`: Apple Silicon-only requirements, checksum-verified DMG helper that only opens the image, Finder drag-to-Applications, unsigned Gatekeeper alternatives without stripping quarantine, update/uninstall, data separation, reversible cleanup and troubleshooting.
+- All local links resolve (85 Markdown files); the Bash helper passes `bash -n`.
