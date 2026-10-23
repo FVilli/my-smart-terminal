@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
@@ -10,6 +10,7 @@ import {
   type SttProvider,
 } from '@smart-terminal/contracts';
 import { SttStore } from '../stt/stt-store';
+import { SettingsStore } from '../settings/settings-store';
 
 type Step = 1 | 2 | 3;
 type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
@@ -26,12 +27,13 @@ const MIC_MESSAGES: Record<MicState, string> = {
 @Component({
   selector: 'app-onboarding-wizard',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (visible()) {
       <div class="backdrop" data-testid="onboarding-overlay">
-        <section class="dialog" role="dialog" aria-modal="true" aria-label="Initial setup">
+        <section class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
           <header>
-            <h2>Initial setup</h2>
+            <h2>{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
             <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span>
           </header>
 
@@ -130,9 +132,8 @@ const MIC_MESSAGES: Record<MicState, string> = {
             <footer>
               @if (step() === 1) {
                 <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
-              } @else {
-                <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button>
               }
+              <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button>
               @if (step() > 1) {
                 <button type="button" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
               }
@@ -141,7 +142,15 @@ const MIC_MESSAGES: Record<MicState, string> = {
               } @else {
                 <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
               }
+              <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
             </footer>
+            @if (confirmDiscard()) {
+              <div class="confirm" data-testid="onboarding-discard-confirm" role="alertdialog" aria-label="Discard changes">
+                <span>Discard unsaved changes?</span>
+                <button type="button" data-testid="onboarding-discard" (click)="discardChanges()">Discard</button>
+                <button type="button" data-testid="onboarding-keep-editing" (click)="keepEditing()">Keep editing</button>
+              </div>
+            }
           }
         </section>
       </div>
@@ -161,11 +170,14 @@ const MIC_MESSAGES: Record<MicState, string> = {
     button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     [data-testid='onboarding-mic-check'] { margin-top: 12px; }
+    .confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text); }
+    .confirm span { flex: 1; }
   `,
 })
 export class OnboardingWizard {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
   private readonly stt = inject(SttStore);
+  private readonly settings = inject(SettingsStore);
   protected readonly aiProviders = AI_PROVIDERS;
   protected readonly sttProviders = STT_PROVIDERS;
   protected readonly visible = signal(false);
@@ -179,16 +191,82 @@ export class OnboardingWizard {
   protected readonly aiToken = signal('');
   protected readonly sttToken = signal('');
   protected readonly micState = signal<MicState>('idle');
+  protected readonly editMode = signal(false);
+  protected readonly confirmDiscard = signal(false);
+  private initialSnapshot = '';
 
   constructor() {
-    void this.api.onboardingState().then(
-      (state) => {
-        this.state.set(state);
-        this.config.set(state.config);
-        this.visible.set(state.required);
-      },
-      () => undefined,
-    );
+    void this.loadState();
+    effect(() => {
+      if (this.settings.open()) {
+        this.openFromSettings();
+      }
+    });
+  }
+
+  private async loadState(): Promise<void> {
+    try {
+      const state = await this.api.onboardingState();
+      this.state.set(state);
+      this.config.set(state.config);
+      this.visible.set(state.required);
+      this.initialSnapshot = JSON.stringify(this.payload());
+    } catch {
+      // Keep the terminal usable if the main process is unavailable.
+    }
+  }
+
+  private async openFromSettings(): Promise<void> {
+    try {
+      const state = await this.api.onboardingState();
+      this.state.set(state);
+      this.config.set(state.config);
+      this.errors.set({});
+      this.warnings.set([]);
+      this.aiToken.set('');
+      this.sttToken.set('');
+      this.step.set(1);
+      this.editMode.set(true);
+      this.visible.set(true);
+      this.restartNotice.set(false);
+      this.confirmDiscard.set(false);
+      this.initialSnapshot = JSON.stringify(this.payload());
+    } catch {
+      this.settings.close();
+    }
+  }
+
+  protected onEscape(): void {
+    if (this.visible() && !this.busy()) {
+      this.requestCancel();
+    }
+  }
+
+  protected requestCancel(): void {
+    if (this.isDirty()) {
+      this.confirmDiscard.set(true);
+      return;
+    }
+    this.close();
+  }
+
+  protected discardChanges(): void {
+    this.confirmDiscard.set(false);
+    this.close();
+  }
+
+  protected keepEditing(): void {
+    this.confirmDiscard.set(false);
+  }
+
+  private close(): void {
+    this.visible.set(false);
+    this.editMode.set(false);
+    this.settings.close();
+  }
+
+  private isDirty(): boolean {
+    return JSON.stringify(this.payload()) !== this.initialSnapshot || this.aiToken() !== '' || this.sttToken() !== '';
   }
 
   protected micMessage(): string {
@@ -246,7 +324,11 @@ export class OnboardingWizard {
 
   protected back(): void {
     this.errors.set({});
-    this.step.update((current) => (current > 1 ? ((current - 1) as Step) : current));
+    if (this.step() === 1) {
+      this.requestCancel();
+      return;
+    }
+    this.step.update((current) => (current - 1) as Step);
   }
 
   /** Skips the current step: `none` provider and no token. */

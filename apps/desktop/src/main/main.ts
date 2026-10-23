@@ -8,7 +8,7 @@ import { listSshAliases } from '@smart-terminal/terminal';
 import { readWindowSize, runCapture } from './capture';
 import { isAllowedNavigation } from './navigation';
 import { resolveRendererPath } from './renderer-path';
-import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSttSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
+import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runSettingsSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSttSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
 import { AppConfigStore, resolveConfigPath } from './app-config';
 import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
 import { OnboardingService } from './onboarding-service';
@@ -55,6 +55,7 @@ const sttSmokeTest = process.env['SMART_TERMINAL_STT_SMOKE'] === '1';
 const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
 const sshSmokeTest = process.env['SMART_TERMINAL_SSH_SMOKE'] === '1';
 const onboardingSmokeTest = process.env['SMART_TERMINAL_ONBOARDING_SMOKE'] === '1';
+const settingsSmokeTest = process.env['SMART_TERMINAL_SETTINGS_SMOKE'] === '1';
 const e2eMode = process.env['SMART_TERMINAL_E2E_MODE'];
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
@@ -160,6 +161,10 @@ function createWindow(): BrowserWindow {
 
   if (onboardingSmokeTest) {
     runOnboardingSmoke(window);
+  }
+
+  if (settingsSmokeTest) {
+    runSettingsSmoke(window);
   }
 
   if (smokeTest || ptySmokeTest) {

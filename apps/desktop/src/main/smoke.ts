@@ -602,6 +602,65 @@ export function runSttSmoke(window: BrowserWindow): void {
   }));
 }
 
+
+const SETTINGS_SCRIPT = `(async () => {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs = 8000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(50); }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
+  const result = {};
+  result.settingsButton = await waitFor(() => !!q('settings-open'));
+  click('settings-open');
+  result.opened = await waitFor(() => !!q('onboarding-overlay'));
+  result.step1 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 1 of 3'));
+  click('onboarding-next');
+  result.step2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  click('onboarding-back');
+  result.backToStep1 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 1 of 3'));
+  click('onboarding-next');
+  await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  click('onboarding-next');
+  result.step3 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
+  click('onboarding-back');
+  result.backToStep2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  click('onboarding-cancel');
+  result.cancelCloses = await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  const machine = q('onboarding-machine');
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+  setter.call(machine, 'changed-machine');
+  machine.dispatchEvent(new Event('input', { bubbles: true }));
+  await sleep(50);
+  click('onboarding-cancel');
+  result.dirtyConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
+  click('onboarding-keep-editing');
+  result.keepEditing = await waitFor(() => !q('onboarding-discard-confirm') && !!q('onboarding-overlay'));
+  click('onboarding-cancel');
+  await waitFor(() => !!q('onboarding-discard-confirm'));
+  click('onboarding-discard');
+  result.discardCloses = await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  result.escapeCloses = await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  result.savedValuesReloaded = q('onboarding-machine')?.value === 'settings-smoke';
+  click('onboarding-cancel');
+  await waitFor(() => !q('onboarding-overlay'));
+  return result;
+})()`;
+
+/** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */
+export function runSettingsSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, SETTINGS_SCRIPT, 'SMART_TERMINAL_SETTINGS_SMOKE_RESULT');
+}
+
 export function runClipboardSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {
