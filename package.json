@@ -21,6 +21,7 @@
     "typecheck:node": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:ipc-smoke": "npm run build && cross-env SMART_TERMINAL_SMOKE=1 electron apps/desktop",
     "test:watch": "vitest",
     "test:ui": "ng test renderer",
     "rebuild:native": "electron-rebuild -f -w node-pty",

@@ -26,3 +26,9 @@ Renderer senza Node; test IPC di risposta e rifiuto payload invalidi.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `ipc.ts` (validazione pura, limite 64 KiB, sender main-frame/origin, errori sanificati), binding `ipc-electron.ts` registrato una sola volta con set di finestre tracciate, canali `app:ping` e `app:runtime-info`, preload minimale, seam `__testInvoke` solo in smoke, `smoke.ts`.
+- Verifica: 12 test Vitest, lint, typecheck, build e `npm run test:ipc-smoke` (exit 0) con payload invalido e canale sconosciuto rifiutati, `require`/`process` undefined nel renderer, sole chiavi `ping,runtimeInfo` esposte.
+- Deviazione/correzione in review: handler registrati una volta per processo e sender set dinamico, per evitare errori con finestre multiple.

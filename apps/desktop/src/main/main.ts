@@ -1,7 +1,9 @@
-import { app, BrowserWindow, ipcMain, net, protocol } from 'electron';
+import { app, BrowserWindow, net, protocol } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { IPC_CHANNELS, type AppPingResult } from '@smart-terminal/contracts';
+import { TEST_IPC_ARGUMENT } from '@smart-terminal/contracts';
+import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
+import { runSmoke } from './smoke';
 
 const APP_SCHEME = 'smart-terminal';
 const APP_HOST = 'bundle';
@@ -20,6 +22,7 @@ protocol.registerSchemesAsPrivileged([
 
 const devServerUrl = process.env['SMART_TERMINAL_DEV_SERVER_URL'];
 const smokeTest = process.env['SMART_TERMINAL_SMOKE'] === '1';
+const ipcSenderIds = new Set<number>();
 
 function registerAppProtocol(): void {
   const rendererRoot = path.join(__dirname, '..', 'renderer', 'browser');
@@ -57,6 +60,7 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
+      additionalArguments: smokeTest ? [TEST_IPC_ARGUMENT] : [],
     },
   });
 
@@ -76,38 +80,18 @@ function createWindow(): BrowserWindow {
     void window.loadURL(`${APP_SCHEME}://${APP_HOST}/index.html`);
   }
 
+  trackIpcWindow(window, ipcSenderIds);
+
   if (smokeTest) {
-    window.webContents.once('did-finish-load', () => {
-      setTimeout(() => {
-        void window.webContents
-          .executeJavaScript(
-            `({ title: document.title, text: document.body.innerText.slice(0, 300), hasApi: typeof window.smartTerminal === 'object' })`,
-          )
-          .then((result: unknown) => {
-            console.log('SMART_TERMINAL_SMOKE_RESULT', JSON.stringify(result));
-            app.exit(0);
-          })
-          .catch((error: unknown) => {
-            console.error('SMART_TERMINAL_SMOKE_ERROR', error);
-            app.exit(1);
-          });
-      }, 1200);
-    });
+    runSmoke(window);
   }
 
   return window;
 }
 
-function registerIpcHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.appPing, (): AppPingResult => ({
-    appVersion: app.getVersion(),
-    platform: process.platform,
-  }));
-}
-
 app.whenReady().then(() => {
   registerAppProtocol();
-  registerIpcHandlers();
+  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`);
   createWindow();
 
   app.on('activate', () => {
