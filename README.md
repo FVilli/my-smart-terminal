@@ -144,6 +144,9 @@ packages/ai/        AI and STT providers
 
 - [Post-install onboarding](docs/14%20-%20Post-install%20onboarding.md)
 - [User manual](docs/12%20-%20User%20manual.md)
+- [Windows installation guide](docs/20%20-%20Windows%20installation%20guide.md)
+- [Linux installation guide](docs/21%20-%20Linux%20installation%20guide.md)
+- [macOS installation guide](docs/22%20-%20macOS%20installation%20guide.md)
 - [Repository setup guide](docs/18%20-%20Repository%20setup%20guide.md)
 - [AI provider setup guide](docs/19%20-%20AI%20provider%20setup%20guide.md)
 - [STT setup guide](docs/17%20-%20STT%20setup%20guide.md)

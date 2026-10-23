@@ -18,35 +18,15 @@ My Smart Terminal is a multi-instance desktop terminal: each tab is an independe
 
 AI typo correction and speech recognition (STT) are optional. Shell and PTY continue to work without network, AI, or Git.
 
-## 2. Installation and requirements
+## 2. Installation
 
-The public release is **v1.1.0** on GitHub Releases:
+Use the guide for your operating system:
 
-**https://github.com/FVilli/my-smart-terminal/releases/latest**
+- [Windows installation guide](20%20-%20Windows%20installation%20guide.md)
+- [Linux installation guide](21%20-%20Linux%20installation%20guide.md)
+- [macOS installation guide](22%20-%20macOS%20installation%20guide.md)
 
-Published artifacts:
-
-- Linux x86_64: `Smart.Terminal-1.1.0-linux-x86_64.AppImage` and `Smart.Terminal-1.1.0-linux-amd64.deb`;
-- macOS Apple Silicon: `Smart.Terminal-1.1.0-mac-arm64.dmg`;
-- Windows x64: `Smart.Terminal-1.1.0-win-x64.exe`;
-- all platforms: `SHA256SUMS`.
-
-V1 artifacts are **unsigned** until certificates are available, so the operating system may show a warning. Always verify the SHA-256 checksum from the release (`SHA256SUMS`) before installing. V1 has no auto-update: updates are manual.
-
-### Launching after installation
-
-- **AppImage**: run the file directly (after `chmod +x`). No installation step is required.
-- **.deb**: after `sudo dpkg -i "Smart.Terminal-1.1.0-linux-amd64.deb"`, open **Smart Terminal** from the applications menu, or run:
-
-  ```bash
-  "/opt/Smart Terminal/smart-terminal"
-  ```
-
-  The package installs the desktop entry `smart-terminal.desktop` and the executable under `/opt/Smart Terminal/`; it does not add a `/usr/bin` command, so use the quoted path or the menu entry.
-- **macOS**: open the downloaded `.dmg`, drag **Smart Terminal** to Applications, then open it from Applications. Because the build is unsigned, use Finder's Open context menu if Gatekeeper blocks the first launch.
-- **Windows**: run the downloaded installer, then launch **Smart Terminal** from the Start menu.
-
-Development features require Node.js 24, Git, and OpenSSH. SSH uses the system client and `~/.ssh/config`.
+Release artifacts are unsigned, so the operating system may show a warning. Verify the published checksum before installing. There is no automatic update; updates are manual. Development features require Node.js 24, Git, and OpenSSH. SSH uses the system client and `~/.ssh/config`.
 
 ## 3. First launch and onboarding
 

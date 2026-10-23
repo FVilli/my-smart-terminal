@@ -10,14 +10,15 @@ created: 2026-10-23
 
 This guide takes you from the first launch to a working local or SSH session. Shells and PTYs work without Git, AI, speech-to-text (STT), or a network connection.
 
-> **Download status:** v1.1.0 is published at https://github.com/FVilli/my-smart-terminal/releases/latest. Verify `SHA256SUMS` before installing. Artifacts are unsigned and there is no auto-update.
+## Installation and launch
 
-## Launch the application
+Install and launch Smart Terminal with the guide for your operating system:
 
-- **Linux AppImage**: run the AppImage directly (make it executable with `chmod +x` if needed).
-- **Linux .deb**: open **Smart Terminal** from the applications menu, or run `"/opt/Smart Terminal/smart-terminal"`.
-- **macOS**: open **Smart Terminal** from Applications; if Gatekeeper blocks the unsigned build, use the Finder Open context menu.
-- **Windows**: launch **Smart Terminal** from the Start menu after running the installer.
+- [Windows installation guide](20%20-%20Windows%20installation%20guide.md)
+- [Linux installation guide](21%20-%20Linux%20installation%20guide.md)
+- [macOS installation guide](22%20-%20macOS%20installation%20guide.md)
+
+Those guides explain release verification, unsigned-artifact warnings, and manual updates. After launch, continue with the first-run wizard below.
 
 ## First launch: three onboarding steps
 
@@ -138,7 +139,7 @@ Hold the microphone push-to-talk control. The UI reports **Voice ready**, **List
 - **Git remote missing:** **Repository not configured** is expected until a remote and branch are set. Continue locally or configure the remote.
 - **Git conflict or rejected push:** preserve local files, fetch/rebase and resolve the conflict, then retry. Force-push is never required.
 - **Secondary/primary role:** **secondary** is normal when another window is the primary coordinator. Keep the working primary open; takeover occurs only when it stops responding.
-- **AppImage will not start:** if FUSE is unavailable, run `./My-Smart-Terminal.AppImage --appimage-extract-and-run`.
+- **AppImage will not start:** see the [Linux installation guide](21%20-%20Linux%20installation%20guide.md) for FUSE requirements and the extraction fallback.
 
 ## Setup checklist
 

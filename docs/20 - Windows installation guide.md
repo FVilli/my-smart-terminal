@@ -87,3 +87,5 @@ To uninstall the app, open **Settings > Apps** (or **Apps & features** on some W
 - **Settings or sessions seem missing:** check the correct Windows account and whether setup selected an external repository. The default local data folder is `%APPDATA%\my-smart-terminal`; the default repository is its `data` subfolder.
 - **Need to recover after deleting or changing folders:** stop the app and restore your backup. If you renamed the folder, restore its original name when the app is closed. Do not delete or move files while Smart Terminal is running.
 - **Still need help:** consult the [user manual](12%20-%20User%20manual.md) and [post-install onboarding guide](14%20-%20Post-install%20onboarding.md). Keep a backup of the data repository before attempting recovery.
+
+**Other platforms:** [Linux installation guide](21%20-%20Linux%20installation%20guide.md) · [macOS installation guide](22%20-%20macOS%20installation%20guide.md)

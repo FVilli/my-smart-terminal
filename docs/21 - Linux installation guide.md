@@ -124,3 +124,5 @@ If you use a custom `XDG_CONFIG_HOME`, the folder is under that location instead
 - **No applications-menu entry:** confirm the `.deb` install completed, then try `"/opt/Smart Terminal/smart-terminal"` in a terminal. You can also log out and back in to refresh the menu.
 - **Missing data or settings:** check whether you selected an external data repository in setup. The default data is under `~/.config/my-smart-terminal/data`; external data is at the path you chose.
 - **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [latest release page](https://github.com/FVilli/my-smart-terminal/releases/latest), and verify again. If it still fails, do not use that download.
+
+**Other platforms:** [Windows installation guide](20%20-%20Windows%20installation%20guide.md) · [macOS installation guide](22%20-%20macOS%20installation%20guide.md)

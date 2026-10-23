@@ -97,3 +97,5 @@ An external repository is separate. Find and back it up or remove it separately;
 - **Gatekeeper warns again:** Use the approved Finder **Open** or **Open Anyway** path. Do not turn off Gatekeeper or strip quarantine attributes.
 
 For first-run steps, see the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md). For sessions and application features, see the [user manual](12%20-%20User%20manual.md). To understand or change your data repository, see the [repository setup guide](18%20-%20Repository%20setup%20guide.md).
+
+**Other platforms:** [Windows installation guide](20%20-%20Windows%20installation%20guide.md) · [Linux installation guide](21%20-%20Linux%20installation%20guide.md)
