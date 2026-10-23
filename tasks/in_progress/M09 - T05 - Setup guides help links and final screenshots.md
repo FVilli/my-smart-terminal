@@ -26,3 +26,9 @@ docs/12; docs/14; docs/assets/screenshots; README.md; apps/renderer/src/app/onbo
 
 ## Do not
 Do not expose arbitrary external URL opening or include personal data/tokens in screenshots.
+
+## Outcome
+- Added repository and AI setup guides (`docs/18`, `docs/19`) and completed the STT guide (`docs/17`); screenshots for wizard steps 1-3 added.
+- Added closed `help:open` IPC/API with fixed GitHub documentation URLs and in-wizard links for all three setup paths.
+- Refreshed all real screenshots after the final M08/M09 UI; added `scripts/check-links.mjs` (`test:docs-links`) and CI link check.
+- README/manual/onboarding guide cross-link the guides.

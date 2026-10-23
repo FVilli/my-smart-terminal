@@ -113,6 +113,8 @@ const scenarios = [
   { name: '04-ai-review.png', scenario: 'ai-review', userData, extra: { SMART_TERMINAL_AI_TEST_MODE: '1' } },
   { name: '05-history.png', scenario: 'history', extra: {} },
   { name: '06-clipboard.png', scenario: 'clipboard', extra: {} },
+  { name: '07-onboarding-ai.png', scenario: 'onboarding-ai', userData: onboardingUserData, extra: {} },
+  { name: '08-onboarding-stt.png', scenario: 'onboarding-stt', userData: onboardingUserData, extra: {} },
 ];
 
 const baseEnv = { ...process.env };
@@ -134,7 +136,7 @@ for (const item of scenarios) {
     SMART_TERMINAL_WINDOW_HEIGHT: String(viewport.height),
     ...item.extra,
   };
-  if (item.scenario === 'onboarding') delete env.SMART_TERMINAL_DATA_REPO;
+  if (item.scenario.startsWith('onboarding')) delete env.SMART_TERMINAL_DATA_REPO;
   const run = spawnSync(process.execPath, ['scripts/run-electron.mjs', 'apps/desktop'], {
     env,
     encoding: 'utf8',

@@ -34,6 +34,8 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npx tsc -p tsconfig.json --noEmit
+      - name: Documentation links
+        run: npm run test:docs-links
       - name: Unit and integration tests
         if: runner.os != 'Windows'
         run: npm run test

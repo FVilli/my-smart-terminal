@@ -53,6 +53,7 @@ const EXPECTED_KEYS = [
   'clipboardWrite',
   'closeTerminal',
   'createTerminal',
+  'helpOpen',
   'listTerminals',
   'onRoleChanged',
   'onSearchRefreshed',

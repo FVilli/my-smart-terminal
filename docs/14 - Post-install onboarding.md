@@ -29,6 +29,8 @@ The first launch opens **Initial setup**. The wizard has three steps. You may sk
 
 ### 1. Data repository and machine
 
+See the [Repository setup guide](18%20-%20Repository%20setup%20guide.md).
+
 The first screen asks for:
 
 - **Machine name** — the name used in session folders and filters. Use a short name without `/` and choose a different name on each computer.
@@ -38,6 +40,8 @@ The first screen asks for:
 Choose **Next** to save these values and continue. Choose **Use defaults** to use the local default repository; the terminal remains usable even when no remote is configured.
 
 ### 2. AI provider and token (optional)
+
+See the [AI provider setup guide](19%20-%20AI%20provider%20setup%20guide.md).
 
 The exact fields are **AI provider**, **Base URL (optional)**, **Model (optional)**, and **Token (optional, keychain only)**. Choose **none** to disable AI, or choose **anthropic**, **openai**, or **openai-compatible** for typo correction. Base URL and model let you customize a compatible endpoint; the token is stored in the operating system keychain (Electron `safeStorage`), never in Markdown or the synchronized repository.
 

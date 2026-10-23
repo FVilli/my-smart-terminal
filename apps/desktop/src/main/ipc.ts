@@ -38,6 +38,7 @@ import {
   type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchQueryResult,
+  type HelpTopic,
   type SetupTestAiResult,
   type SttStatus,
   type SttTranscribeRequest,
@@ -168,7 +169,12 @@ export interface AppController {
   relaunch(): void;
 }
 
+export interface HelpGateway {
+  open(topic: HelpTopic): Promise<void>;
+}
+
 export interface IpcServices {
+  help: HelpGateway;
   ssh: SshGateway;
   onboarding: OnboardingGateway;
   app: AppController;
@@ -270,6 +276,10 @@ export const validateAiCorrect = singleRequest<AiCorrectRequest>(
     !/[\u0000-\u001f\u007f]/.test(v['text']),
 );
 
+export const validateHelpTopic = singleRequest<HelpTopic>(
+  (v) => hasExactKeys(v, ['topic']) && (v['topic'] === 'repository' || v['topic'] === 'ai' || v['topic'] === 'stt' || v['topic'] === 'troubleshooting'),
+);
+
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
 export const validateSttTranscribe = singleRequest<SttTranscribeRequest>(
@@ -334,6 +344,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[], SetupTestAiResult>;
+  [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
 }
@@ -451,6 +462,10 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.setupTestAi]: {
       validate: noArguments,
       handle: () => services.ai.testConnection(),
+    },
+    [IPC_CHANNELS.helpOpen]: {
+      validate: validateHelpTopic,
+      handle: (_sender, topic) => services.help.open(topic),
     },
     [IPC_CHANNELS.sttStatus]: {
       validate: noArguments,

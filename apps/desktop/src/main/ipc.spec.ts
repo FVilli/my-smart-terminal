@@ -54,6 +54,7 @@ const services: IpcServices = {
     logout: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
   },
   app: { relaunch: vi.fn() },
+  help: { open: vi.fn(() => Promise.resolve()) },
   ai: {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
     correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),

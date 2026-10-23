@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, net, protocol, safeStorage, session } from 'electron';
+import { app, BrowserWindow, clipboard, net, protocol, safeStorage, session, shell } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
@@ -16,11 +16,13 @@ import { AiService } from './ai-service';
 import { SttService } from './stt-service';
 import { SecretStore } from './secret-store';
 import { InstallationStore } from './installation-store';
+import { HELP_URLS } from './help-topics';
 import { DataRuntime } from './data-runtime';
 import { ClipboardGatewayAdapter } from './clipboard-gateway';
 import { electronClipboardSource } from './electron-clipboard';
 import { HistoryService } from './history-service';
 import { TerminalHost } from './terminal-host';
+
 
 const APP_SCHEME = 'smart-terminal';
 const APP_HOST = 'bundle';
@@ -302,6 +304,7 @@ app.whenReady().then(async () => {
       ssh: { aliases: () => listSshAliases() },
       onboarding,
       ai,
+      help: { open: async (topic) => { await shell.openExternal(HELP_URLS[topic]); } },
       stt,
       app: {
         relaunch: () => {

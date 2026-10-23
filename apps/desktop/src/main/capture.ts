@@ -64,6 +64,24 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding') {
             await waitFor(() => q('onboarding-overlay'));
           }
+          if (${JSON.stringify(scenario)} === 'onboarding-ai') {
+            await waitFor(() => q('onboarding-overlay'));
+            click('onboarding-next');
+            await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+            const provider = q('onboarding-ai-provider');
+            if (provider) { provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true })); }
+            await waitFor(() => q('onboarding-ai-url'));
+          }
+          if (${JSON.stringify(scenario)} === 'onboarding-stt') {
+            await waitFor(() => q('onboarding-overlay'));
+            click('onboarding-next');
+            await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+            click('onboarding-next');
+            await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
+            const provider = q('onboarding-stt-provider');
+            if (provider) { provider.value = 'local'; provider.dispatchEvent(new Event('change', { bubbles: true })); }
+            await waitFor(() => q('onboarding-stt-command'));
+          }
           if (${JSON.stringify(scenario)} === 'tabs') {
             await waitFor(() => q('session-tab'));
             click('session-plus');
@@ -102,6 +120,8 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           }
           const checks = {};
           if (${JSON.stringify(scenario)} === 'onboarding') checks['onboardingVisible'] = !!q('onboarding-overlay');
+          if (${JSON.stringify(scenario)} === 'onboarding-ai') checks['onboardingAiStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 2 of 3') && !!q('onboarding-ai-url');
+          if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-command');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
           if (${JSON.stringify(scenario)} === 'ssh-menu') checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;
           if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('ai-notice') && q('ai-notice').textContent.includes('review');

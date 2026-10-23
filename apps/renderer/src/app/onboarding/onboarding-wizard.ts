@@ -5,6 +5,7 @@ import {
   type AiProvider,
   type OnboardingConfig,
   type OnboardingSaveResult,
+  type HelpTopic,
   type RemoteSetupResult,
   type SetupTestAiResult,
   type OnboardingState,
@@ -88,6 +89,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       }
                     </p>
                   }
+                  <button type="button" class="help-link" data-testid="onboarding-help-repository" (click)="openHelp('repository')">Repository setup guide</button>
                 </div>
               }
               @case (2) {
@@ -129,6 +131,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       </p>
                     }
                   }
+                  <button type="button" class="help-link" data-testid="onboarding-help-ai" (click)="openHelp('ai')">AI provider setup guide</button>
                 </div>
               }
               @case (3) {
@@ -169,6 +172,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
                     }
                   }
+                  <button type="button" class="help-link" data-testid="onboarding-help-stt" (click)="openHelp('stt')">STT setup guide</button>
                 </div>
               }
             }
@@ -222,6 +226,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
     .remote-result { margin: 8px 0 0; font-size: 12px; line-height: 1.45; }
     .remote-result.ok { color: var(--accent); }
     .remote-result.error { color: var(--danger); }
+    .help-link { margin-top: 8px; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; }
     .confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text); }
     .confirm span { flex: 1; }
   `,
@@ -354,6 +359,10 @@ export class OnboardingWizard {
     if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change) {
       this.sttTestResult.set(null);
     }
+  }
+
+  protected openHelp(topic: HelpTopic): void {
+    void this.api.helpOpen(topic).catch(() => undefined);
   }
 
   protected async testSttProvider(): Promise<void> {

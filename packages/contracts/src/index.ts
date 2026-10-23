@@ -26,6 +26,7 @@ export const IPC_CHANNELS = {
   onboardingSkip: 'onboarding:skip',
   setupTestRemote: 'setup:test-remote',
   setupTestAi: 'setup:test-ai',
+  helpOpen: 'help:open',
   secretsStatus: 'secrets:status',
   secretsLogout: 'secrets:logout',
   appRelaunch: 'app:relaunch',
@@ -250,6 +251,9 @@ export interface OnboardingValidateRequest {
   config: OnboardingConfig;
 }
 
+export const HELP_TOPICS = ['repository', 'ai', 'stt', 'troubleshooting'] as const;
+export type HelpTopic = (typeof HELP_TOPICS)[number];
+
 export interface SetupTestAiResult {
   ok: boolean;
   provider: AiProvider;
@@ -378,6 +382,7 @@ export interface SmartTerminalApi {
   onboardingSkip(): Promise<OnboardingSaveResult>;
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   setupTestAi(): Promise<SetupTestAiResult>;
+  helpOpen(topic: HelpTopic): Promise<void>;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;
