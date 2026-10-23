@@ -4,7 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 const release = path.resolve('release');
-const deb = process.argv[2] ?? fs.readdirSync(release).find((name) => name.endsWith('.deb'));
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const version = packageJson.version;
+const releaseFiles = fs.readdirSync(release);
+const deb = process.argv[2] ?? releaseFiles.find((name) => name.endsWith('.deb'));
+const appImage = releaseFiles.find((name) => name === `Smart.Terminal-${version}-linux-x86_64.AppImage`);
 if (!deb) {
   console.error('[verify-linux-package] no .deb in release/');
   process.exit(1);
@@ -29,8 +33,32 @@ try {
   const exec = /^Exec="?([^"\n]+)"?/m.exec(desktop)?.[1];
   const binary = exec ? path.join(root, exec.replace(/^\/+/, '')) : '';
   if (!binary || !fs.existsSync(binary) || !(fs.statSync(binary).mode & 0o111)) problems.push('desktop Exec is not executable in package');
-  const info = execFileSync('dpkg-deb', ['-f', file, 'Package', 'Version'], { encoding: 'utf8' }).trim();
-  if (!info.includes('smart-terminal')) problems.push('package name missing');
+  const packageName = execFileSync('dpkg-deb', ['-f', file, 'Package'], { encoding: 'utf8' }).trim();
+  const packageVersion = execFileSync('dpkg-deb', ['-f', file, 'Version'], { encoding: 'utf8' }).trim();
+  const architecture = execFileSync('dpkg-deb', ['-f', file, 'Architecture'], { encoding: 'utf8' }).trim();
+  const info = `${packageName} ${packageVersion} ${architecture}`;
+  if (packageName !== 'my-smart-terminal') problems.push(`unexpected package name: ${packageName}`);
+  if (packageVersion !== version) problems.push(`unexpected package version: ${packageVersion} (expected ${version})`);
+  if (architecture !== 'amd64') problems.push(`unexpected package architecture: ${architecture}`);
+  if (!appImage) problems.push('no matching .AppImage in release/');
+  else {
+    const appPath = path.join(release, appImage);
+    try {
+      const appRoot = path.join(root, 'appimage'); fs.mkdirSync(appRoot);
+      execFileSync(appPath, ['--appimage-extract'], { cwd: appRoot, stdio: 'pipe' });
+      const extracted = path.join(appRoot, 'squashfs-root');
+      const appDesktopPath = path.join(extracted, 'smart-terminal.desktop');
+      const appIconPath = path.join(extracted, 'smart-terminal.png');
+      if (!fs.existsSync(appDesktopPath)) problems.push('AppImage missing smart-terminal.desktop');
+      if (!fs.existsSync(appIconPath)) problems.push('AppImage missing smart-terminal.png');
+      else {
+        if (fs.statSync(appIconPath).size !== fs.statSync('apps/desktop/build/icon-linux.png').size || !fs.readFileSync(appIconPath).equals(fs.readFileSync('apps/desktop/build/icon-linux.png'))) problems.push('AppImage icon does not match source icon bytes');
+        const iconBytes = fs.readFileSync(appIconPath);
+        if (iconBytes.length < 24 || iconBytes.toString('ascii', 1, 4) !== 'PNG' || iconBytes.readUInt32BE(16) !== 512 || iconBytes.readUInt32BE(20) !== 512) problems.push('AppImage icon is not 512x512 PNG');
+      }
+      if (fs.existsSync(appDesktopPath) && !fs.readFileSync(appDesktopPath, 'utf8').split(/\r?\n/).includes(`X-AppImage-Version=${version}`)) problems.push('AppImage desktop version does not match package version');
+    } catch (error) { problems.push(`AppImage extraction/verification failed: ${error.message}`); }
+  }
   try {
     execFileSync('desktop-file-validate', [path.join(root, 'usr/share/applications/smart-terminal.desktop')], { stdio: 'pipe' });
   } catch (error) {

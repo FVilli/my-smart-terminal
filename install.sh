@@ -7,8 +7,7 @@ fail() { printf '%s\n' "install.sh: $*" >&2; exit 1; }
 case "$(uname -m)" in x86_64|amd64) ;; *) fail 'This installer requires Linux x86_64.' ;; esac
 command -v curl >/dev/null 2>&1 || fail 'curl is required.'
 
-VERSION=${SMART_TERMINAL_VERSION:-1.1.1}
-case "$VERSION" in ''|*[!0-9.]*) fail 'SMART_TERMINAL_VERSION must contain only digits and dots.' ;; esac
+VERSION=1.1.1
 BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
 MODE=auto
 while [ "$#" -gt 0 ]; do
