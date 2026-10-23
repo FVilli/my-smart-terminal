@@ -163,12 +163,12 @@ describe('SessionsStore', () => {
       const store = new SessionsStore();
       await store.createLocal();
       await store.createLocal();
-      store.setDraft('id-1', 'uno');
+      store.setDraft('id-1', 'one');
       store.setDraft('id-2', 'due');
       await store.sendActive('due');
       expect(store.activeDraft()).toBe('');
       store.select('id-1');
-      expect(store.activeDraft()).toBe('uno');
+      expect(store.activeDraft()).toBe('one');
     });
   });
 

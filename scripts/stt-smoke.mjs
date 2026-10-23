@@ -52,7 +52,7 @@ const artifacts = fs
   .readdirSync(userData, { recursive: true, withFileTypes: true })
   .filter((entry) => entry.isFile() && /\.(webm|wav|mp3|ogg|m4a|aac|flac|opus)$/i.test(entry.name));
 if (artifacts.length > 0) {
-  console.error('[stt-smoke] trovato un file audio nella userData', artifacts.map((entry) => entry.name));
+  console.error('[stt-smoke] found an audio file in userData', artifacts.map((entry) => entry.name));
 }
 
 fs.rmSync(root, { recursive: true, force: true });

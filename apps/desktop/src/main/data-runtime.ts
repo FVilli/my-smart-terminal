@@ -62,7 +62,7 @@ export function resolveDataPaths(
 
 /**
  * Connects the main process to the Markdown data repository: resolves paths and machine,
- * alloca ID/file di sessione e ne finalizza `ended_at`.
+ * allocates IDs/session files and finalizes `ended_at`.
  */
 export class DataRuntime {
   readonly dataRepoPath: string;
@@ -106,7 +106,7 @@ export class DataRuntime {
     return { allocation, machine: this.machine };
   }
 
-  /** Scrive `ended_at` in session.md (atomico). Idempotente; errori di I/O sono assorbiti e restituiti come `false`. */
+  /** Writes `ended_at` to session.md atomically. Idempotent; I/O errors are absorbed and returned as `false`. */
   endSession(sessionId: string): boolean {
     const allocation = this.sessions.get(sessionId);
     if (allocation === undefined) {

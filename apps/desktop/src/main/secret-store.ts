@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SECRET_TOKEN_MAX_LENGTH } from '@smart-terminal/contracts';
 
-/** Sottoinsieme di Electron `safeStorage` (iniettabile nei test). */
+/** Subset of Electron `safeStorage` (injectable in tests). */
 export interface SafeStorageLike {
   isEncryptionAvailable(): boolean;
   encryptString(plainText: string): Buffer;
@@ -58,7 +58,7 @@ export class SecretStore {
     private readonly safeStorage: SafeStorageLike,
   ) {}
 
-  /** Cifratura disponibile e backend non `basic_text`/sconosciuto. */
+  /** Encryption available and backend is not `basic_text`/unknown. */
   isSecure(): boolean {
     try {
       if (!this.safeStorage.isEncryptionAvailable()) {

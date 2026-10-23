@@ -83,7 +83,7 @@ describe('FileSessionIdAllocator', () => {
   it('continues after restart and never reuses ids after a gap', async () => {
     await make().allocate(request);
     await make().allocate(request);
-    // simula crash dopo prenotazione: counter avanzato ma directory mai creata
+    // simulate a crash after reservation: counter advanced but directory never created
     fs.writeFileSync(counterPath(), fs.readFileSync(counterPath(), 'utf8').replace('last_session: 2', 'last_session: 5'));
     expect((await make().allocate(request)).label).toBe('S6');
   });
@@ -156,7 +156,7 @@ describe('FileSessionIdAllocator', () => {
   });
 
   async function seedLock(owner: { pid: number; nonce: string; heartbeat_at: string } | null): Promise<string> {
-    // Il nome è derivato da repo+machine: lo ricava un allocator reale creando e lasciando il lock.
+    // The name is derived from repo+machine: a real allocator obtains it by creating and releasing the lock.
     const probe = make({ timeoutMs: 1 });
     const name = (probe as unknown as { lockPath: string }).lockPath;
     fs.mkdirSync(name, { recursive: true });

@@ -40,7 +40,7 @@ Events: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 `ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `clipboardWrite`, `search`, `searchFacets`, `syncStatus`, `onSyncStatus`, `onRoleChanged`, `onSearchRefreshed`. The `__testInvoke` seam exists only with the startup argument `--smart-terminal-test-ipc`, enabled by smoke tests.
 
 ## History and clipboard (M03)
-- `history:record` accepts only `{sessionId, text, agent?}`, fixed source `assisted`, testo ≤16 KiB, `agent` ≤64 char. Sensitive text: `{recorded:false}`. The renderer calls it only after a successful editor submission; no keystrokes or native shell history.
+- `history:record` accepts only `{sessionId, text, agent?}`, fixed source `assisted`, text ≤16 KiB, `agent` ≤64 char. Sensitive text: `{recorded:false}`. The renderer calls it only after a successful editor submission; no keystrokes or native shell history.
 - Clipboard: opt-in (default off; `SMART_TERMINAL_CLIPBOARD=1` to enable it at startup), polling 800 ms, max 32 KiB UTF-8, hash SHA-256, dedupe in memory and against the file, best-effort secret filter, pause/clear. Associated with the active session on tab/focus.
 - `search:query` is case-insensitive, filters machine/session/date/kind, caps at 100, and returns history/clipboard entries; the index is in memory and rebuilt at startup.
 

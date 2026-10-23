@@ -24,7 +24,7 @@ export interface AppConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
-  /** Absolute path to the local STT executable (mai una stringa di shell). */
+  /** Absolute path to the local STT executable (never a shell string). */
   sttCommand?: string;
   syncDebounceMs?: number;
   syncMaxWaitMs?: number;
@@ -197,7 +197,7 @@ export function resolveConfigPath(userDataPath: string, env: NodeJS.ProcessEnv =
 
 const isParseFailure = (error: unknown): boolean => error instanceof AppConfigError || error instanceof FrontmatterError;
 
-/** Persistenza atomica di `config.md` con backup `.bak` dell'ultima versione valida e quarantena `.corrupt`. */
+/** Atomic persistence of `config.md` with a `.bak` backup of the last valid version and `.corrupt` quarantine. */
 export class AppConfigStore {
   constructor(readonly filePath: string) {}
 

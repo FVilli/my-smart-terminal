@@ -63,7 +63,7 @@ if (process.platform === 'linux' && process.env['SMART_TERMINAL_NO_XVFB'] !== '1
     display = virtualDisplay;
     console.log(`[run-electron] display virtuale ${virtualDisplay}`);
   } else {
-    console.warn('[run-electron] Xvfb non trovato: uso il display corrente');
+    console.warn('[run-electron] Xvfb not found: using the current display');
   }
 }
 

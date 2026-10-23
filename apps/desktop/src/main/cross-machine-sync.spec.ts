@@ -72,7 +72,7 @@ describe('cross-machine sync -> search', () => {
         try {
           return execFileSync('git', ['ls-tree', '-r', '--name-only', 'main'], { cwd: remote, encoding: 'utf8', stdio: 'pipe' });
         } catch {
-          return ''; // il branch remoto non esiste ancora
+          return ''; // the remote branch does not exist yet
         }
       },
       (files) => files.includes('history.md'),

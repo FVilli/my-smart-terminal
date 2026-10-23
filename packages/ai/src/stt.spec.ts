@@ -55,10 +55,10 @@ describe('LocalSttAdapter', () => {
     const received: { file: string; args: readonly string[]; input: Uint8Array }[] = [];
     const run: SttProcessRunner = async (file, args, input) => {
       received.push({ file, args, input });
-      return { stdout: '  dettato  \n' };
+      return { stdout: '  dictated  \n' };
     };
     const adapter = new LocalSttAdapter('/opt/stt/transcribe', ['--model', 'small; rm -rf /'], run);
-    await expect(adapter.transcribe({ audio: audio(8), mimeType: 'audio/wav' }, { timeoutMs: 1000 })).resolves.toBe('dettato');
+    await expect(adapter.transcribe({ audio: audio(8), mimeType: 'audio/wav' }, { timeoutMs: 1000 })).resolves.toBe('dictated');
     expect(received[0]?.file).toBe('/opt/stt/transcribe');
     expect(received[0]?.args).toEqual(['--model', 'small; rm -rf /']);
     expect(received[0]?.input.byteLength).toBe(8);

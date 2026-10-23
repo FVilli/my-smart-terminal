@@ -5,7 +5,7 @@ import type { TerminalSessionView } from '../session.model';
   selector: 'app-session-tabs',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs" role="tablist" aria-label="Sessioni terminale">
+    <div class="tabs" role="tablist" aria-label="Terminal sessions">
       @for (session of sessions(); track session.id) {
         <div
           class="tab"

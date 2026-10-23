@@ -52,7 +52,7 @@ export class SessionsStore {
     return this.create({ kind: 'ssh', sshAlias: alias, cols: 80, rows: 24 });
   }
 
-  /** Ripete l'ultima creazione fallita (default: shell locale). */
+  /** Retries the last failed creation (default: local shell). */
   retryCreate(): Promise<string | null> {
     return this.create(this.lastRequest);
   }

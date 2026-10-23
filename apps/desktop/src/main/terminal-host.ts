@@ -78,7 +78,7 @@ export class TerminalHost implements TerminalGateway {
     });
   }
 
-  /** Resolves a live session for window `senderId`; `undefined` se sconosciuta, di un'altra finestra o terminata. */
+  /** Resolves a live session for window `senderId`; `undefined` if unknown, from another window, or terminated. */
   resolveSession(senderId: number, sessionId: string): Pick<TerminalSessionInfo, 'machine' | 'sessionDirectory'> | undefined {
     const extras = this.windows.get(senderId)?.extras.get(sessionId);
     return extras === undefined ? undefined : { machine: extras.machine, sessionDirectory: extras.sessionDirectory };

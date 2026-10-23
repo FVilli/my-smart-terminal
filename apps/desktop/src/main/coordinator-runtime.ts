@@ -49,7 +49,7 @@ const positiveInt = (value: string | undefined): number | undefined => {
   return value !== undefined && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-/** Tempi dello scheduler Git da env (`SMART_TERMINAL_SYNC_*`); valori non validi => default. */
+/** Git scheduler timings from env (`SMART_TERMINAL_SYNC_*`); invalid values fall back to defaults. */
 export function resolveSyncTiming(env: NodeJS.ProcessEnv): { debounceMs?: number; maxWaitMs?: number; fetchIntervalMs?: number } {
   const debounceMs = positiveInt(env['SMART_TERMINAL_SYNC_DEBOUNCE_MS']);
   const maxWaitMs = positiveInt(env['SMART_TERMINAL_SYNC_MAX_WAIT_MS']);
@@ -272,7 +272,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
     void this.coordinator
       .request('search.upsert', { sessionDirectory })
       .then(() => this.coordinator.request('sync.dirty'))
-      .catch(() => undefined); // best effort: l'indice si riallinea con refresh e il sync al prossimo ciclo
+      .catch(() => undefined); // best effort: the index realigns on refresh and sync on the next cycle
   }
 
   /**
@@ -320,7 +320,7 @@ export class CoordinatorRuntime implements ClipboardBackend {
       branch: env['SMART_TERMINAL_GIT_BRANCH'] || undefined,
       ...configSyncTiming(this.options.config),
       ...resolveSyncTiming(env),
-      // `search.refresh()` e' idempotente: restituisce true una sola volta per cambiamento, quindi niente doppio evento.
+      // `search.refresh()` is idempotent: it returns true once per change, so no duplicate event.
       onRemoteIntegrated: () => notifyRefreshed(),
       onStatusChange: (status) => {
         if (status.state === 'synced') {

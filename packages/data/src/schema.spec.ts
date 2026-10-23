@@ -97,7 +97,7 @@ describe('history.md', () => {
 
   it('appends events and roundtrips multiline/unicode/backtick text', () => {
     const events: HistoryEvent[] = [
-      { id: 'e1', timestamp: T, source: 'assisted', agent: 'claude', cwd: '/tmp/x', text: 'ls -la\necho "città 🚀"' },
+      { id: 'e1', timestamp: T, source: 'assisted', agent: 'claude', cwd: '/tmp/x', text: 'ls -la\necho "city 🚀"' },
       { id: 'e2', timestamp: T, source: 'shell', text: 'echo ```nested``` and ````four````\n## not a heading\n' },
       { id: 'e3', timestamp: T, source: 'assisted', text: '' },
       { id: 'e4', timestamp: T, source: 'assisted', text: '\r\nwin\r\n' },

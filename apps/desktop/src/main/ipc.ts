@@ -88,7 +88,7 @@ export interface ChannelDefinition<Args extends unknown[], Result> {
   /** Validates raw arguments; must throw or return false when invalid. */
   validate(args: unknown[]): args is Args;
   handle(sender: SenderInfo, ...args: Args): Result | Promise<Result>;
-  /** Serialized payload limit (default `MAX_PAYLOAD_BYTES`); l'audio STT usa un limite dedicato. */
+  /** Serialized payload limit (default `MAX_PAYLOAD_BYTES`); STT audio uses a dedicated limit. */
   maxPayloadBytes?: number;
 }
 
@@ -458,7 +458,7 @@ const binaryByteLength = (value: unknown): number | undefined => {
 };
 
 /**
- * Dimensione del payload come lo vede Electron: i buffer binari contano i loro byte reali
+ * Payload size as Electron sees it: binary buffers count their real bytes
  * (`JSON.stringify` would expand them into an array of numbers); the rest is serialized.
  */
 function checkPayloadSize(args: unknown[], limit: number): void {

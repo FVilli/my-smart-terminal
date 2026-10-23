@@ -13,7 +13,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         data-testid="ai-correction"
         aria-label="AI correction"
         [disabled]="!canCorrect()"
-        [attr.title]="ai.status().warning ?? 'Correggi i refusi con AI'"
+        [attr.title]="ai.status().warning ?? 'Fix typos with AI'"
         (click)="correctWithAi()"
       >
         {{ ai.busy() ? '…' : 'AI' }}
@@ -24,7 +24,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         rows="3"
         spellcheck="false"
         placeholder="Enter sends · Shift+Enter inserts a newline"
-        aria-label="Input assistito"
+        aria-label="Assisted input"
         [value]="draft()"
         [disabled]="disabled()"
         (input)="draftChange.emit($any($event.target).value)"

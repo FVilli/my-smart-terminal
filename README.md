@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="mockups/Smart%20Terminal%20-%20final%20mock.png" alt="Smart Terminal interface" width="880" />
+  <img src="docs/assets/screenshots/02-terminal-tabs.png" alt="Smart Terminal: two sessions, terminal, assisted input and global history sidebar" width="880" />
 </p>
 
 ---
@@ -27,6 +27,18 @@ The terminal is where technical work really happens: commands, debugging, deploy
 - **Multi-machine**: the same history and clipboard follow you between computers through the Git repository you choose.
 - **AI and voice when needed**: typo correction and dictation remain optional, non-invasive, and never automatic.
 - **No lock-in**: your data is files, your sync is Git, and your keys remain in the system keychain.
+
+## A look inside
+
+Real screenshots from the English build (1440×872 content area, Xvfb capture):
+
+| First run | Global history | Clipboard |
+| --- | --- | --- |
+| <img src="docs/assets/screenshots/01-onboarding.png" alt="First-run onboarding" width="280" /> | <img src="docs/assets/screenshots/05-history.png" alt="Global history with machine filter" width="280" /> | <img src="docs/assets/screenshots/06-clipboard.png" alt="Clipboard capture" width="280" /> |
+
+| SSH picker | AI review |
+| --- | --- |
+| <img src="docs/assets/screenshots/03-ssh-menu.png" alt="SSH alias picker" width="420" /> | <img src="docs/assets/screenshots/04-ai-review.png" alt="AI correction review" width="420" /> |
 
 ## Why it is different
 

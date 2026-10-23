@@ -287,18 +287,18 @@ const EDITOR_SCRIPT = `(async () => {
     q('assisted-send')[0].click();
     result.sensitiveSent = await waitFor(() => textarea().value === '', 2000);
     await sleep(300);
-    setText('bozza-uno');
+    setText('draft-one');
     await sleep(50);
     q('session-plus')[0].click();
     await sleep(50);
     q('session-new-local')[0].click();
     result.secondTab = await waitFor(async () => q('session-tab').length === 2 && textarea().value === '', 8000);
-    setText('bozza-due');
+    setText('draft-two');
     await sleep(50);
     q('session-tab')[0].click();
-    result.firstDraftIntact = await waitFor(() => textarea().value === 'bozza-uno', 2000);
+    result.firstDraftIntact = await waitFor(() => textarea().value === 'draft-one', 2000);
     q('session-tab')[1].click();
-    result.secondDraftIntact = await waitFor(() => textarea().value === 'bozza-due', 2000);
+    result.secondDraftIntact = await waitFor(() => textarea().value === 'draft-two', 2000);
   } finally {
     off();
   }
@@ -594,7 +594,7 @@ function hasNoAudioArtifacts(directory: string): boolean {
   }
 }
 
-/** Active STT smoke test with SMART_TERMINAL_STT_SMOKE=1: requires SMART_TERMINAL_STT_TEST_MODE=1 e un provider configurato. */
+/** Active STT smoke test with SMART_TERMINAL_STT_SMOKE=1: requires SMART_TERMINAL_STT_TEST_MODE=1 and a configured provider. */
 export function runSttSmoke(window: BrowserWindow): void {
   runUiSmoke(window, STT_SCRIPT, 'SMART_TERMINAL_STT_SMOKE_RESULT', async () => ({
     noAudioFileInUserData: hasNoAudioArtifacts(app.getPath('userData')),

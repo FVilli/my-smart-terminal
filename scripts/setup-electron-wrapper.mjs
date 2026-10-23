@@ -12,7 +12,7 @@ if (!fs.existsSync(binDir)) {
 
 const script = `#!/bin/sh
 # Shim generato da scripts/setup-electron-wrapper.mjs.
-# Instrada ogni invocazione di "electron" sul display virtuale Xvfb, mai sul desktop utente.
+# Routes every "electron" invocation to the virtual Xvfb display, never the user desktop.
 exec node "${wrapper}" "$@"
 `;
 

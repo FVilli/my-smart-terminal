@@ -8,7 +8,7 @@ describe('frontmatter', () => {
       colon: 'a: b',
       hash: 'x # y',
       newline: 'riga1\nriga2',
-      unicode: 'città · 日本語 🚀',
+      unicode: 'São Paulo · 日本語 🚀',
       quote: `it's "q"`,
       numberLike: '42',
       boolLike: 'true',

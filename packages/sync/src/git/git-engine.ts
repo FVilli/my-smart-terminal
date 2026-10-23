@@ -295,7 +295,7 @@ export class GitEngine {
     return new GitEngineError('git', this.sanitize(result.stderr));
   }
 
-  /** Una riga, senza percorsi locali ne' credenziali nelle URL. */
+  /** One line, without local paths or URL credentials. */
   private sanitize(text: string): string {
     const line = text.split('\n').find((l) => l.trim().length > 0) ?? 'git command failed';
     return line

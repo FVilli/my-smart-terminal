@@ -1,6 +1,6 @@
 /**
- * Contratti condivisi tra main, preload e renderer.
- * Ogni canale IPC deve essere elencato qui e validato nel main.
+ * Shared contracts between main, preload and renderer.
+ * Every IPC channel must be listed here and validated in the main process.
  */
 export const IPC_CHANNELS = {
   appPing: 'app:ping',
@@ -33,7 +33,7 @@ export const IPC_CHANNELS = {
   sttTranscribe: 'stt:transcribe',
 } as const;
 
-/** Eventi main -> renderer (non invocabili dal renderer). */
+/** Main -> renderer events (not invocable from the renderer). */
 export const IPC_EVENTS = {
   terminalData: 'terminal:data',
   terminalExit: 'terminal:exit',
@@ -48,7 +48,7 @@ export const HISTORY_MAX_AGENT_LENGTH = 64;
 export const SEARCH_MAX_QUERY_LENGTH = 256;
 export const CLIPBOARD_WRITE_MAX_BYTES = 32 * 1024;
 export const AI_CORRECTION_MAX_TEXT_BYTES = 16 * 1024;
-/** Limite dell'audio inviato al main per una singola trascrizione (10 MiB). */
+/** Maximum audio sent to the main process for a single transcription (10 MiB). */
 export const STT_MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const TERMINAL_MIN_DIMENSION = 1;
 export const TERMINAL_MAX_DIMENSION = 1000;
@@ -64,11 +64,11 @@ export interface AppRuntimeInfo {
   appVersion: string;
   platform: string;
   isPackaged: boolean;
-  /** Questa istanza e' il coordinator primary della macchina. */
+  /** This instance is the coordinator primary for the machine. */
   isPrimary: boolean;
 }
 
-/** Stato sync pubblicato dal primary alle finestre (evento `sync:status`). */
+/** Sync state published by the primary to windows (`sync:status` event). */
 export interface SyncStatusEvent {
   state: 'synced' | 'dirty' | 'syncing' | 'offline' | 'error';
   lastSyncAt?: string;
@@ -76,7 +76,7 @@ export interface SyncStatusEvent {
   remoteConfigured: boolean;
 }
 
-/** Il primary ha riletto l'indice di ricerca dopo un pull Git. */
+/** The primary reloaded the search index after a Git pull. */
 export interface SearchRefreshedEvent {
   refreshedAt: string;
 }
@@ -95,7 +95,7 @@ export interface TerminalCreateRequest {
 }
 
 export interface TerminalSessionInfo {
-  /** Coincide con `label` (`S<n>`, progressivo per macchina). */
+  /** Matches `label` (`S<n>`, per-machine sequence). */
   sessionId: string;
   label: string;
   kind: 'local' | 'ssh';
@@ -104,9 +104,9 @@ export interface TerminalSessionInfo {
   pid: number;
   cwd: string;
   machine: string;
-  /** Directory sessione relativa al repo dati: `sessions/<machine>/<dir>`. */
+  /** Session directory relative to the data repository: `sessions/<machine>/<dir>`. */
   sessionDirectory: string;
-  /** ISO 8601 con offset. */
+  /** ISO 8601 with offset. */
   startedAt: string;
 }
 
@@ -136,7 +136,7 @@ export interface TerminalExitEvent {
   signal?: number;
 }
 
-/** Invio esplicito dall'editor assistito; la source è sempre `assisted` e viene fissata dal main. */
+/** Explicit submission from the assisted editor; the source is always `assisted` and set by the main process. */
 export interface HistoryRecordRequest {
   sessionId: string;
   text: string;
@@ -152,7 +152,7 @@ export interface ClipboardConfigureRequest {
   paused: boolean;
 }
 
-/** `null` quando non esiste una sessione attiva. */
+/** `null` when there is no active session. */
 export interface ClipboardSetActiveRequest {
   sessionId: string | null;
 }
@@ -160,20 +160,20 @@ export interface ClipboardSetActiveRequest {
 export interface ClipboardCaptureState {
   enabled: boolean;
   paused: boolean;
-  /** ISO 8601 dell'ultimo evento clipboard scritto in questo processo. */
+  /** ISO 8601 of the last clipboard event written in this process. */
   lastEventAt: string | null;
 }
 
 export type SearchEntryKind = 'history' | 'clipboard';
 
 export interface SearchQueryRequest {
-  /** Sottostringa case-insensitive (anche vuota, per filtrare solo). */
+  /** Case-insensitive substring (may be empty to apply filters only). */
   query: string;
   machine?: string;
   sessionId?: string;
-  /** ISO 8601 con offset, inclusivo. */
+  /** ISO 8601 with offset, inclusive. */
   from?: string;
-  /** ISO 8601 con offset, inclusivo. */
+  /** ISO 8601 with offset, inclusive. */
   to?: string;
   kind?: SearchEntryKind;
 }
@@ -189,7 +189,7 @@ export interface SearchResultEntry {
   cwd?: string;
 }
 
-/** Al massimo 100 voci, ordinate per timestamp decrescente. */
+/** At most 100 entries, sorted by descending timestamp. */
 export interface SearchQueryResult {
   entries: SearchResultEntry[];
 }
@@ -199,7 +199,7 @@ export interface SearchFacetsResult {
   machines: string[];
 }
 
-/** Testo da copiare nella clipboard di sistema (pulsante Copia). */
+/** Text to copy to the system clipboard (Copy button). */
 export interface ClipboardWriteRequest {
   text: string;
 }
@@ -210,7 +210,7 @@ export type AiProvider = (typeof AI_PROVIDERS)[number];
 export type SttProvider = (typeof STT_PROVIDERS)[number];
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
 
-/** Parte della configurazione modificabile dal wizard (nessun segreto). */
+/** Configuration fields editable by the wizard (no secrets). */
 export interface OnboardingConfig {
   machineName: string;
   dataRepoPath: string;
@@ -220,24 +220,24 @@ export interface OnboardingConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttModel?: string;
-  /** Percorso assoluto dell'eseguibile STT locale (provider `local`). */
+  /** Absolute path to the local STT executable (`local` provider). */
   sttCommand?: string;
 }
 
 export interface OnboardingState {
-  /** Il wizard deve essere mostrato. */
+  /** Whether the wizard must be shown. */
   required: boolean;
   /** `env-override`: percorsi forzati da variabili d'ambiente (test), nessun wizard. */
   reason: 'missing' | 'corrupt' | 'valid' | 'env-override';
   /** Valori correnti (config valida) oppure predefiniti. */
   config: OnboardingConfig;
-  /** La cifratura sicura del sistema (keychain) e' disponibile. */
+  /** Whether system secure encryption (keychain) is available. */
   secureStorage: boolean;
-  /** Chiavi segreto presenti (`ai:<provider>`, `stt:<provider>`); mai i token. */
+  /** Present secret keys (`ai:<provider>`, `stt:<provider>`); never the tokens. */
   storedSecrets: string[];
 }
 
-/** Token opzionali: restano nel main e non tornano mai al renderer. */
+/** Optional tokens: they stay in the main process and never return to the renderer. */
 export interface OnboardingSaveRequest {
   config: OnboardingConfig;
   aiToken?: string;
@@ -250,12 +250,12 @@ export interface OnboardingValidateRequest {
 
 export interface OnboardingValidationResult {
   ok: boolean;
-  /** Campo (`machineName`, `dataRepoPath`, ...) -> messaggio fisso e sanificato. */
+  /** Field (`machineName`, `dataRepoPath`, ...) -> fixed, sanitized message. */
   errors: Record<string, string>;
 }
 
 export interface OnboardingSaveResult extends OnboardingValidationResult {
-  /** Repo dati, machine o remote cambiati: serve riavviare l'app per applicarli. */
+  /** Data repository, machine or remote changed: the app must restart to apply them. */
   restartRequired: boolean;
   warnings: string[];
 }
@@ -296,13 +296,13 @@ export interface SttStatus {
   configured: boolean;
   provider: SttProvider;
   model?: string;
-  /** Token `stt:cloud` presente nel keychain. */
+  /** `stt:cloud` token present in the keychain. */
   hasToken: boolean;
   secureStorage: boolean;
   warning?: string;
 }
 
-/** Audio registrato nel renderer, mai salvato su disco da nessuna delle due parti. */
+/** Audio recorded in the renderer, never saved to disk by either side. */
 export interface SttTranscribeRequest {
   audio: Uint8Array;
   mimeType: string;
@@ -337,22 +337,22 @@ export interface SmartTerminalApi {
   clipboardState(): Promise<ClipboardCaptureState>;
   clipboardConfigure(request: ClipboardConfigureRequest): Promise<ClipboardCaptureState>;
   clipboardSetActive(request: ClipboardSetActiveRequest): Promise<ClipboardCaptureState>;
-  /** Azzera il dedupe in memoria (gli hash gia' scritti in clipboard.md restano dedupati). */
+  /** Clears the in-memory dedupe (hashes already written to clipboard.md remain deduplicated). */
   clipboardClear(): Promise<ClipboardCaptureState>;
   clipboardWrite(request: ClipboardWriteRequest): Promise<void>;
   search(request: SearchQueryRequest): Promise<SearchQueryResult>;
   searchFacets(): Promise<SearchFacetsResult>;
-  /** Stato sync corrente: dal primary locale oppure via RPC se questa istanza e' secondary. */
+  /** Current sync state: from the local primary or via RPC when this instance is secondary. */
   syncStatus(): Promise<SyncStatusEvent>;
-  /** Alias `Host` da `~/.ssh/config` (sola lettura). */
+  /** Alias `Host` da `~/.ssh/config` (read-only). */
   sshAliases(): Promise<string[]>;
   onboardingState(): Promise<OnboardingState>;
   onboardingValidate(request: OnboardingValidateRequest): Promise<OnboardingValidationResult>;
   onboardingSave(request: OnboardingSaveRequest): Promise<OnboardingSaveResult>;
-  /** Salta il wizard salvando una configurazione con valori predefiniti. */
+  /** Skips the wizard by saving a configuration with default values. */
   onboardingSkip(): Promise<OnboardingSaveResult>;
   secretsStatus(): Promise<SecretsStatus>;
-  /** Revoca (cancella) il token della chiave. */
+  /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;
   /** Riavvia l'app (relaunch + exit). */
   appRelaunch(): Promise<void>;
@@ -367,5 +367,5 @@ export interface SmartTerminalApi {
   onSearchRefreshed(listener: (event: SearchRefreshedEvent) => void): Unsubscribe;
 }
 
-/** Argomento di avvio che abilita il seam di test `__testInvoke` nel preload. */
+/** Launch argument enabling the `__testInvoke` test seam in preload. */
 export const TEST_IPC_ARGUMENT = '--smart-terminal-test-ipc';

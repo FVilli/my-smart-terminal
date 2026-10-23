@@ -103,11 +103,11 @@ describe('SttService', () => {
 
   it('uses the configured local command and never leaks it in the result', async () => {
     const run = vi.fn(async (_file: string, _args: readonly string[], _input: Uint8Array, _timeoutMs: number) => ({
-      stdout: ' dettato locale ',
+      stdout: ' local dictation ',
     }));
     const service = new SttService({ ...stores(config()), run });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
-    expect(result).toEqual({ text: 'dettato locale', skipped: false });
+    expect(result).toEqual({ text: 'local dictation', skipped: false });
     expect(run).toHaveBeenCalledTimes(1);
     expect(run.mock.calls[0]?.[0]).toBe('/opt/stt/transcribe');
     expect(JSON.stringify(result)).not.toContain('/opt/stt');
@@ -117,14 +117,14 @@ describe('SttService', () => {
     const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
       expect(String(url)).toBe('https://api.openai.com/v1/audio/transcriptions');
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer cloud-token');
-      return new Response(JSON.stringify({ text: 'dettato cloud' }), { status: 200 });
+      return new Response(JSON.stringify({ text: 'cloud dictation' }), { status: 200 });
     });
     const service = new SttService({
       ...stores(config({ sttProvider: 'cloud', sttCommand: undefined })),
       fetch: fetcher as typeof fetch,
     });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
-    expect(result).toEqual({ text: 'dettato cloud', skipped: false });
+    expect(result).toEqual({ text: 'cloud dictation', skipped: false });
     expect(JSON.stringify(result)).not.toContain('cloud-token');
   });
 

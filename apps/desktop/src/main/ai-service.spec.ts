@@ -50,17 +50,17 @@ describe('AiService', () => {
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer secret-token');
       const body = JSON.parse(String(init?.body)) as { model: string; temperature: number };
       expect(body).toMatchObject({ model: 'test-model', temperature: 0 });
-      return new Response(JSON.stringify({ choices: [{ message: { content: 'testo corretto' } }] }), { status: 200 });
+      return new Response(JSON.stringify({ choices: [{ message: { content: 'corrected text' } }] }), { status: 200 });
     });
     const service = new AiService({ ...stores(config({ aiBaseUrl: 'https://example.test/v1' })), fetch: fetcher as typeof fetch });
-    const result = await service.correct({ text: 'testo da correggere' });
-    expect(result).toMatchObject({ corrected: 'testo corretto', skipped: false });
+    const result = await service.correct({ text: 'text to correct' });
+    expect(result).toMatchObject({ corrected: 'corrected text', skipped: false });
     expect(JSON.stringify(result)).not.toContain('secret-token');
   });
 
   it('falls back to the original on provider failure', async () => {
     const fetcher = vi.fn(async () => new Response('nope', { status: 500 }));
-    const result = await new AiService({ ...stores(config()), fetch: fetcher as typeof fetch }).correct({ text: 'testo' });
-    expect(result).toMatchObject({ corrected: 'testo', skipped: true, reason: 'provider-error' });
+    const result = await new AiService({ ...stores(config()), fetch: fetcher as typeof fetch }).correct({ text: 'text' });
+    expect(result).toMatchObject({ corrected: 'text', skipped: true, reason: 'provider-error' });
   });
 });
