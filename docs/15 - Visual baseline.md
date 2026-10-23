@@ -13,12 +13,12 @@ Reference: `mockups/Smart Terminal - final mock.png` (1930×1327). Comparison: r
 
 | Region | Mock pixels | Share of content height | Target at 872 px |
 | --- | --- | --- | --- |
-| Window/menu/header area | y0–121 | 9.2% | ~80 px, reduced to 64 px for the app header because the mock top may include window chrome |
-| Session tab bar | y123–214 (92 px) | 7.0% | 54 px |
+| Window/menu/header area | y0–121 | 9.2% | app header 48 px; the mock top likely includes window chrome |
+| Session tab bar | y123–214 (92 px) | 7.0% | 52–56 px |
 | Tab/terminal separator | y218–227 (10 px) | 0.8% | 1 px border |
 | Terminal output | y228–1121 (894 px) | 67.8% | flexible remainder (~610 px) |
-| Assisted input | y1125–1286 (162 px) | 12.3% | ~118 px including toolbar/spacing |
-| Status footer | y1290–1318 (29 px) | 2.2% | 26 px |
+| Assisted input | y1125–1286 (162 px) | 12.3% | 96–110 px including toolbar/spacing |
+| Status footer | y1290–1318 (29 px) | 2.2% | 28 px |
 
 Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemented as a 75/25 grid with `min-width: 0`.
 
@@ -46,7 +46,7 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 | `--card-bg` | `#333333` | sidebar cards |
 | `--border` | `#161d26` | separators |
 | `--text` / `--text-muted` | `#e6edf3` / `#8b9bab` | readable contrast |
-| `--accent` | `#8cc7a1` | mock terminal green; verify contrast on dark surfaces |
+| `--accent` | `#4cc2a5` | keep the existing accessible accent; `#8cc7a1` was a single terminal sample, not a UI palette |
 | Footer | `#171e25` | same as terminal, thin top border |
 
 Typography: monospace for terminal, assisted editor, session labels and tab targets; UI chrome may use the system sans-serif. Active tab is a filled `#384a5d` surface, not the terminal background.

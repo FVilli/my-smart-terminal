@@ -5,7 +5,7 @@ project: smart-terminal
 created: 2026-10-23
 id: "M08-T05"
 milestone: "M08"
-depends_on: "T04"
+depends_on: "T01"
 deliverables: "Linux desktop menu and package entry"
 ---
 <!-- gsynchro:v1 id=bc732635-25a9-4d40-b12a-f531b0712611 registered=2026-10-23T12:22:14.926Z -->

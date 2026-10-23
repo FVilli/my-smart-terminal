@@ -16,7 +16,7 @@ deliverables: "Application shell alignment"
 Align the main shell (header, tab bar, terminal area, sidebar, assisted input, footer) with the approved mock measurements.
 
 ## Constrained implementation
-Implement the target proportions and palette from T01: 75/25 grid with min-width/min-height 0; header/tab structure; taller tab bar with distinct active/inactive colors; black/very dark sidebar with #333 cards; taller assisted input; thin footer on terminal background; terminal #171e25; consistent borders/spacing. Keep the sidebar full height and all content scrollable. Add a header settings slot (icon wired in M09). Preserve xterm fit/resize and existing data-testid behavior.
+Implement the target proportions and palette from T01: 75/25 grid with min-width/min-height 0; header/tab structure; taller tab bar with distinct active/inactive colors; black/very dark sidebar with #333 cards; taller assisted input; thin footer on terminal background; terminal #171e25; consistent borders/spacing. Keep the sidebar full height and all content scrollable. Reserve the header settings slot but hide it until M09-T01 (do not render a disabled placeholder). Preserve xterm fit/resize and existing data-testid behavior.
 
 ## Acceptance criteria
 DOM metrics at 1440x900 and 1024x700 show 75/25 ±0.02, no overflow, tab/input/footer heights within the documented targets; active tab and sidebar colors sampled from screenshots match the target palette; terminal/input use monospace; no session switching or PTY behavior changes.

@@ -16,7 +16,7 @@ deliverables: "AI provider connection test"
 Verify the configured AI provider responds before leaving setup.
 
 ## Constrained implementation
-Add a “Test AI” action in the AI step. It sends a minimal, non-destructive request through the existing main-only AiService with the configured provider/base URL/model/token, timeout/abort, and returns a clear result (success, latency, model, sanitized error). Never execute commands, never log the token or prompt text beyond a fixed test marker. Support deterministic test mode for CI/smoke. Disable the action when unconfigured and show remediation links.
+Add a shared `setup:test-ai` IPC contract and a “Test AI” action in the AI step. It sends a minimal, non-destructive request through the existing main-only AiService with the configured provider/base URL/model/token, timeout/abort, and returns a clear result (success, latency, model, sanitized error). Never execute commands, never log the token or prompt text beyond a fixed test marker. Support deterministic test mode for CI/smoke. Disable the action when unconfigured and show remediation links.
 
 ## Acceptance criteria
 A configured provider shows a successful response; wrong token/URL/timeout/offline produce localized actionable errors; token never appears in UI or logs; no terminal command is executed; smoke test covers success/failure with test mode; unit tests cover timeout and sanitized errors.
