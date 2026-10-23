@@ -34,6 +34,7 @@
     "test:onboarding-smoke": "npm run build && node scripts/onboarding-smoke.mjs",
     "test:ipc-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:pty-smoke": "npm run rebuild:native && npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_PTY_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
+    "test:e2e": "npm run build && node scripts/e2e-multi-instance.mjs",
     "test:watch": "vitest",
     "test:ui": "ng test renderer",
     "rebuild:native": "electron-rebuild -f -w node-pty",

@@ -26,3 +26,9 @@ Tutti i casi passano su fixture file e Git locale.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: modalità E2E main (`SMART_TERMINAL_E2E_MODE` same-machine/cross-machine, READY/ROLE/SEARCH), script `scripts/e2e-multi-instance.mjs`, `test:e2e`.
+- Verifica: due istanze Electron reali su Xvfb; una sola primary, sessionId distinti, file Markdown presenti; SIGKILL del primary + takeover del secondary; cross-machine con bare remote e marker visibile senza scritture locali.
+- Correzione in review: lo script uccideva solo il wrapper Node lasciando vivo Electron e il lock; ora usa un process group dedicato (`detached` + kill negativo) e attende il takeover.

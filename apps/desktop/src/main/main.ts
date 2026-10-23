@@ -53,6 +53,7 @@ const sttSmokeTest = process.env['SMART_TERMINAL_STT_SMOKE'] === '1';
 const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
 const sshSmokeTest = process.env['SMART_TERMINAL_SSH_SMOKE'] === '1';
 const onboardingSmokeTest = process.env['SMART_TERMINAL_ONBOARDING_SMOKE'] === '1';
+const e2eMode = process.env['SMART_TERMINAL_E2E_MODE'];
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 let terminalHost: TerminalHost | undefined;
@@ -191,6 +192,9 @@ app.whenReady().then(async () => {
   // Le uscite via app.exit() (smoke, crash controllati) non emettono before-quit: rilascia comunque il lock primary.
   process.on('exit', () => runtime.releaseLockSync());
   runtime.onRoleChanged(() => {
+    if (e2eMode === 'same-machine' || e2eMode === 'cross-machine') {
+      console.log(`SMART_TERMINAL_E2E_ROLE ${JSON.stringify({ instance: process.env['SMART_TERMINAL_E2E_INSTANCE'] ?? '', isPrimary: runtime.isPrimary })}`);
+    }
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(IPC_EVENTS.roleChanged, { isPrimary: runtime.isPrimary });
     }
@@ -231,6 +235,24 @@ app.whenReady().then(async () => {
     onRecorded: (sessionDirectory) => runtime.notifyWrite(sessionDirectory),
   });
   const clipboardCapture = new ClipboardGatewayAdapter(runtime, (senderId, sessionId) => host.resolveSession(senderId, sessionId));
+  if ((e2eMode === 'same-machine' || e2eMode === 'cross-machine') && process.env['SMART_TERMINAL_E2E_INSTANCE']) {
+    const instance = process.env['SMART_TERMINAL_E2E_INSTANCE'];
+    const marker = process.env['SMART_TERMINAL_E2E_MARKER'] ?? `e2e-${instance}-${process.pid}-${Date.now()}`;
+    const created = await dataRuntime.createSession(`e2e-${instance}`, { kind: 'local', cwd: process.cwd() });
+    const sessionRef = { sessionDirectory: created.allocation.relativeDir };
+    const e2eHistory = new HistoryService({ dataRepoPath: dataRuntime.dataRepoPath, resolveSession: (_sender, id) => id === created.allocation.sessionId ? sessionRef : undefined, onRecorded: (dir) => runtime.notifyWrite(dir) });
+    if (e2eMode !== 'cross-machine' || instance === 'A') e2eHistory.record(1, { sessionId: created.allocation.sessionId, text: marker });
+    const ready = { mode: e2eMode, instance, role: runtime.isPrimary ? 'primary' : 'secondary', isPrimary: runtime.isPrimary, pid: process.pid, sessionId: created.allocation.sessionId, sessionDirectory: created.allocation.relativeDir, machine: created.machine };
+    console.log(`SMART_TERMINAL_E2E_READY ${JSON.stringify(ready)}`);
+    if (e2eMode === 'cross-machine' && instance !== 'A') {
+      const timer = setInterval(async () => {
+        const found = (await runtime.query({ query: marker })).entries.length > 0;
+        console.log(`SMART_TERMINAL_E2E_SEARCH ${JSON.stringify({ instance, found, query: marker })}`);
+      }, 500);
+      timer.unref();
+    }
+    app.on('before-quit', () => dataRuntime.endSession(created.allocation.sessionId));
+  }
   const ai = new AiService({
     configStore,
     secrets,

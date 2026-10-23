@@ -86,6 +86,7 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test` | unit test Vitest (IPC, SessionManager, data schema/allocatore, runtime) |
 | `npm run test:data` | test mirati del package data e del runtime dati |
 | `npm run test:coordinator` | elezione multi-processo, takeover, protocollo, Git con repo bare |
+| `npm run test:e2e` | due istanze Electron reali: primary unico, ID distinti, failover e cross-machine su Git bare |
 | `node scripts/run-electron.mjs apps/desktop` | avvio Electron su Xvfb `:99` (usato dagli smoke) |
 | `npm run build` | bundle main/preload + Angular production |
 | `npm run test:ipc-smoke` | finestra Electron, API valida, rifiuto payload/canale, renderer senza Node |
