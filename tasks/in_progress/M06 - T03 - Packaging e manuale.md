@@ -26,3 +26,9 @@ Artefatti avviabili dove runner presente; procedure manuali documentate.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: version 1.0.0, electron-builder config (AppImage/.deb, dmg, NSIS, asar/node-pty, icona), script package:linux/mac/win/dir, checksums SHA-256, CI matrice Linux/macOS/Windows e release workflow su tag, manuale utente/README/release notes.
+- Verifica: `npm run package:linux` produce AppImage e .deb; `release/linux-unpacked` e AppImage avviati con smoke su Xvfb; `npm run checksums` genera SHA256SUMS; docs/09 aggiornato. macOS/Windows demandati alle pipeline native.
+- Note: artefatti non firmati, no auto-update; icona generata localmente; `latest-linux.yml` è metadato del builder, escluso dai checksum.

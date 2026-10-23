@@ -24,5 +24,15 @@ Artefatti con checksum SHA-256 pubblicati insieme alla release. Signing macOS/Wi
 4. UI confrontata con mock approvato, con monospace e layout 75/25.
 5. Release notes: funzionalità, limitazioni, migrazione dati e istruzioni installazione.
 
+## Implementazione v1.0.0
+- Versione `1.0.0` in root/desktop/renderer; `electron-builder` in `electron-builder.yml` con:
+  - Linux: AppImage e `.deb` (`npm run package:linux`), icona `apps/desktop/build/icon.png`, `executableName smart-terminal`, `syncDesktopName`.
+  - macOS: `.dmg`; Windows: installer NSIS. Costruiti dalle rispettive pipeline native (la build locale Linux produce solo artefatti Linux).
+  - `asar: true`, `node-pty` in `asarUnpack`, rebuild nativo per Electron, `artifactName` con nome/versione/os/arch.
+- `npm run package:dir` per una verifica rapida; `npm run checksums` genera `release/SHA256SUMS` escludendo metadati di update.
+- CI: `.github/workflows/ci.yml` (matrice Linux/macOS/Windows, `npm ci`, lint, typecheck, test, coordinator, build, rebuild nativo, smoke Linux su Xvfb, package, checksums, upload artefatti). `.github/workflows/release.yml` su tag `v*` pubblica gli artefatti e `SHA256SUMS` con `GITHUB_TOKEN`; nessun rilascio da PR.
+- Smoke artifact Linux verificato con AppImage `--appimage-extract-and-run` e variabili `SMART_TERMINAL_SMOKE=1` su display virtuale.
+- Gli artefatti V1 sono **non firmati**; nessun auto-update. Pubblicare sempre `SHA256SUMS` e la nota unsigned. La versione dell'app è `1.0.0`, tag atteso `v1.0.0`.
+
 ## Aggiornamenti e compatibilità
 Lo schema frontmatter Markdown ha un campo `schema_version`; una nuova versione dell'app deve leggere gli schemi precedenti o eseguire migrazioni esplicite con backup. Non modificare contenuti sincronizzati in modo distruttivo durante upgrade automatici.

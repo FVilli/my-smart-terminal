@@ -1,6 +1,6 @@
 {
   "name": "my-smart-terminal",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Terminale desktop multi-istanza con sessioni Markdown e sync Git",
   "workspaces": [
@@ -42,7 +42,13 @@
     "setup:test-display": "node scripts/setup-electron-wrapper.mjs",
     "postinstall": "node scripts/setup-electron-wrapper.mjs",
     "test:ai-smoke": "npm run build && node scripts/ai-smoke.mjs",
-    "test:stt-smoke": "npm run build && node scripts/stt-smoke.mjs"
+    "test:stt-smoke": "npm run build && node scripts/stt-smoke.mjs",
+    "package:linux": "npm run build && electron-builder --linux AppImage deb --config electron-builder.yml",
+    "package:mac": "npm run build && electron-builder --mac dmg --config electron-builder.yml",
+    "package:win": "npm run build && electron-builder --win nsis --config electron-builder.yml",
+    "package:dir": "npm run build && electron-builder --dir --config electron-builder.yml",
+    "checksums": "node scripts/checksums.mjs",
+    "setup:electron": "node node_modules/electron/install.js"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",
@@ -64,12 +70,18 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0",
     "vitest": "5.0.5",
-    "wait-on": "9.5.1"
+    "wait-on": "9.5.1",
+    "gsynchro": "0.3.7"
   },
   "allowScripts": {
     "node-pty@1.1.0": true,
     "esbuild@0.28.2": true,
     "@parcel/watcher@2.6.0": true,
     "lmdb@3.5.6": true
-  }
+  },
+  "dependencies": {
+    "node-pty": "1.1.0"
+  },
+  "author": "Federico Villi <fvilli@gmail.com>",
+  "desktopName": "smart-terminal.desktop"
 }

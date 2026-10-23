@@ -1,5 +1,6 @@
-appId: com.smartterminal.app
+appId: com.fvilli.smartterminal
 productName: Smart Terminal
+copyright: Copyright © 2026 Federico Villi
 directories:
   output: release
   buildResources: apps/desktop/build
@@ -7,20 +8,47 @@ files:
   - dist/apps/desktop/**/*
   - dist/apps/renderer/browser/**/*
   - package.json
+  - '!**/*.map'
 extraMetadata:
   main: dist/apps/desktop/main.js
 asar: true
 asarUnpack:
   - node_modules/node-pty/**/*
 npmRebuild: true
+artifactName: '${productName}-${version}-${os}-${arch}.${ext}'
 linux:
+  icon: icon.png
   target:
     - AppImage
     - deb
   category: Development
+  executableName: smart-terminal
+  syncDesktopName: true
+  maintainer: Federico Villi <fvilli@gmail.com>
+  synopsis: Terminale desktop multi-sessione con Markdown e Git
+  description: Terminale desktop multi-istanza per shell locali e SSH, con history/clipboard Markdown, sync Git e input assistito opzionale.
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
 mac:
+  icon: icon.png
+  category: public.app-category.developer-tools
   target:
     - dmg
+  hardenedRuntime: false
+  gatekeeperAssess: false
 win:
+  icon: icon.png
   target:
     - nsis
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
