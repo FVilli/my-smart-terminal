@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=0c7cf147-e9f0-433e-8027-a48232215715 registered=2026-10-23T20:20:48.246Z -->
 
 # Install Smart Terminal on Linux
 

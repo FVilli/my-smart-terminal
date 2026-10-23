@@ -8,6 +8,7 @@ milestone: "M15"
 depends_on: "M15-T01"
 deliverables: "stt_base_url, response format and language support for OpenAI-compatible transcription"
 ---
+<!-- gsynchro:v1 id=d9f9ffb1-b011-45d0-9128-246ad2292c0d registered=2026-10-23T20:20:48.294Z -->
 
 # M15 - T02 - Self-hosted STT configuration
 

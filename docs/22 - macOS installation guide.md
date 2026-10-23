@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=97b440ef-4705-4c18-8ef8-0284667d78b3 registered=2026-10-23T20:20:48.249Z -->
 
 # Install Smart Terminal on macOS
 

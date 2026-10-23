@@ -8,6 +8,7 @@ milestone: "M11"
 depends_on: "M10"
 deliverables: "512x512 Linux installation icon, README logo asset, Linux packaging icon configuration and README branding"
 ---
+<!-- gsynchro:v1 id=6b49abc9-0efa-4e85-9a98-1bfd80eee6bd registered=2026-10-23T20:20:48.260Z -->
 
 # M11 - T01 - Branding assets and Linux icon
 

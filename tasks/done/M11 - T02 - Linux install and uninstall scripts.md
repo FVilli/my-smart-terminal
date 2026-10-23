@@ -8,6 +8,7 @@ milestone: "M11"
 depends_on: "M10"
 deliverables: "Root install.sh and uninstall.sh, POSIX-safe curl|sh behavior, fake-command tests and CI checks"
 ---
+<!-- gsynchro:v1 id=2662cae8-9692-4cfd-a44a-95e8eeb8fa5e registered=2026-10-23T20:20:48.261Z -->
 
 # M11 - T02 - Linux install and uninstall scripts
 

@@ -8,6 +8,7 @@ milestone: "M15"
 depends_on: "M15-T02"
 deliverables: "AI/STT wizard fields, Unsloth examples, tests and security review"
 ---
+<!-- gsynchro:v1 id=74a1c855-7de1-47ee-8693-b2eb3e33624c registered=2026-10-23T20:20:48.295Z -->
 
 # M15 - T03 - Wizard guides and review
 

@@ -5,6 +5,7 @@ project: smart-terminal
 created: 2026-10-23
 status: accepted
 ---
+<!-- gsynchro:v1 id=907f3f78-02d6-4ba6-be00-e900738f25d6 registered=2026-10-23T20:20:48.251Z -->
 
 # ADR: assisted input and terminal keyboard behavior
 

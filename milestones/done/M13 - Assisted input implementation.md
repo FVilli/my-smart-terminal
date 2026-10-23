@@ -7,6 +7,7 @@ id: "M13"
 goal: "Implement the accepted M12 input contract: explicit focus transitions, caret/arrow behavior, Tab focus traversal, Enter/Shift+Enter/IME/Escape, and tests proving the PTY remains untouched."
 depends_on: "M12"
 ---
+<!-- gsynchro:v1 id=baa17fa5-6911-405c-b943-b7c29aa7c144 registered=2026-10-23T20:20:48.256Z -->
 
 # M13 - Assisted input implementation
 

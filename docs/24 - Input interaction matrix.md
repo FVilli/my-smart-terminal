@@ -4,6 +4,7 @@ type: reference
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=c760b2ac-c6f1-4ffb-a1e8-dc11388de171 registered=2026-10-23T20:20:48.252Z -->
 
 # Input interaction matrix
 

@@ -8,6 +8,7 @@ milestone: "M13"
 depends_on: "M12"
 deliverables: "Explicit terminal/composer focus transitions with accessible, discoverable shortcut"
 ---
+<!-- gsynchro:v1 id=0fe19fe1-d20c-4d01-9d4c-ec7395175b8c registered=2026-10-23T20:20:48.276Z -->
 
 # M13 - T01 - Focus transitions
 

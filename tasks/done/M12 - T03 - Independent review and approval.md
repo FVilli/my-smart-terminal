@@ -8,6 +8,7 @@ milestone: "M12"
 depends_on: "M12-T02"
 deliverables: "Independent review of the matrix/ADR, fixes, approval record and handoff criteria"
 ---
+<!-- gsynchro:v1 id=f6f65a53-b681-4651-99f3-a81e942b5e29 registered=2026-10-23T20:20:48.273Z -->
 
 # M12 - T03 - Independent review and approval
 

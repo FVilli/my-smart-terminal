@@ -8,6 +8,7 @@ milestone: "M13"
 depends_on: "M13-T01, M13-T02"
 deliverables: "Automated focus/composer tests and terminal/SSH/TUI passthrough regression coverage"
 ---
+<!-- gsynchro:v1 id=4cc26ece-5abd-4916-bf6c-cbca9ef528de registered=2026-10-23T20:20:48.284Z -->
 
 # M13 - T03 - Passthrough and accessibility verification
 

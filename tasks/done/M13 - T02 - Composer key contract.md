@@ -8,6 +8,7 @@ milestone: "M13"
 depends_on: "M13-T01"
 deliverables: "Caret/arrow, Tab, Enter, Shift+Enter, IME and Escape behavior in the assisted composer"
 ---
+<!-- gsynchro:v1 id=d23fc504-27d2-40b1-b744-97356fe490bc registered=2026-10-23T20:20:48.282Z -->
 
 # M13 - T02 - Composer key contract
 

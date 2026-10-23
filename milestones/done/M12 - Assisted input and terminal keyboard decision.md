@@ -7,6 +7,7 @@ id: "M12"
 goal: "Decide definitively whether to keep the assisted input or replace it with terminal Enter interception, document the keyboard contract, and prepare a future implementation without changing app behavior."
 depends_on: "M11"
 ---
+<!-- gsynchro:v1 id=6a809b52-05f0-4623-9427-0a1723162970 registered=2026-10-23T20:20:48.255Z -->
 
 # M12 - Assisted input and terminal keyboard decision
 

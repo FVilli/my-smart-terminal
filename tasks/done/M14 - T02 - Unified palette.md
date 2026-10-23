@@ -8,6 +8,7 @@ milestone: "M14"
 depends_on: "M14-T01"
 deliverables: "Sidebar uses terminal background; history/clipboard cards use input background; visual baseline updated"
 ---
+<!-- gsynchro:v1 id=217cab34-331a-4ffc-8e5d-0c5fa1f80127 registered=2026-10-23T20:20:48.288Z -->
 
 # M14 - T02 - Unified palette
 

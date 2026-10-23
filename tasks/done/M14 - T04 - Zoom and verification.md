@@ -8,6 +8,7 @@ milestone: "M14"
 depends_on: "M14-T01, M14-T02, M14-T03"
 deliverables: "Working Ctrl+plus/minus/0 zoom, ADR exception, visual/package verification"
 ---
+<!-- gsynchro:v1 id=a8d12e41-1397-4298-ae0f-bfef127682b9 registered=2026-10-23T20:20:48.291Z -->
 
 # M14 - T04 - Zoom and verification
 

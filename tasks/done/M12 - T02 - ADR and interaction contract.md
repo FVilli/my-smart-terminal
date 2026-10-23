@@ -8,6 +8,7 @@ milestone: "M12"
 depends_on: "M12-T01"
 deliverables: "ADR selecting the interaction model and defining the keyboard/focus/AI/history contract"
 ---
+<!-- gsynchro:v1 id=26966836-77f8-4139-adf9-f7fe92aab318 registered=2026-10-23T20:20:48.267Z -->
 
 # M12 - T02 - ADR and interaction contract
 

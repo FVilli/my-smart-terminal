@@ -8,6 +8,7 @@ milestone: "M14"
 depends_on: "M14-T01"
 deliverables: "First-run wizard retained; edit mode tabs Repository/AI/STT/Appearance; persisted terminal monospace font"
 ---
+<!-- gsynchro:v1 id=aec8de43-dd8f-4531-a090-258d28f09f89 registered=2026-10-23T20:20:48.290Z -->
 
 # M14 - T03 - Tabbed settings and terminal font
 

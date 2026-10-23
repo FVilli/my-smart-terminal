@@ -7,6 +7,7 @@ id: "M11"
 goal: "Make Linux installation a safe one-command experience from the public repository, with Ubuntu menu integration, a new installation icon and README logo, verified by a v1.1.1 release."
 depends_on: "M10"
 ---
+<!-- gsynchro:v1 id=9532bc3d-6071-4619-9741-98c7f8b49a76 registered=2026-10-23T20:20:48.255Z -->
 
 # M11 - Linux one-command installation and branding
 

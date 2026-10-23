@@ -8,6 +8,7 @@ milestone: "M15"
 depends_on: "M14"
 deliverables: "Reliable OpenAI-compatible chat configuration, clear base URL/token/model guidance and sanitized errors"
 ---
+<!-- gsynchro:v1 id=ecfac9ec-c58e-4c6c-be3e-b9df3cf53f7e registered=2026-10-23T20:20:48.293Z -->
 
 # M15 - T01 - Self-hosted AI diagnostics
 

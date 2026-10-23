@@ -7,6 +7,7 @@ id: "M14"
 goal: "Remove non-value Chrome, show the version, unify the palette, add tabbed settings and terminal font choice, fix zoom and the runtime icon."
 depends_on: "M13"
 ---
+<!-- gsynchro:v1 id=9f41c126-cb8b-4165-82df-690881438efb registered=2026-10-23T20:20:48.258Z -->
 
 # M14 - Visual shell, settings and zoom
 

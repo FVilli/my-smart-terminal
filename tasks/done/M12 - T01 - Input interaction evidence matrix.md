@@ -8,6 +8,7 @@ milestone: "M12"
 depends_on: "M11"
 deliverables: "Evidence matrix comparing current input/terminal behavior and all three options"
 ---
+<!-- gsynchro:v1 id=2fbe6c45-160d-44cd-9576-9b6ea0f6ae06 registered=2026-10-23T20:20:48.265Z -->
 
 # M12 - T01 - Input interaction evidence matrix
 

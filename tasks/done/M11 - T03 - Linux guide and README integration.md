@@ -8,6 +8,7 @@ milestone: "M11"
 depends_on: "M11-T01, M11-T02"
 deliverables: "Updated Linux guide with one-command install/remove, menu/icon explanation, README logo and consistent docs"
 ---
+<!-- gsynchro:v1 id=e9f4ae4c-e412-4b3f-b596-36eab127f46f registered=2026-10-23T20:20:48.262Z -->
 
 # M11 - T03 - Linux guide and README integration
 

@@ -8,6 +8,7 @@ milestone: "M14"
 depends_on: "M13"
 deliverables: "Menu policy, dynamic version title and runtime/menu icon"
 ---
+<!-- gsynchro:v1 id=301f3034-5134-44bf-b406-d7faa8c15a89 registered=2026-10-23T20:20:48.286Z -->
 
 # M14 - T01 - Menu title and icon
 
