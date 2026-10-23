@@ -27,6 +27,7 @@ const METRICS_SCRIPT = `(() => {
     footerHeight: box('app-status-footer')?.height ?? 0,
     activeTabBg: activeTab ? getComputedStyle(activeTab).backgroundColor : null,
     sidebarBg: bg('app-sidebar-panel'),
+    sidebarCardBg: bg('[data-testid="sidebar-entry"]'),
     terminalBg: bg('app-terminal-workarea'),
     inputBg: bg('app-assisted-input') };
 })()`;

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, clipboard, Menu, net, protocol, safeStorage, session, shell } from 'electron';
 import path from 'node:path';
 import { formatWindowTitle, resolveWindowIcon } from './window-branding';
+import { resetZoomFactor, stepZoomFactor } from './zoom';
 import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
@@ -108,6 +109,22 @@ function createWindow(): BrowserWindow {
   });
 
   window.once('ready-to-show', () => window.show());
+
+  let zoomFactor = 1;
+  // Electron delivers this before input reaches focused xterm; only zoom shortcuts are consumed.
+  window.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown' || input.alt || !(input.control || input.meta)) return;
+    const key = input.key.toLowerCase();
+    let next: number | undefined;
+    if (key === '0') next = resetZoomFactor();
+    else if (key === '-' || key === 'subtract') next = stepZoomFactor(zoomFactor, -1);
+    else if (key === '+' || key === '=' || key === 'add') next = stepZoomFactor(zoomFactor, 1);
+    if (next !== undefined) {
+      event.preventDefault();
+      zoomFactor = next;
+      window.webContents.setZoomFactor(zoomFactor);
+    }
+  });
 
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   window.webContents.on('will-navigate', (event, targetUrl) => {

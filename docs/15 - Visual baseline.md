@@ -32,7 +32,7 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 | Terminal | ~672 px (`#171e25`) |
 | Assisted input | ~86 px (`#222e3c`) |
 | Footer | 28 px (`#212b38`) |
-| Sidebar | 360 px at 1440 (25%), `#0a0d10` |
+| Sidebar | 360 px at 1440 (25%), `#171e25` |
 | Main accent | `#4cc2a5` |
 
 ## Target palette
@@ -43,8 +43,8 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 | `--tab-bg` | `#212b38` | inactive tab bar |
 | `--tab-active` | `#384a5d` | active tab, full-height fill |
 | `--input-bg` | `#222e3c` | assisted input |
-| `--sidebar-bg` | `#000000` | sidebar |
-| `--card-bg` | `#333333` | sidebar cards |
+| `--sidebar-bg` | `#171e25` | sidebar, matches terminal |
+| `--card-bg` | `#222e3c` | history/clipboard cards, matches input |
 | `--border` | `#161d26` | separators |
 | `--text` / `--text-muted` | `#e6edf3` / `#8b9bab` | readable contrast |
 | `--accent` | `#4cc2a5` | keep the existing accessible accent; `#8cc7a1` was a single terminal sample, not a UI palette |
@@ -58,6 +58,10 @@ Typography: monospace for terminal, assisted editor, session labels and tab targ
 2. Read DOM metrics (split, overflow) from `SMART_TERMINAL_LAYOUT_RESULT`.
 3. Sample screenshot colors and row/column transitions with a PNG decoder (Pillow or equivalent) at known regions.
 4. Record deltas against this document; do not use full-image pixel-perfect diffing because antialiasing and fonts vary by platform.
+
+## Zoom and terminal keyboard behavior
+
+Ctrl/Cmd+- and Ctrl/Cmd+Plus (including Ctrl+=, Ctrl+Shift+=, and numpad add/subtract) adjust zoom in 10% steps from 50% to 200%; Ctrl/Cmd+0 resets to 100%. These zoom shortcuts are handled by Electron before input reaches xterm. Other keys are not intercepted; terminal applications may consume other Ctrl/Cmd shortcuts.
 
 ## Out of scope
 

@@ -19,3 +19,7 @@ Map the previously black sidebar background to the xterm background `#171e25`; m
 
 ## Acceptance
 Palette measurements match; contrast/readability retained; layout and sidebar smokes/screenshots pass.
+
+## Outcome
+- Sidebar/header background now uses terminal `#171e25`; history/clipboard cards use input `#222e3c`.
+- Updated visual baseline and layout gate; layout passes at both viewports.
