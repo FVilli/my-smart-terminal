@@ -1,37 +1,37 @@
 ---
-title: "Workflow agenti"
+title: "Agent workflow"
 type: workflow
 project: smart-terminal
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=f2889ae1-28e4-43eb-b6d0-da75bb1febd4 registered=2026-10-23T07:57:50.130Z -->
 
-# Workflow agenti
+# Agent workflow
 
-## Organizzazione
-- `docs/`: specifiche architetturali e contratti brevi con frontmatter. `mockups/`: baseline visiva.
-- `milestones/todo|in_progress|done/`: file `MNN - Nome.md`.
-- `tasks/todo|in_progress|done/`: file `MNN - TNN - Nome.md`.
-- **Lo stato deriva soltanto dalla cartella**, mai dal frontmatter. Spostare fisicamente il file nel cambio di stato.
+## Organization
+- `docs/`: short architectural specifications and contracts with frontmatter. `mockups/`: visual baseline.
+- `milestones/todo|in_progress|done/`: `MNN - Name.md` files.
+- `tasks/todo|in_progress|done/`: `MNN - TNN - Name.md` files.
+- **State derives only from the folder**, never from frontmatter. Physically move the file when changing state.
 
-## Frontmatter richiesto
-Tutti i Markdown: `title`, `type`, `project`, `created`. Milestone: `id`, `goal`, `depends_on`. Task: `id`, `milestone`, `depends_on`, `deliverables`; non aggiungere campo `status`.
+## Required frontmatter
+All Markdown: `title`, `type`, `project`, `created`. Milestone: `id`, `goal`, `depends_on`. Task: `id`, `milestone`, `depends_on`, `deliverables`; do not add a `status` field.
 
-## Esecuzione
-1. Selezionare task in `todo` con dipendenze `done`; spostarlo in `in_progress` prima di lavorare.
-2. Leggere le specifiche linkate, rispettare decisioni e scope; vietato introdurre stack/DB/servizi senza decisione esplicita.
-3. Implementare cambiamenti minimi; eseguire test descritti in criteri di accettazione.
-4. Documentare eventuali deviazioni in task e fermarsi per decisioni architetturali non coperte.
-5. Spostare task in `done` solo se criteri verificati e deliverable presenti.
-6. Spostare milestone in `in_progress` quando parte il primo task e in `done` solo quando tutti i suoi task sono `done`.
+## Execution
+1. Select a `todo` task whose dependencies are `done`; move it to `in_progress` before working.
+2. Read the linked specifications, respect decisions and scope; do not introduce stack/DB/services without an explicit decision.
+3. Implement minimal changes; run the tests described in the acceptance criteria.
+4. Document any deviations in the task and stop for architectural decisions not covered.
+5. Move the task to `done` only when criteria are verified and deliverables are present.
+6. Move the milestone to `in_progress` when its first task starts and to `done` only when all its tasks are `done`.
 
-## Convenzioni
-Gli ID sono immutabili; non rinominare task completati. Un task deve essere eseguibile senza scelte architetturali rilevanti; fare riferimento alle specifiche sotto `docs/`. Niente SQL/SQLite: persistenza Markdown + Git.
+## Conventions
+IDs are immutable; do not rename completed tasks. A task must be executable without significant architectural choices; refer to the specifications under `docs/`. No SQL/SQLite: Markdown + Git persistence.
 
-## Priorità
-Seguire M01→M06; parallelizzare solo task senza dipendenze e senza modifiche concorrenti agli stessi file.
+## Priorities
+Follow M01→M06; parallelize only tasks without dependencies and without concurrent changes to the same files.
 
-## Sincronizzazione dei documenti
-- `gsynchro` può sincronizzare in entrambe le direzioni con la copia Drive. Dopo ogni spostamento di stato verificare che lo stesso `id` non esista in più cartelle.
-- Se compaiono duplicati, la copia canonica è quella nella cartella di stato più avanzata (`done` > `in_progress` > `todo`); rimuovere le copie stale anche dalla destinazione sincronizzata, non solo dal repo.
-- Evitare spostamenti multipli mentre il daemon sta riconciliando: fermarlo, riconciliare e riavviarlo a milestone conclusa. Frontmatter e corpo del task devono restare integri dopo la sincronizzazione.
+## Document synchronization
+- `gsynchro` can synchronize in both directions with the Drive copy. After every state change, verify that the same `id` does not exist in multiple folders.
+- If duplicates appear, the canonical copy is the one in the most advanced state folder (`done` > `in_progress` > `todo`); remove stale copies from the synchronized destination as well, not only from the repository.
+- Avoid multiple moves while the daemon is reconciling: stop it, reconcile, and restart it when the milestone is complete. Frontmatter and task body must remain intact after synchronization.

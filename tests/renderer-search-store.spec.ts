@@ -128,12 +128,12 @@ describe('SearchStore', () => {
     const store = new SearchStore();
     await store.copy('ls -la');
     expect(clipboardWrite).toHaveBeenCalledWith({ text: 'ls -la' });
-    expect(store.notice()).toBe('Copiato negli appunti');
+    expect(store.notice()).toBe('Copied to clipboard');
     await vi.advanceTimersByTimeAsync(2000);
     expect(store.notice()).toBeNull();
     clipboardWrite.mockRejectedValueOnce(new Error('x'));
     await store.copy('x');
-    expect(store.notice()).toBe('Copia non riuscita');
+    expect(store.notice()).toBe('Copy failed');
   });
 });
 
@@ -181,12 +181,12 @@ describe('SyncStatusStore', () => {
 });
 
 describe('sidebar/footer helpers', () => {
-  it('maps sync states to badges, "Repo non configurato" without remote', () => {
+  it('maps sync states to badges, "Repository not configured" without remote', () => {
     expect(syncBadge('synced', true)).toEqual({ state: 'synced', label: 'GitHub synced' });
     expect(syncBadge('dirty', true).state).toBe('syncing');
     expect(syncBadge('error', true)).toEqual({ state: 'error', label: 'GitHub sync error' });
-    expect(syncBadge('synced', false)).toEqual({ state: 'unconfigured', label: 'Repo non configurato' });
-    expect(syncBadge('error', false).label).toBe('Repo non configurato');
+    expect(syncBadge('synced', false)).toEqual({ state: 'unconfigured', label: 'Repository not configured' });
+    expect(syncBadge('error', false).label).toBe('Repository not configured');
   });
 
   it('builds one-line previews and short timestamps', () => {

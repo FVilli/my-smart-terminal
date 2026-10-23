@@ -1,34 +1,34 @@
 ---
-title: "M05 - T03 - Adapter correzione AI"
+title: "M05 - T03 - AI correction adapter"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M05-T03"
 milestone: "M05"
 depends_on: "T02"
-deliverables: "Adapter correzione AI"
+deliverables: "AI correction adapter"
 ---
 <!-- gsynchro:v1 id=93259279-5635-4f29-a0de-556c83c478db registered=2026-10-23T07:58:09.673Z -->
 
-# M05 - T03 - Adapter correzione AI
+# M05 - T03 - AI correction adapter
 
-## Obiettivo
-Adapter correzione AI.
+## Objective
+AI correction adapter.
 
-## Implementazione vincolata
-Provider Anthropic, OpenAI, locale; prompt refusi-only e review prima dell’invio.
+## Constrained implementation
+Anthropic, OpenAI, and local providers; typo-only prompts and review before sending.
 
-## Criteri di accettazione
-Nessuna correzione dei comandi shell; timeout fallback; test path/codice preservati.
+## Acceptance criteria
+No shell-command correction; timeout fallback; paths/code preserved in tests.
 
-## Riferimenti
+## References
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce databases, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato (dopo due worker parziali; integrazione finalizzata dal parent).
-- Implementato: libreria AI (prompt vincolato, shell detection conservativa, adapter Anthropic/OpenAI/OpenAI-compatible, timeout/fallback), `AiService` main con config/token dinamici e test mode, IPC `ai:status`/`ai:correct`, preload, `AiStore`, pulsante AI con review e nessun auto-send.
-- Verifica: 330 test, adapter con fetch fake/timeout, `test:ai-smoke` con status, correzione, avviso review, nessun invio, shell saltata; smoke editor/sidebar/tabs/layout verdi.
-- Deviazioni: test mode deterministico solo per smoke (`SMART_TERMINAL_AI_TEST_MODE=1`); shell detection conservativa (meglio saltare che alterare un comando).
+## Outcome
+- 2026-10-23: completed (after two partial workers; integration finalized by the parent).
+- Implemented: AI library (constrained prompt, conservative shell detection, Anthropic/OpenAI/OpenAI-compatible adapters, timeout/fallback), main `AiService` with dynamic config/tokens and test mode, `ai:status`/`ai:correct` IPC, preload, `AiStore`, AI button with review and no auto-send.
+- Verification: 330 tests, adapter with fake fetch/timeout, `test:ai-smoke` with status, correction, review warning, no send, shell skipped; editor/sidebar/tabs/layout smoke tests passed.
+- Deviations: deterministic test mode only for smoke tests (`SMART_TERMINAL_AI_TEST_MODE=1`); conservative shell detection (better to skip than alter a command).

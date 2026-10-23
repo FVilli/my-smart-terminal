@@ -5,9 +5,10 @@ project: smart-terminal
 created: 2026-10-23
 id: "M07-T06"
 milestone: "M07"
-depends_on: "T01,T02,T03,T04,T05"
+depends_on: "T01,T02,T03,T04,T05,T10"
 deliverables: "Linux release publication"
 ---
+<!-- gsynchro:v1 id=dec7d6f0-a6f4-4d13-aed7-a59e9a6f642b registered=2026-10-23T10:19:23.502Z -->
 
 # M07 - T06 - Linux release publication
 

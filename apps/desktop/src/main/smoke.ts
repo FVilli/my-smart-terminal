@@ -262,7 +262,7 @@ const EDITOR_SCRIPT = `(async () => {
   try {
     result.initialSession = await waitFor(async () => q('session-tab').length === 1 && !textarea().disabled, 8000);
     await sleep(500);
-    result.placeholderHint = textarea().placeholder === 'Invio invia · Shift+Invio va a capo';
+    result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter inserts a newline';
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
     setText("printf 'EDITOR_%s\\\\n' OK");
     await sleep(100);
@@ -391,7 +391,7 @@ const SIDEBAR_SCRIPT = `(async () => {
   result.placeholdersDiffer = clipboardPlaceholder.length > 0 && historyPlaceholder.length > 0 &&
     clipboardPlaceholder !== historyPlaceholder && search().placeholder === clipboardPlaceholder;
   result.controlsEnabled = !search().disabled && !q('sidebar-machine-filter').disabled;
-  result.syncLabel = q('sync-badge').textContent.includes('Repo non configurato');
+  result.syncLabel = q('sync-badge').textContent.includes('Repository not configured');
   for (let attempt = 0; attempt < 40 && !q('primary-indicator'); attempt += 1) await sleep(50);
   result.primaryIndicator = !!q('primary-indicator') && q('primary-indicator').textContent.includes('Primary instance');
   const sidebar = q('sidebar');
@@ -443,13 +443,13 @@ const CLIPBOARD_UI_SCRIPT = `(async () => {
   const result = {};
   result.initialSession = await waitFor(async () => (await api.listTerminals()).length === 1, 8000);
   await sleep(300);
-  result.disabledByDefault = !q('clipboard-enable').checked && q('clipboard-status').textContent.includes('Cattura disattivata') && q('clipboard-pause').disabled;
+  result.disabledByDefault = !q('clipboard-enable').checked && q('clipboard-status').textContent.includes('Clipboard capture off') && q('clipboard-pause').disabled;
   q('clipboard-enable').click();
-  result.enabledViaUi = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  result.enabledViaUi = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Clipboard capture on'), 4000);
   q('clipboard-pause').click();
-  result.pausedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Cattura in pausa'), 4000);
+  result.pausedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Clipboard capture paused'), 4000);
   q('clipboard-pause').click();
-  result.resumedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  result.resumedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Clipboard capture on'), 4000);
   return result;
 })()`;
 
@@ -491,17 +491,17 @@ const AI_SCRIPT = `(async () => {
     const status = await api.aiStatus();
     result.statusConfigured = status.configured === true && status.hasToken === true;
     result.buttonDisabledWhenEmpty = await waitFor(() => aiButton() && aiButton().disabled === true, 8000);
-    setText('Questo e un testo con un refuso');
+    setText('This is a sentance with a typo');
     await sleep(100);
     result.buttonEnabledWithDraft = aiButton().disabled === false;
     aiButton().click();
-    result.corrected = await waitFor(() => textarea().value.startsWith('Questo è'), 8000);
-    result.noticeReview = await waitFor(() => notice() && notice().textContent.includes('rivedi'), 4000);
-    result.notSent = (await api.search({ query: 'refuso' })).entries.length === 0;
+    result.corrected = await waitFor(() => textarea().value.includes('sentence'), 8000);
+    result.noticeReview = await waitFor(() => notice() && notice().textContent.includes('review'), 4000);
+    result.notSent = (await api.search({ query: 'typo' })).entries.length === 0;
     setText('git status');
     await sleep(100);
     aiButton().click();
-    result.shellSkipped = await waitFor(() => notice() && notice().textContent.includes('comando shell'), 4000);
+    result.shellSkipped = await waitFor(() => notice() && notice().textContent.includes('shell command'), 4000);
     result.shellDraftUnchanged = textarea().value === 'git status';
     result.noAutoSend = (await api.search({ query: 'git status' })).entries.length === 0;
   } finally {
@@ -545,7 +545,7 @@ const STT_SCRIPT = `(async () => {
   // 1. Permesso negato: messaggio localizzato, terminale e invio restano usabili.
   navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
   mic().click();
-  result.deniedMessage = await waitFor(() => voiceLabel() === 'Microfono negato', 4000);
+  result.deniedMessage = await waitFor(() => voiceLabel() === 'Microphone denied', 4000);
   setText('echo MIC_DENIED_STILL_WORKS');
   await sleep(100);
   result.deniedDoesNotBlockSend = q('assisted-send').disabled === false;
@@ -560,19 +560,19 @@ const STT_SCRIPT = `(async () => {
   oscillator.start();
   navigator.mediaDevices.getUserMedia = async () => destination.stream;
   press('pointerdown');
-  result.listeningLabel = await waitFor(() => voiceLabel() === 'Ascolto…', 4000);
+  result.listeningLabel = await waitFor(() => voiceLabel() === 'Listening…', 4000);
   await sleep(1200);
   press('pointerup');
-  result.transcriptInDraft = await waitFor(() => textarea().value.includes('testo dettato di prova'), 15000);
+  result.transcriptInDraft = await waitFor(() => textarea().value.includes('test transcript'), 15000);
   result.labelBackToIdle = await waitFor(() => voiceLabel() === 'Voice ready', 4000);
   try { oscillator.stop(); void context.close(); } catch {}
 
   // 3. Il testo arriva nella bozza editabile e non viene inviato.
-  setText('testo dettato di prova editato');
+  setText('edited test transcript');
   await sleep(100);
-  result.transcriptEditable = textarea().value === 'testo dettato di prova editato';
+  result.transcriptEditable = textarea().value === 'edited test transcript';
   await sleep(500);
-  result.notSent = (await api.search({ query: 'testo dettato di prova' })).entries.length === 0 && textarea().value.length > 0;
+  result.notSent = (await api.search({ query: 'test transcript' })).entries.length === 0 && textarea().value.length > 0;
 
   // 4. Nessun overflow del layout con l'etichetta vocale.
   const host = document.querySelector('app-assisted-input');
@@ -769,11 +769,11 @@ const SYNC_UI_HISTORY_SCRIPT = `(async () => {
   setValue(q('sidebar-search'), 'remote_box_prompt');
   result.searchCaseInsensitive = await waitFor(() => entries().length === 1 && hasText('REMOTE_BOX_PROMPT'), 4000);
   setValue(q('sidebar-search'), 'zzz-no-such-text');
-  result.emptyMessage = await waitFor(() => entries().length === 0 && !!q('sidebar-empty') && q('sidebar-empty').textContent.includes('Nessun risultato'), 4000);
+  result.emptyMessage = await waitFor(() => entries().length === 0 && !!q('sidebar-empty') && q('sidebar-empty').textContent.includes('No results for the current filters.'), 4000);
   setValue(q('sidebar-search'), 'SYNC_UI_OK');
   result.searchLocal = await waitFor(() => entries().length === 1 && hasText('SYNC_UI_OK'), 4000);
   entries()[0].el.querySelector('[data-testid="entry-copy"]').click();
-  result.copyNotice = await waitFor(() => !!q('sidebar-notice') && q('sidebar-notice').textContent.includes('Copiato'), 4000);
+  result.copyNotice = await waitFor(() => !!q('sidebar-notice') && q('sidebar-notice').textContent.includes('Copied to clipboard'), 4000);
   return result;
 })()`;
 
@@ -790,9 +790,9 @@ const SYNC_UI_INSERT_SCRIPT = `(async () => {
   setValue(q('sidebar-search'), '');
   q('sidebar-tab-clipboard').click();
   result.clipboardTabEmptyOfHistory = await waitFor(() => entries().every((e) => e.kind === 'clipboard'), 4000);
-  result.captureOff = q('clipboard-status').textContent.includes('Cattura disattivata');
+  result.captureOff = q('clipboard-status').textContent.includes('Clipboard capture off');
   q('clipboard-enable').click();
-  result.captureOn = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  result.captureOn = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Clipboard capture on'), 4000);
   return result;
 })()`;
 
@@ -810,7 +810,7 @@ const SYNC_UI_CLIPBOARD_SCRIPT = `(async () => {
   clip.el.querySelector('[data-testid="entry-copy"]').click();
   await sleep(300);
   const footer = q('sync-badge');
-  result.footerNoRemote = footer.textContent.includes('Repo non configurato') && footer.getAttribute('data-state') === 'unconfigured';
+  result.footerNoRemote = footer.textContent.includes('Repository not configured') && footer.getAttribute('data-state') === 'unconfigured';
   result.footerPrimary = !!q('primary-indicator') && q('primary-indicator').textContent.includes('Primary instance');
   const status = await api.syncStatus();
   result.syncStatusApi = status.remoteConfigured === false && typeof status.state === 'string';

@@ -27,7 +27,7 @@ export const SYNC_LABELS: Record<SyncState, string> = {
   error: 'GitHub sync error',
 };
 
-export const SYNC_UNCONFIGURED_LABEL = 'Repo non configurato';
+export const SYNC_UNCONFIGURED_LABEL = 'Repository not configured';
 
 /** Badge del footer dallo stato del primary: `dirty` (modifiche in attesa) e' mostrato come `syncing`. */
 export function syncBadge(

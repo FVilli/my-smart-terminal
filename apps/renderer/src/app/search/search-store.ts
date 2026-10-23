@@ -85,9 +85,9 @@ export class SearchStore {
   async copy(text: string): Promise<void> {
     try {
       await this.api.clipboardWrite({ text });
-      this.showNotice('Copiato negli appunti');
+      this.showNotice('Copied to clipboard');
     } catch {
-      this.showNotice('Copia non riuscita');
+      this.showNotice('Copy failed');
     }
   }
 

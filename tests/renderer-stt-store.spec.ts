@@ -71,7 +71,7 @@ describe('SttStore', () => {
     FakeRecorder.instances = [];
     getUserMedia.mockReset();
     sttStatus.mockReset().mockResolvedValue(configured);
-    sttTranscribe.mockReset().mockResolvedValue({ text: 'testo dettato di prova', skipped: false });
+    sttTranscribe.mockReset().mockResolvedValue({ text: 'test transcript', skipped: false });
     writeTerminal.mockReset();
     recordHistory.mockReset();
     Object.defineProperty(globalThis.navigator, 'mediaDevices', {
@@ -103,8 +103,8 @@ describe('SttStore', () => {
     await store.start();
     expect(getUserMedia).not.toHaveBeenCalled();
     expect(store.error()).toBe('unconfigured');
-    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('STT non configurato');
-    expect(store.notice()).toContain('STT non configurato');
+    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('STT not configured');
+    expect(store.notice()).toContain('STT not configured');
   });
 
   it('reports a denied permission without blocking anything else', async () => {
@@ -114,7 +114,7 @@ describe('SttStore', () => {
     await store.start();
     expect(store.phase()).toBe('idle');
     expect(store.error()).toBe('denied');
-    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Microfono negato');
+    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Microphone denied');
     expect(writeTerminal).not.toHaveBeenCalled();
     expect(recordHistory).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe('SttStore', () => {
     await flush();
     await store.start();
     expect(store.error()).toBe('unavailable');
-    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Microfono non disponibile');
+    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Microphone unavailable');
   });
 
   it('records, transcribes the audio and delivers the text without sending it', async () => {
@@ -140,7 +140,7 @@ describe('SttStore', () => {
     await starting;
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
     expect(store.phase()).toBe('recording');
-    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Ascolto…');
+    expect(voiceLabel(store.status(), store.phase(), store.error())).toBe('Listening…');
 
     await store.stop();
     expect(FakeRecorder.instances[0]?.stopped).toBe(true);
@@ -152,7 +152,7 @@ describe('SttStore', () => {
     expect(request?.audio.byteLength).toBe(48);
     // I parametri del codec vengono rimossi: il main accetta solo `audio/*` senza parametri.
     expect(request?.mimeType).toBe('audio/webm');
-    expect(received).toEqual(['testo dettato di prova']);
+    expect(received).toEqual(['test transcript']);
     // La trascrizione non invia nulla al PTY né in history.
     expect(writeTerminal).not.toHaveBeenCalled();
     expect(recordHistory).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('SttStore', () => {
     expect(FakeRecorder.instances[0]?.stopped).toBe(true);
     expect(stopped()).toBe(true);
     expect(store.phase()).toBe('idle');
-    expect(received).toEqual(['testo dettato di prova']);
+    expect(received).toEqual(['test transcript']);
   });
 
   it('halts without transcribing and releases the tracks (tab change or destroy)', async () => {
@@ -239,11 +239,11 @@ describe('SttStore', () => {
 describe('voice helpers', () => {
   it('maps status, phase and errors to the localized label', () => {
     expect(voiceLabel(configured, 'idle', null)).toBe('Voice ready');
-    expect(voiceLabel(configured, 'recording', null)).toBe('Ascolto…');
-    expect(voiceLabel(configured, 'transcribing', null)).toBe('Trascrivo…');
-    expect(voiceLabel(configured, 'idle', 'denied')).toBe('Microfono negato');
-    expect(voiceLabel(configured, 'idle', 'unavailable')).toBe('Microfono non disponibile');
-    expect(voiceLabel({ ...configured, configured: false }, 'idle', null)).toBe('STT non configurato');
+    expect(voiceLabel(configured, 'recording', null)).toBe('Listening…');
+    expect(voiceLabel(configured, 'transcribing', null)).toBe('Transcribing…');
+    expect(voiceLabel(configured, 'idle', 'denied')).toBe('Microphone denied');
+    expect(voiceLabel(configured, 'idle', 'unavailable')).toBe('Microphone unavailable');
+    expect(voiceLabel({ ...configured, configured: false }, 'idle', null)).toBe('STT not configured');
   });
 
   it('normalizes the recorder mime type and appends the transcript to the draft', () => {

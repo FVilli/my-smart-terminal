@@ -12,23 +12,23 @@ deliverables: "Security hardening"
 
 # M06 - T02 - Security hardening
 
-## Obiettivo
+## Objective
 Security hardening.
 
-## Implementazione vincolata
-Audit IPC, path traversal, secret filtering, keychain e logs.
+## Constrained implementation
+Audit IPC, path traversal, secret filtering, keychain, and logs.
 
-## Criteri di accettazione
-Test negativi e report checklist senza segreti nei file.
+## Acceptance criteria
+Negative tests and a checklist report with no secrets in files.
 
-## Riferimenti
+## References
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce databases, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: origin esatta per navigazione, protocol handler anti-traversal/null/URI invalidi, rifiuto symlink nei path sessione e allocatore, fallback socket path lungo, validazione remote Git, limiti payload per-canale, audit log/API rischiose.
-- Verifica: 385 test (navigation hardening, path safety, endpoint lungo, remote Git, IPC negativi); lint/typecheck/build verdi.
-- Report: `docs/13 - Security checklist.md` con rischi residui (filtri euristici, ACL named pipe, hook Git, keyring, firma, no auto-update).
+## Outcome
+- 2026-10-23: completed.
+- Implemented: exact origin for navigation, protocol handler against traversal/null/invalid URIs, symlink rejection in session and allocator paths, long socket-path fallback, Git remote validation, per-channel payload limits, and audit of risky logs/APIs.
+- Verification: 385 tests (navigation hardening, path safety, long endpoint, Git remote, negative IPC); lint/typecheck/build passed.
+- Report: `docs/13 - Security checklist.md` with residual risks (heuristic filters, named-pipe ACLs, Git hooks, keyring, signing, no auto-update).

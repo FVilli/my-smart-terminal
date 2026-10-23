@@ -44,11 +44,11 @@ export const FALLBACK_AUDIO_MIME = 'audio/webm';
 
 const VOICE_LABELS = {
   idle: 'Voice ready',
-  recording: 'Ascolto…',
-  transcribing: 'Trascrivo…',
-  denied: 'Microfono negato',
-  unavailable: 'Microfono non disponibile',
-  unconfigured: 'STT non configurato',
+  recording: 'Listening…',
+  transcribing: 'Transcribing…',
+  denied: 'Microphone denied',
+  unavailable: 'Microphone unavailable',
+  unconfigured: 'STT not configured',
 } as const;
 
 export const UNCONFIGURED_STATUS: SttStatus = {
@@ -93,19 +93,19 @@ export function appendTranscript(draft: string, transcript: string): string {
 export function sttNotice(reason: SttTranscribeResult['reason']): string {
   switch (reason) {
     case 'missing-token':
-      return 'STT non configurato: manca il token cloud.';
+      return 'STT not configured: cloud token missing.';
     case 'unconfigured':
-      return 'STT non configurato: nessun provider attivo.';
+      return 'STT not configured: no active provider.';
     case 'timeout':
-      return 'STT non disponibile (timeout): riprova.';
+      return 'STT unavailable (timeout): try again.';
     case 'unsupported':
-      return 'Provider STT non supportato.';
+      return 'Unsupported STT provider.';
     case 'invalid-audio':
-      return 'Audio non valido: registrazione ignorata.';
+      return 'Invalid audio: recording ignored.';
     case 'empty':
-      return 'Nessun parlato riconosciuto.';
+      return 'No speech recognized.';
     default:
-      return 'STT non disponibile: riprova.';
+      return 'STT unavailable: try again.';
   }
 }
 

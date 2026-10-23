@@ -16,7 +16,7 @@ export interface AiServiceOptions {
   testMode?: boolean;
 }
 
-const TEST_CORRECTION = (text: string): string => text.replace(/\bQuesto e\b/g, 'Questo è').replace(/\bquesto e\b/g, 'questo è');
+const TEST_CORRECTION = (text: string): string => text.replace(/\bsentance\b/g, 'sentence');
 
 /**
  * Correzione AI lato main: config e token non attraversano mai il confine IPC.
@@ -41,7 +41,7 @@ export class AiService {
         provider: 'none',
         hasToken: false,
         secureStorage: this.options.secrets.isSecure(),
-        ...(this.testMode ? { warning: 'Modalità test AI attiva.' } : {}),
+        ...(this.testMode ? { warning: 'AI test mode active.' } : {}),
       };
     }
     const hasToken = this.testMode || this.options.secrets.has(`ai:${config.aiProvider}`);
@@ -51,7 +51,7 @@ export class AiService {
       ...(config.aiModel !== undefined ? { model: config.aiModel } : {}),
       hasToken,
       secureStorage: this.options.secrets.isSecure(),
-      ...(!hasToken ? { warning: 'Token AI non configurato.' } : this.testMode ? { warning: 'Modalità test AI attiva.' } : {}),
+      ...(!hasToken ? { warning: 'AI token not configured.' } : this.testMode ? { warning: 'AI test mode active.' } : {}),
     };
   }
 

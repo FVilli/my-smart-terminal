@@ -5,9 +5,10 @@ project: smart-terminal
 created: 2026-10-23
 id: "M07-T08"
 milestone: "M07"
-depends_on: "T01,T02,T03,T04,T05"
+depends_on: "T01,T02,T03,T04,T05,T10"
 deliverables: "Windows release publication"
 ---
+<!-- gsynchro:v1 id=4ba22c62-6c3a-4845-9762-f859a4f3e3f6 registered=2026-10-23T10:19:23.503Z -->
 
 # M07 - T08 - Windows release publication
 

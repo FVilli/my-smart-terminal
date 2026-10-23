@@ -8,6 +8,7 @@ milestone: "M07"
 depends_on: "T06,T07,T08"
 deliverables: "GitHub release and download verification"
 ---
+<!-- gsynchro:v1 id=84056feb-ff93-4a24-8735-afb4ebeb28bd registered=2026-10-23T10:19:23.504Z -->
 
 # M07 - T09 - GitHub release and download verification
 

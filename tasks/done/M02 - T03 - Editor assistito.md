@@ -1,34 +1,34 @@
 ---
-title: "M02 - T03 - Editor assistito"
+title: "M02 - T03 - Assisted editor"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M02-T03"
 milestone: "M02"
 depends_on: "T02"
-deliverables: "Editor assistito"
+deliverables: "Assisted editor"
 ---
 <!-- gsynchro:v1 id=2f3bb4b4-95d5-4e86-8f69-1176061ca8dd registered=2026-10-23T07:58:00.205Z -->
 
-# M02 - T03 - Editor assistito
+# M02 - T03 - Assisted editor
 
-## Obiettivo
-Editor assistito.
+## Objective
+Assisted editor.
 
-## Implementazione vincolata
-Input multilinea pinned, pulsante invio e Voice ready; invio esplicito al PTY attivo.
+## Constrained implementation
+Pinned multiline input, send button, and Voice ready; explicit send to the active PTY.
 
-## Criteri di accettazione
-Bozze per tab, editor non intercetta TUI in modalità native.
+## Acceptance criteria
+Drafts for each tab; the editor does not intercept TUI in native mode.
 
 ## Riferimenti
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce a database, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: Invio/Shift+Invio/IME, pulsante invio condizionato, hint, `SessionsStore.sendActive` con limite 64 KiB UTF-8 e `\r`, bozza svuotata solo su successo, bozze per tab, smoke `test:editor-smoke`.
-- Verifica: 52 test Vitest, lint, typecheck, build, smoke editor con marker eseguito, draft cleared, shift-enter non gestito, bozze isolate.
-- Deviazione minore: `sendActive` asincrona perché `writeTerminal` è asincrona.
+## Outcome
+- 2026-10-23: completed.
+- Implemented: Enter/Shift+Enter/IME, conditional send button, hint, `SessionsStore.sendActive` with 64 KiB UTF-8 limit and `\r`, draft cleared only on success, drafts per tab, `test:editor-smoke`.
+- Verification: 52 Vitest tests, lint, typecheck, build, editor smoke with executed marker, draft cleared, shift-enter unhandled, isolated drafts.
+- Minor deviation: `sendActive` is asynchronous because `writeTerminal` is asynchronous.

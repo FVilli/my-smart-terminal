@@ -26,7 +26,7 @@ import type { TerminalSessionView } from '../session.model';
             class="tab-close"
             data-testid="session-tab-close"
             [attr.data-session-id]="session.id"
-            [attr.aria-label]="'Chiudi ' + session.label"
+            [attr.aria-label]="'Close ' + session.label"
             (click)="$event.stopPropagation(); closed.emit(session.id)"
           >
             ×
@@ -38,7 +38,7 @@ import type { TerminalSessionView } from '../session.model';
           type="button"
           class="plus"
           data-testid="session-plus"
-          aria-label="Nuova sessione"
+          aria-label="New session"
           aria-haspopup="menu"
           [attr.aria-expanded]="menuOpen()"
           (click)="toggleMenu()"
@@ -67,7 +67,7 @@ import type { TerminalSessionView } from '../session.model';
               </button>
             } @empty {
               <button type="button" role="menuitem" data-testid="session-new-ssh" disabled>
-                SSH <small>Nessun host in ~/.ssh/config</small>
+                SSH <small>No hosts in ~/.ssh/config</small>
               </button>
             }
           </div>

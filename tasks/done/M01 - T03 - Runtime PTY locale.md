@@ -1,35 +1,35 @@
 ---
-title: "M01 - T03 - Runtime PTY locale"
+title: "M01 - T03 - Local PTY runtime"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M01-T03"
 milestone: "M01"
 depends_on: "T02"
-deliverables: "Runtime PTY locale"
+deliverables: "Local PTY runtime"
 ---
 <!-- gsynchro:v1 id=4c04f175-2678-433a-b209-a2393f6fc110 registered=2026-10-23T07:57:58.050Z -->
 
-# M01 - T03 - Runtime PTY locale
+# M01 - T03 - Local PTY runtime
 
-## Obiettivo
-Runtime PTY locale.
+## Objective
+Local PTY runtime.
 
-## Implementazione vincolata
-Integrare node-pty per shell OS in servizio istanza e stream ad xterm.js.
+## Constrained implementation
+Integrate node-pty for the OS shell in the instance service and stream to xterm.js.
 
-## Criteri di accettazione
-Input/output e resize PTY funzionano; exit gestito.
+## Acceptance criteria
+PTY input/output and resize work; exit is handled.
 
 ## Riferimenti
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce a database, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: `packages/terminal` (interfacce PTY, shell locale file+args, `SessionManager` testabile), adapter nativo `@smart-terminal/terminal/node-pty`, host per finestra con cleanup, canali/eventi terminale validati, API preload tipizzata, componente Angular xterm con fit/resize/exit, smoke PTY.
-- Verifica: 41 test Vitest, lint, typecheck, build, `test:ipc-smoke` e `test:pty-smoke` con output `created/promptOutput/markerSeen/resizeOk/listed/exited/exitEvent=true`.
-- Deviazioni documentate: limite payload IPC portato a 128 KiB (i validatori mantengono 64 KiB sui dati write); `handle(sender, ...)` per selezionare il manager della finestra; eventi separati in `IPC_EVENTS`; `rebuild:native` lascia `node-pty` compilato per Electron (i test unitari non caricano il binding).
-- Contratti e comandi registrati in `docs/11 - Contratti IPC e verifica runtime.md`.
+## Outcome
+- 2026-10-23: completed.
+- Implemented: `packages/terminal` (PTY interfaces, local shell file+args, testable `SessionManager`), native `@smart-terminal/terminal/node-pty` adapter, per-window host with cleanup, validated terminal channels/events, typed preload API, Angular xterm component with fit/resize/exit, PTY smoke test.
+- Verification: 41 Vitest tests, lint, typecheck, build, `test:ipc-smoke`, and `test:pty-smoke` with output `created/promptOutput/markerSeen/resizeOk/listed/exited/exitEvent=true`.
+- Documented deviations: IPC payload limit raised to 128 KiB (validators retain 64 KiB for write data); `handle(sender, ...)` selects the window manager; separate events in `IPC_EVENTS`; `rebuild:native` leaves `node-pty` compiled for Electron (unit tests do not load the binding).
+- Contracts and commands recorded in `docs/11 - Contratti IPC e verifica runtime.md`.

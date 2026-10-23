@@ -45,19 +45,19 @@ export function shortTimestamp(timestamp: string): string {
       <input
         type="search"
         data-testid="sidebar-search"
-        [placeholder]="activeTab() === 'clipboard' ? 'Cerca nella clipboard…' : 'Cerca nella cronologia…'"
-        aria-label="Cerca"
+        [placeholder]="activeTab() === 'clipboard' ? 'Search clipboard…' : 'Search history…'"
+        aria-label="Search"
         [value]="query()"
         (input)="queryChange.emit($any($event.target).value)"
       />
       <div class="filter-row">
-        <select data-testid="sidebar-machine-filter" aria-label="Filtro macchina" (change)="machineChange.emit($any($event.target).value)">
-          <option value="" [selected]="machineFilter() === ''">Tutte le macchine</option>
+        <select data-testid="sidebar-machine-filter" aria-label="Machine filter" (change)="machineChange.emit($any($event.target).value)">
+          <option value="" [selected]="machineFilter() === ''">All machines</option>
           @for (machine of machines(); track machine) {
             <option [value]="machine" [selected]="machine === machineFilter()">{{ machine }}</option>
           }
         </select>
-        <button type="button" class="refresh" data-testid="sidebar-refresh" aria-label="Aggiorna" title="Aggiorna" (click)="refresh.emit()">↻</button>
+        <button type="button" class="refresh" data-testid="sidebar-refresh" aria-label="Refresh" title="Refresh" (click)="refresh.emit()">↻</button>
       </div>
     </div>
     @if (activeTab() === 'clipboard') {
@@ -69,7 +69,7 @@ export function shortTimestamp(timestamp: string): string {
             [checked]="clipboardState().enabled"
             (change)="configureClipboard.emit({ enabled: $any($event.target).checked, paused: false })"
           />
-          Abilita cattura clipboard
+          Enable clipboard capture
         </label>
         <div class="capture-actions">
           <button
@@ -78,15 +78,15 @@ export function shortTimestamp(timestamp: string): string {
             [disabled]="!clipboardState().enabled"
             (click)="configureClipboard.emit({ enabled: true, paused: !clipboardState().paused })"
           >
-            {{ clipboardState().paused ? 'Riprendi' : 'Pausa' }}
+            {{ clipboardState().paused ? 'Resume' : 'Pause' }}
           </button>
-          <button type="button" data-testid="clipboard-clear-dedupe" (click)="clearClipboard.emit()">Cancella dedupe</button>
+          <button type="button" data-testid="clipboard-clear-dedupe" (click)="clearClipboard.emit()">Clear dedupe</button>
         </div>
         <p class="capture-status" data-testid="clipboard-status">
-          {{ captureLabel() }}@if (clipboardState().lastEventAt; as last) { · ultimo: {{ last }} }
+          {{ captureLabel() }}@if (clipboardState().lastEventAt; as last) { · last: {{ last }} }
         </p>
         @if (clipboardError()) {
-          <p class="capture-error" role="alert" data-testid="clipboard-error">Stato cattura non disponibile.</p>
+          <p class="capture-error" role="alert" data-testid="clipboard-error">Clipboard capture state unavailable.</p>
         }
       </div>
     }
@@ -95,7 +95,7 @@ export function shortTimestamp(timestamp: string): string {
     }
     <div class="list" data-testid="sidebar-list">
       @if (error()) {
-        <p class="error" role="alert" data-testid="sidebar-error">Ricerca non disponibile. Il terminale non è interessato: riprova con ↻.</p>
+        <p class="error" role="alert" data-testid="sidebar-error">Search unavailable. The terminal is unaffected; try again with ↻.</p>
       }
       @for (entry of entries(); track $index) {
         <article class="entry" data-testid="sidebar-entry" [attr.data-kind]="entry.kind">
@@ -109,13 +109,13 @@ export function shortTimestamp(timestamp: string): string {
           </header>
           <p class="preview" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
           <div class="entry-actions">
-            <button type="button" data-testid="entry-copy" (click)="copyText.emit(entry.text)">Copia</button>
-            <button type="button" data-testid="entry-insert" (click)="insertText.emit(entry.text)">Inserisci</button>
+            <button type="button" data-testid="entry-copy" (click)="copyText.emit(entry.text)">Copy</button>
+            <button type="button" data-testid="entry-insert" (click)="insertText.emit(entry.text)">Insert</button>
           </div>
         </article>
       } @empty {
         @if (loading()) {
-          <p class="empty" data-testid="sidebar-loading">Caricamento…</p>
+          <p class="empty" data-testid="sidebar-loading">Loading…</p>
         } @else if (!error()) {
           <p class="empty" data-testid="sidebar-empty">{{ emptyMessage() }}</p>
         }
@@ -180,16 +180,16 @@ export class SidebarPanel {
   protected captureLabel(): string {
     const { enabled, paused } = this.clipboardState();
     if (!enabled) {
-      return 'Cattura disattivata';
+      return 'Clipboard capture off';
     }
-    return paused ? 'Cattura in pausa' : 'Cattura attiva';
+    return paused ? 'Clipboard capture paused' : 'Clipboard capture on';
   }
 
   protected emptyMessage(): string {
     if (this.query().trim().length > 0 || this.machineFilter().length > 0) {
-      return 'Nessun risultato per i filtri correnti.';
+      return 'No results for the current filters.';
     }
-    return this.activeTab() === 'clipboard' ? 'Nessun elemento nella clipboard.' : 'Nessun comando in cronologia.';
+    return this.activeTab() === 'clipboard' ? 'No items in the clipboard.' : 'No commands in history.';
   }
 
   protected time(entry: SearchResultEntry): string {

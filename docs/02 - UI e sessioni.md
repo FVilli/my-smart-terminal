@@ -1,21 +1,21 @@
 ---
-title: "Interfaccia e sessioni"
+title: "UI and sessions"
 type: spec
 project: smart-terminal
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=0c18662a-8789-43bb-89e5-08f13400756c registered=2026-10-23T07:57:43.848Z -->
 
-# Interfaccia e sessioni
+# UI and sessions
 
-## Baseline visiva
-Riferimento immutabile: `mockups/Smart Terminal - mock definitivo.png` (immagine fornita dall'utente). Layout 75% terminale / 25% sidebar, tema scuro, terminale e input in font monospace.
+## Visual baseline
+Immutable reference: `mockups/Smart Terminal - mock definitivo.png` (image supplied by the user). 75% terminal / 25% sidebar layout, dark theme, terminal and input in a monospace font.
 
-## Comportamento
-Tab superiori per sessioni locali e SSH; `+` apre scelta Local/alias da `~/.ssh/config`. PTY attivi anche se tab non in focus. Sidebar con tabs alternative Clipboard/History, ricerca e filtro macchina. History include tutte le macchine sincronizzate.
+## Behavior
+Top tabs for local and SSH sessions; `+` opens a Local/alias choice from `~/.ssh/config`. Active PTYs remain active even when their tab is not focused. Sidebar with alternative Clipboard/History tabs, search, and machine filter. History includes all synchronized machines.
 
-## Input assistito
-Editor ancorato in basso, bozza per sessione, AI correction a sinistra, microfono e `Voice ready` in basso a destra. Invio volontario al PTY; terminale nativo resta sempre usabile.
+## Assisted input
+Editor anchored at the bottom, per-session draft, AI correction on the left, microphone and `Voice ready` at the bottom right. Deliberate submission to the PTY; the native terminal always remains usable.
 
-## Stato footer
-`GitHub synced` (con stati syncing/offline/error) e icona `Primary instance` accesa solo per il leader locale; read-only indicativo, aggiornata via IPC.
+## Footer status
+`GitHub synced` (with syncing/offline/error states) and `Primary instance` icon lit only for the local leader; read-only indicator, updated through IPC.

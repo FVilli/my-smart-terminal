@@ -1,43 +1,43 @@
 ---
-title: Stack e struttura codice
+title: Stack and code structure
 type: architecture
 project: smart-terminal
 version: 1
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=a1d8fd30-27d1-4418-ba70-e2a182bdd71a registered=2026-10-23T07:57:46.927Z -->
-# Stack e struttura codice
+# Stack and code structure
 
-## Stack vincolante
-- Desktop: Electron, processi main/preload/renderer separati.
-- UI: Angular standalone, TypeScript strict; tema CSS e componenti Angular.
-- Terminale: `@xterm/xterm` + fit addon; PTY: `node-pty` in processo Node non privilegiato.
-- Persistenza: solo file Markdown nel clone Git condiviso; no SQLite, no database, no storage remoto diverso dal Git scelto.
-- Sincronizzazione: Git CLI (`fetch`, `commit`, `rebase`, `push`) serializzato dal servizio coordinatore per macchina.
-- SSH: binario OpenSSH di sistema e parsing configurazioni Host/Include; non implementare protocollo SSH in JavaScript.
-- AI: adapter Anthropic, OpenAI ed endpoint OpenAI-compatible; STT locale/cloud dietro adapter distinto.
-- Segreti: keychain del sistema; mai nel repository dati.
+## Required stack
+- Desktop: Electron, separate main/preload/renderer processes.
+- UI: Angular standalone, strict TypeScript; CSS theme and Angular components.
+- Terminal: `@xterm/xterm` + fit addon; PTY: `node-pty` in an unprivileged Node process.
+- Persistence: Markdown files only in the shared Git clone; no SQLite, no database, no remote storage other than the selected Git.
+- Synchronization: Git CLI (`fetch`, `commit`, `rebase`, `push`) serialized by the per-machine coordinator service.
+- SSH: system OpenSSH binary and Host/Include configuration parsing; do not implement the SSH protocol in JavaScript.
+- AI: Anthropic, OpenAI, and OpenAI-compatible endpoint adapters; local/cloud STT behind a separate adapter.
+- Secrets: system keychain; never in the data repository.
 
 ## Monorepo
 ```text
 apps/desktop/       # Electron main, preload, packaging
 apps/renderer/      # Angular + xterm.js
-packages/contracts/ # tipi ed eventi IPC condivisi
+packages/contracts/ # shared IPC types and events
 packages/terminal/  # PTY, session lifecycle, SSH
-packages/data/      # Markdown read/write, ricerca in memoria
+packages/data/      # Markdown read/write, in-memory search
 packages/sync/      # primary coordinator, Git, debounce
 packages/ai/        # providers, correction, STT
 ```
 
-## Contratti
-Il renderer accede a filesystem, processi, Git e credenziali solo tramite API preload esplicite e tipizzate. `contextIsolation=true`, `nodeIntegration=false`; validare tutte le richieste IPC. Versioni esatte delle dipendenze sono fissate nel lockfile durante M01, senza aggiornamenti automatici da parte dei task successivi.
+## Contracts
+The renderer accesses the filesystem, processes, Git, and credentials only through explicit, typed preload APIs. `contextIsolation=true`, `nodeIntegration=false`; validate all IPC requests. Exact dependency versions are pinned in the lockfile during M01, with no automatic updates by subsequent tasks.
 
 ## SSH
-- Parser read-only di `~/.ssh/config` (override `SMART_TERMINAL_SSH_CONFIG`) con `Host`, `Include` e glob, ricorsione limitata e alias concreti; `Match`/wildcard ignorati.
-- Esecuzione tramite binario OpenSSH (`ssh <alias>`) come file+args, mai stringa shell; alias validato, ambiente ereditato (incluso `SSH_AUTH_SOCK`), nessuna chiave letta o copiata.
+- Read-only parser for `~/.ssh/config` (`SMART_TERMINAL_SSH_CONFIG` override) with `Host`, `Include`, and globs, limited recursion, and concrete aliases; `Match`/wildcards ignored.
+- Execution through the OpenSSH binary (`ssh <alias>`) as file+args, never a shell string; alias validated, environment inherited (including `SSH_AUTH_SOCK`), no key read or copied.
 
-## Target
-Desktop Linux, macOS, Windows; implementazione e test dei diversi PTY e pacchetti vanno effettuati nella relativa pipeline OS. Il terminale deve funzionare anche senza Git, AI o rete.
+## Targets
+Linux, macOS, and Windows desktop; implementation and testing of the different PTYs and packages must be performed in the respective OS pipeline. The terminal must also work without Git, AI, or network.
 
-## Decisioni attuative
-Monorepo npm workspaces, output `dist/apps/renderer/browser`, config Markdown locale, coordinatore su socket/named pipe, `safeStorage` e toolchain di test: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.
+## Implementation decisions
+npm workspaces monorepo, `dist/apps/renderer/browser` output, local Markdown configuration, coordinator over socket/named pipe, `safeStorage`, and test toolchain: `docs/10 - Config locale, coordinatore e sicurezza runtime.md`.

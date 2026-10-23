@@ -19,7 +19,7 @@ export interface SecretSetResult {
 }
 
 export const SECRET_UNSECURE_WARNING =
-  'Keychain di sistema non disponibile: il token resta solo in memoria e andra\' reinserito al prossimo avvio.';
+  'System keychain unavailable: the token will stay in memory only and must be entered again at next launch.';
 
 const KEY_PATTERN = /^(ai|stt):[a-z][a-z-]{0,31}$/;
 

@@ -53,7 +53,7 @@ describe('SttService', () => {
     expect(withCommand.warning).toBeUndefined();
     const withoutCommand = new SttService(stores(config({ sttCommand: undefined })) as never).status();
     expect(withoutCommand).toMatchObject({ configured: false, provider: 'local' });
-    expect(withoutCommand.warning).toContain('Comando STT locale');
+    expect(withoutCommand.warning).toContain('Local STT command');
   });
 
   it('reports cloud provider configured only with the stt:cloud token', () => {
@@ -61,7 +61,7 @@ describe('SttService', () => {
     expect(configured).toMatchObject({ configured: true, hasToken: true, secureStorage: true });
     const missing = new SttService(stores(config({ sttProvider: 'cloud' }), null) as never).status();
     expect(missing).toMatchObject({ configured: false, hasToken: false });
-    expect(missing.warning).toContain('Token STT');
+    expect(missing.warning).toContain('STT token');
     const secrets = stores(config({ sttProvider: 'cloud' }));
     new SttService(secrets as never).status();
     expect(secrets.secrets.has).toHaveBeenCalledWith('stt:cloud');

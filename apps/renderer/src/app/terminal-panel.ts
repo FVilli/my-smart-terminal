@@ -65,7 +65,7 @@ export class TerminalPanel implements OnDestroy {
       const session = this.session();
       if (session?.status === 'exited' && !this.exitAnnounced) {
         this.exitAnnounced = true;
-        this.terminal?.write(`\r\n\x1b[90m[Processo terminato con codice ${session.exitCode ?? '?'}]\x1b[0m\r\n`);
+        this.terminal?.write(`\r\n\x1b[90m[Process exited with code ${session.exitCode ?? '?'}]\x1b[0m\r\n`);
       }
     });
   }

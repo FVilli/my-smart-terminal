@@ -13,15 +13,15 @@
     />
     @if (pendingCloseId(); as closingId) {
       <div class="notice" role="alertdialog" aria-label="Conferma chiusura" data-testid="close-confirm">
-        <span>Chiudere la sessione attiva? Il processo verrà terminato.</span>
-        <button type="button" data-testid="close-confirm-yes" (click)="confirmClose()">Chiudi sessione</button>
-        <button type="button" data-testid="close-confirm-no" (click)="cancelClose()">Annulla</button>
+        <span>Close the active session? The process will be terminated.</span>
+        <button type="button" data-testid="close-confirm-yes" (click)="confirmClose()">Close session</button>
+        <button type="button" data-testid="close-confirm-no" (click)="cancelClose()">Cancel</button>
       </div>
     }
     @if (store.createError(); as error) {
       <div class="notice notice--error" role="alert" data-testid="create-error">
         <span>{{ error }}</span>
-        <button type="button" data-testid="create-retry" (click)="retryCreate()">Riprova</button>
+        <button type="button" data-testid="create-retry" (click)="retryCreate()">Retry</button>
       </div>
     }
     <app-terminal-workarea>
@@ -30,8 +30,8 @@
       }
       @if (store.sessions().length === 0 && !store.creating()) {
         <div class="empty-state" data-testid="empty-state">
-          <p>Nessuna sessione aperta.</p>
-          <button type="button" data-testid="empty-create" (click)="createLocal()">Nuova sessione locale</button>
+          <p>No open sessions.</p>
+          <button type="button" data-testid="empty-create" (click)="createLocal()">New session locale</button>
         </div>
       }
     </app-terminal-workarea>

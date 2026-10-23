@@ -1,6 +1,6 @@
 <div class="terminal-host" #host></div>
 @if (session()?.status === 'exited') {
-  <p class="terminal-status" role="status" data-testid="terminal-exited">Sessione terminata. L'input è disabilitato.</p>
+  <p class="terminal-status" role="status" data-testid="terminal-exited">Session ended. Input is disabled.</p>
 }
 @if (session(); as current) {
   @if (current.kind === 'ssh') {

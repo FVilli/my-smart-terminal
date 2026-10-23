@@ -1,122 +1,122 @@
 ---
-title: "Manuale utente"
+title: "User manual"
 type: manual
 project: smart-terminal
 created: 2026-10-23
 ---
 <!-- gsynchro:v1 id=e7e31832-14ad-4df3-bf01-16b6e5b9d439 registered=2026-10-23T09:58:42.366Z -->
 
-# My Smart Terminal v1.0.0 — Manuale utente
+# My Smart Terminal v1.0.0 — User manual
 
-## 1. Che cos’è
+## 1. What it is
 
-My Smart Terminal è un terminale desktop multi-istanza: ogni tab è una sessione PTY indipendente, locale oppure SSH. Offre input assistito, bozze per tab, history e clipboard consultabili, sessioni in Markdown e sincronizzazione Git. Un coordinatore locale assegna gli ID e serializza scritture e Git; una finestra può essere primary o secondary.
+My Smart Terminal is a multi-instance desktop terminal: each tab is an independent PTY session, local or SSH. It provides assisted input, per-tab drafts, browsable history and clipboard, Markdown sessions, and Git synchronization. A local coordinator assigns IDs and serializes writes and Git; a window can be primary or secondary.
 
-AI per la correzione dei refusi e riconoscimento vocale (STT) sono opzionali. Shell e PTY continuano a funzionare senza rete, AI o Git.
+AI typo correction and speech recognition (STT) are optional. Shell and PTY continue to work without network, AI, or Git.
 
-## 2. Installazione e requisiti
+## 2. Installation and requirements
 
-La release pubblica sarà su **GitHub Releases**:
+The public release will be on **GitHub Releases**:
 
 **https://github.com/FVilli/my-smart-terminal/releases/latest**
 
-Stato v1.0.0:
+v1.0.0 status:
 
-- Linux: `.AppImage` e `.deb` **pronti** (build locale in `release/`), pubblicazione GitHub in preparazione;
-- macOS: `.dmg` prodotto dalla pipeline CI macOS;
-- Windows: installer `.exe` (NSIS) prodotto dalla pipeline CI Windows.
+- Linux: `.AppImage` and `.deb` **ready** (local build in `release/`), GitHub publication pending;
+- macOS: `.dmg` produced by the macOS CI pipeline;
+- Windows: `.exe` installer (NSIS) produced by the Windows CI pipeline.
 
-Se la release non è ancora visibile, gli artefatti Linux si trovano nella cartella `release/` del repository. Gli artefatti della V1 sono **non firmati** finché non saranno disponibili i certificati: il sistema operativo può quindi mostrare un avviso. Verificare sempre il checksum SHA-256 pubblicato insieme all’artefatto (`release/SHA256SUMS`). La V1 non include auto-update: gli aggiornamenti sono manuali.
+If the release is not yet visible, Linux artifacts are in the repository's `release/` directory. V1 artifacts are **unsigned** until certificates are available, so the operating system may show a warning. Always verify the SHA-256 checksum published with the artifact (`release/SHA256SUMS`). V1 has no auto-update: updates are manual.
 
-Per usare le funzioni di sviluppo servono Node.js 24, Git e OpenSSH. SSH usa il client di sistema e `~/.ssh/config`.
+Development features require Node.js 24, Git, and OpenSSH. SSH uses the system client and `~/.ssh/config`.
 
-## 3. Primo avvio e onboarding
+## 3. First launch and onboarding
 
-Al primo avvio il wizard propone tre passaggi:
+At first launch, the wizard offers three steps:
 
-1. **Repository dati e macchina** — scegliere il percorso del clone/repository dati e un nome macchina. Se si salta la configurazione, viene usato un repository locale predefinito; il terminale resta utilizzabile.
-2. **Provider AI e token** — scegliere Anthropic, OpenAI o OpenAI-compatible, eventualmente base URL/modello, e salvare il token nel keychain del sistema. Su Linux, se il backend è `basic_text` o non è disponibile, il token viene tenuto solo in memoria per la sessione: non viene scritto in chiaro.
-3. **STT e microfono** — scegliere STT locale o cloud, configurare il comando locale assoluto o il provider cloud, verificare il microfono e concedere il permesso. È possibile saltare questo passaggio.
+1. **Data repository and machine** — choose the data clone/repository path and a machine name. If setup is skipped, a default local repository is used; the terminal remains usable.
+2. **AI provider and token** — choose Anthropic, OpenAI, or OpenAI-compatible, optionally set the base URL/model, and save the token in the system keychain. On Linux, if the backend is `basic_text` or unavailable, the token is kept in memory for the session only: it is never written in plaintext.
+3. **STT and microphone** — choose local or cloud STT, configure the absolute local command or cloud provider, check the microphone, and grant permission. This step can be skipped.
 
-La configurazione non segreta è in `userData/config/config.md` (su Linux tipicamente sotto `~/.config/...`, su macOS sotto `~/Library/Application Support/...`, su Windows sotto `%APPDATA%/...`). Non è sincronizzata. I token sono gestiti dal main tramite `safeStorage`/keychain e non sono inseriti nei Markdown; senza un keyring sicuro non c’è fallback plaintext.
+Non-secret configuration is in `userData/config/config.md` (typically under `~/.config/...` on Linux, `~/Library/Application Support/...` on macOS, and `%APPDATA%/...` on Windows). It is not synchronized. Tokens are managed by main through `safeStorage`/keychain and are not placed in Markdown; without a secure keyring there is no plaintext fallback.
 
-La configurazione usa `schema_version: 1`. Se è illeggibile o sconosciuta, l’app conserva un backup `.bak` dell’ultima configurazione valida o mette quella corrotta in quarantena `.corrupt`, quindi riparte con default sicuri.
+Configuration uses `schema_version: 1`. If it is unreadable or unknown, the app keeps a `.bak` backup of the last valid configuration or quarantines the corrupt one as `.corrupt`, then restarts with safe defaults.
 
-## 4. Uso quotidiano
+## 4. Daily use
 
-### Tab e sessioni
+### Tabs and sessions
 
-- Premere `+` e scegliere **Local** oppure un alias SSH letto da `~/.ssh/config` (sono supportati anche `Include` e glob compatibili).
-- Cambiare tab non termina il PTY: processo, output e bozza restano associati alla sessione.
-- Chiudere una tab termina ordinatamente il PTY e aggiorna `session.md`; viene chiesta conferma quando necessario.
-- Un errore SSH riguarda solo quella sessione e non blocca le altre.
+- Press `+` and choose **Local** or an SSH alias read from `~/.ssh/config` (compatible `Include` and globs are also supported).
+- Switching tabs does not terminate the PTY: the process, output, and draft remain associated with the session.
+- Closing a tab terminates its PTY cleanly and updates `session.md`; confirmation is requested when needed.
+- An SSH error affects only that session and does not block others.
 
-### Input assistito
+### Assisted input
 
-Ogni tab ha una bozza indipendente. **Invio** invia deliberatamente il testo al PTY; **Shift+Invio** inserisce una nuova riga. La bozza viene svuotata solo dopo un invio riuscito. Il terminale xterm resta utilizzabile direttamente: tasti e prompt di una TUI non vengono intercettati dall’editor.
+Each tab has an independent draft. **Enter** deliberately sends the text to the PTY; **Shift+Enter** inserts a newline. The draft is cleared only after a successful submission. The xterm terminal remains directly usable: keys and TUI prompts are not intercepted by the editor.
 
-**AI correction** si attiva con un clic esplicito e corregge solo probabili refusi nella bozza. Salta i testi riconosciuti come comandi shell e conserva codice, percorsi, URL, flag e significato. Rivedere sempre il risultato: non viene mai eseguito o inviato automaticamente.
+**AI correction** is enabled with an explicit click and corrects only likely typos in the draft. It skips text recognized as shell commands and preserves code, paths, URLs, flags, and meaning. Always review the result: it is never executed or sent automatically.
 
-### Microfono
+### Microphone
 
-Tenere premuto il controllo push-to-talk. Gli stati sono `Voice ready`, `Ascolto…`, `Trascrivo…` ed eventuale errore. La trascrizione entra nella bozza modificabile e non viene inviata automaticamente; cambiare tab o chiudere la finestra interrompe e scarta l’audio corrente.
+Hold the push-to-talk control. States are `Voice ready`, `Listening…`, `Transcribing…`, and any error. The transcription enters the editable draft and is not sent automatically; changing tabs or closing the window interrupts and discards the current audio.
 
-### History e Clipboard
+### History and Clipboard
 
-La sidebar alterna **History** e **Clipboard**.
+The sidebar alternates between **History** and **Clipboard**.
 
-- History: ricercare testo, filtrare per macchina, copiare oppure inserire nella bozza. La V1 registra gli invii espliciti dell’editor assistito; la shell history nativa non è registrata in modo generale.
-- Clipboard: la raccolta è opt-in. Si può mettere in pausa, cancellare, cercare, copiare o inserire un elemento nella bozza. L’inserimento non invia mai automaticamente.
+- History: search text, filter by machine, copy, or insert into the draft. V1 records explicit assisted-editor submissions; native shell history is not recorded generally.
+- Clipboard: capture is opt-in. It can be paused, cleared, searched, copied, or inserted into the draft. Insertion never sends automatically.
 
-Il footer mostra lo stato Git (`synced`, `dirty`, `syncing`, `offline`, `error`) e il ruolo `primary`/`secondary`.
+The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role.
 
-## 5. Dati e sincronizzazione
+## 5. Data and synchronization
 
-Nel repository dati l’app crea:
+The app creates this structure in the data repository:
 
 ```text
 sessions/<machine>/counter.md
-sessions/<machine>/<data-ora>_S<n>_<local|ssh-alias>/
+sessions/<machine>/<date-time>_S<n>_<local|ssh-alias>/
   session.md
   history.md
   clipboard.md
 ```
 
-`S<n>` è progressivo per macchina e non viene riutilizzato. La scrittura Markdown è locale e immediata. La history è **assisted-only**: gli input digitati direttamente nella shell non vengono registrati, salvo un’integrazione shell affidabile già presente; non vengono intercettati keystroke o prompt TUI. Clipboard è opt-in, può essere sospesa o cancellata, e i filtri sono best-effort.
+`S<n>` is sequential per machine and is never reused. Markdown writes are local and immediate. History is **assisted-only**: input typed directly in the shell is not recorded, except where reliable shell integration is already present; keystrokes and TUI prompts are not intercepted. Clipboard is opt-in, can be paused or cleared, and filters are best-effort.
 
-Il repository può essere un clone Git con remote e branch configurabili. Il coordinatore esegue fetch, commit, rebase e push in serie; di norma usa debounce di 10 s, attesa massima 60 s e fetch ogni 15 s. Senza remote compare **Repo non configurato**: i file restano locali. Offline produce commit locali e non blocca il terminale. In caso di push respinto viene tentato fetch/rebase/retry limitato; in caso di conflitto il sync si ferma in errore e preserva i file. Non viene mai usato force push.
+The repository can be a Git clone with configurable remote and branch. The coordinator runs fetch, commit, rebase, and push serially; normally it uses a 10 s debounce, 60 s maximum wait, and fetch every 15 s. Without a remote, **Repo not configured** is shown: files remain local. Offline mode creates local commits and does not block the terminal. After a rejected push, a limited fetch/rebase/retry is attempted; on conflict, sync stops with an error and preserves files. Force-push is never used.
 
-## 6. Privacy e sicurezza
+## 6. Privacy and security
 
-- Token AI/STT: solo keychain/`safeStorage`, mai nel repository o nel renderer.
-- Non salvare password, chiavi private o altri segreti in Markdown.
-- I filtri di history e clipboard riconoscono pattern comuni, ma sono euristici e non garantiscono di rilevare ogni segreto.
-- Clipboard è disattivata finché non viene abilitata; l’audio STT resta in memoria, senza file persistenti.
-- AI/STT hanno timeout e fallback: la loro indisponibilità non blocca PTY, shell, invio o scrittura locale.
-- Il repository dati Git è considerato fidato: Git può eseguire hook/configurazioni del repository scelto. Non usare repository non fidati.
+- AI/STT tokens: keychain/`safeStorage` only, never in the repository or renderer.
+- Do not save passwords, private keys, or other secrets in Markdown.
+- History and clipboard filters recognize common patterns, but are heuristic and cannot guarantee detection of every secret.
+- Clipboard is disabled until enabled; STT audio remains in memory, with no persistent files.
+- AI/STT have timeouts and fallbacks: their unavailability does not block PTY, shell, submission, or local writes.
+- The Git data repository is trusted: Git can execute hooks/configuration from the selected repository. Do not use untrusted repositories.
 
-## 7. Risoluzione dei problemi
+## 7. Troubleshooting
 
-- **Repo non configurato**: impostare un remote/branch nella configurazione o continuare in locale; Git non è necessario per il PTY.
-- **Push respinto o conflitto**: attendere il fetch/rebase automatico; se resta `error`, conservare i file locali, risolvere il conflitto con Git e riprovare senza force push.
-- **SSH non raggiungibile**: verificare alias, rete, agent e `~/.ssh/config` con il comando `ssh <alias>`; l’app non copia chiavi private.
-- **Microfono negato**: abilitare il permesso nelle impostazioni del sistema, riavviare se richiesto, oppure usare la tastiera.
-- **AI/STT non disponibili**: controllare provider, token, endpoint e comando locale assoluto; il terminale resta operativo.
-- **Secondary/primary**: `secondary` è normale con più finestre. Il takeover avviene solo se il primary non risponde più; non chiudere il primary funzionante per forzarlo.
-- **Lock stale**: dopo un crash il nuovo primary recupera il lock quando il processo precedente non è più vivo; attendere il takeover, senza cancellare manualmente i file mentre l’app è attiva.
-- **Keyring assente**: su Linux il token non viene persistito e può essere usato solo in memoria per la sessione; configurare un keyring sicuro per l’uso cloud persistente.
-- **Log**: cercare l’output del processo Electron e i log dell’app nella directory dati utente; i log non devono contenere token, audio o testo AI. Gli errori mostrati all’interfaccia sono sanificati.
-- **AppImage e FUSE**: se l’AppImage non si avvia, eseguire `./My-Smart-Terminal.AppImage --appimage-extract-and-run`.
+- **Repo not configured**: set a remote/branch in configuration or continue locally; Git is not required for PTY.
+- **Rejected push or conflict**: wait for automatic fetch/rebase; if `error` remains, preserve local files, resolve the conflict with Git, and retry without force-push.
+- **SSH unreachable**: check the alias, network, agent, and `~/.ssh/config` with `ssh <alias>`; the app does not copy private keys.
+- **Microphone denied**: enable permission in system settings, restart if requested, or use the keyboard.
+- **AI/STT unavailable**: check the provider, token, endpoint, and absolute local command; the terminal remains operational.
+- **Secondary/primary**: `secondary` is normal with multiple windows. Takeover occurs only when the primary no longer responds; do not close a working primary to force it.
+- **Stale lock**: after a crash, the new primary recovers the lock when the previous process is no longer alive; wait for takeover and do not manually delete files while the app is active.
+- **Missing keyring**: on Linux, the token is not persisted and can be used only in memory for the session; configure a secure keyring for persistent cloud use.
+- **Logs**: look for Electron process output and app logs in the user data directory; logs must not contain tokens, audio, or AI text. Interface errors are sanitized.
+- **AppImage and FUSE**: if the AppImage does not start, run `./My-Smart-Terminal.AppImage --appimage-extract-and-run`.
 
-## 8. Limiti V1 e compatibilità
+## 8. V1 limits and compatibility
 
-La V1 non registra la shell history nativa in generale, non garantisce il riconoscimento di tutti i segreti, non aggiorna automaticamente e non firma gli artefatti. Le named pipe Windows usano autenticazione a token ma non ACL dedicate. AI/STT dipendono dal provider, dal keyring e dalla rete quando sono cloud.
+V1 does not generally record native shell history, guarantee detection of every secret, auto-update, or sign artifacts. Windows named pipes use token authentication but no dedicated ACLs. AI/STT depend on the provider, keyring, and network when cloud-based.
 
-I file di configurazione e Markdown usano `schema_version: 1`. Prima di aggiornare da una versione pre-1.0 fare una copia del repository dati e della configurazione. L’app crea backup `.bak` della configurazione valida e quarantena `.corrupt` quando rileva dati invalidi; non modifica distruttivamente i contenuti sincronizzati.
+Configuration and Markdown files use `schema_version: 1`. Before upgrading from a pre-1.0 version, copy the data repository and configuration. The app creates `.bak` backups of valid configuration and `.corrupt` quarantine for invalid data; it does not destructively modify synchronized content.
 
-## 9. Sviluppo, test e packaging
+## 9. Development, testing, and packaging
 
-Il repository è un monorepo npm workspaces:
+The repository is an npm workspaces monorepo:
 
 ```bash
 npm ci
@@ -126,14 +126,14 @@ npm run test
 npm run test:e2e
 ```
 
-Su Linux gli smoke Electron usano Xvfb, normalmente `:99`, tramite `scripts/run-electron.mjs`; non lanciare Electron sul desktop dell’utente. Per uno smoke esplicito, ad esempio:
+On Linux, Electron smoke tests use Xvfb, normally `:99`, through `scripts/run-electron.mjs`; do not launch Electron on the user's desktop. For an explicit smoke test, for example:
 
 ```bash
 npm run test:ipc-smoke
 npm run test:pty-smoke
 ```
 
-I comandi di packaging sono dedicati alla piattaforma:
+Packaging commands are platform-specific:
 
 ```bash
 npm run package:linux
@@ -141,21 +141,21 @@ npm run package:mac
 npm run package:win
 ```
 
-Usano electron-builder e producono rispettivamente AppImage/.deb, `.dmg` o installer NSIS. `npm run package` resta disponibile per il packaging generico. Dopo il packaging, eseguire `npm run checksums` e pubblicare i checksum SHA-256 insieme agli artefatti.
+They use electron-builder and produce AppImage/.deb, `.dmg`, or an NSIS installer respectively. `npm run package` remains available for generic packaging. After packaging, run `npm run checksums` and publish SHA-256 checksums with the artifacts.
 
-## 10. Riferimenti
+## 10. References
 
-- [Visione e scope](00%20-%20Visione.md)
-- [Architettura](01%20-%20Architettura.md)
-- [Interfaccia e sessioni](02%20-%20UI%20e%20sessioni.md)
-- [Contratto Markdown](03%20-%20Markdown%20schema.md)
-- [Sincronizzazione Git](04%20-%20Sync%20Git.md)
-- [AI, voce e sicurezza](05%20-%20AI%20Voice%20Sicurezza.md)
-- [Stack e struttura codice](06%20-%20Stack%20e%20struttura%20codice.md)
-- [Logica runtime](07%20-%20Logica%20runtime.md)
-- [UX e interazioni](08%20-%20UX%20e%20interazioni.md)
-- [Build e rilascio](09%20-%20Build%20e%20rilascio.md)
-- [Config locale, coordinatore e sicurezza runtime](10%20-%20Config%20locale,%20coordinatore%20e%20sicurezza%20runtime.md)
-- [Contratti IPC e verifica runtime](11%20-%20Contratti%20IPC%20e%20verifica%20runtime.md)
+- [Vision and scope](00%20-%20Visione.md)
+- [Architecture](01%20-%20Architettura.md)
+- [UI and sessions](02%20-%20UI%20e%20sessioni.md)
+- [Markdown contract](03%20-%20Markdown%20schema.md)
+- [Git synchronization](04%20-%20Sync%20Git.md)
+- [AI, voice, and security](05%20-%20AI%20Voice%20Sicurezza.md)
+- [Stack and code structure](06%20-%20Stack%20e%20struttura%20codice.md)
+- [Runtime logic](07%20-%20Logica%20runtime.md)
+- [UX and interactions](08%20-%20UX%20e%20interazioni.md)
+- [Build and release](09%20-%20Build%20e%20rilascio.md)
+- [Local configuration, coordinator, and runtime security](10%20-%20Config%20locale,%20coordinatore%20e%20sicurezza%20runtime.md)
+- [IPC contracts and runtime verification](11%20-%20Contratti%20IPC%20e%20verifica%20runtime.md)
 - [Security checklist](13%20-%20Security%20checklist.md)
 - [Workflow](WORKFLOW.md)

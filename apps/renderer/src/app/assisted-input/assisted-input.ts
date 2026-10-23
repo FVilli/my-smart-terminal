@@ -23,14 +23,14 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         data-testid="assisted-textarea"
         rows="3"
         spellcheck="false"
-        placeholder="Invio invia · Shift+Invio va a capo"
+        placeholder="Enter sends · Shift+Enter inserts a newline"
         aria-label="Input assistito"
         [value]="draft()"
         [disabled]="disabled()"
         (input)="draftChange.emit($any($event.target).value)"
         (keydown)="onKeydown($event)"
       ></textarea>
-      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Invia" [disabled]="!canSend()" (click)="send()">⏎</button>
+      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()">⏎</button>
       <div class="voice">
         <button
           type="button"

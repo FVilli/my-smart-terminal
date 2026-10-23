@@ -1,34 +1,34 @@
 ---
-title: "M01 - T02 - IPC sicuro"
+title: "M01 - T02 - Secure IPC"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M01-T02"
 milestone: "M01"
 depends_on: "T01"
-deliverables: "IPC sicuro"
+deliverables: "Secure IPC"
 ---
 <!-- gsynchro:v1 id=586818af-b865-43bf-b920-30494b51c0e3 registered=2026-10-23T07:57:57.171Z -->
 
-# M01 - T02 - IPC sicuro
+# M01 - T02 - Secure IPC
 
-## Obiettivo
-IPC sicuro.
+## Objective
+Secure IPC.
 
-## Implementazione vincolata
-Preload tipizzato con canali approvati e contextIsolation true, nodeIntegration false; validare payload.
+## Constrained implementation
+Typed preload with approved channels and contextIsolation true, nodeIntegration false; validate payloads.
 
-## Criteri di accettazione
-Renderer senza Node; test IPC di risposta e rifiuto payload invalidi.
+## Acceptance criteria
+Renderer without Node; IPC tests for response and rejection of invalid payloads.
 
 ## Riferimenti
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce a database, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: `ipc.ts` (validazione pura, limite 64 KiB, sender main-frame/origin, errori sanificati), binding `ipc-electron.ts` registrato una sola volta con set di finestre tracciate, canali `app:ping` e `app:runtime-info`, preload minimale, seam `__testInvoke` solo in smoke, `smoke.ts`.
-- Verifica: 12 test Vitest, lint, typecheck, build e `npm run test:ipc-smoke` (exit 0) con payload invalido e canale sconosciuto rifiutati, `require`/`process` undefined nel renderer, sole chiavi `ping,runtimeInfo` esposte.
-- Deviazione/correzione in review: handler registrati una volta per processo e sender set dinamico, per evitare errori con finestre multiple.
+## Outcome
+- 2026-10-23: completed.
+- Implemented: `ipc.ts` (pure validation, 64 KiB limit, main-frame/origin sender, sanitized errors), `ipc-electron.ts` binding registered once with a tracked window set, `app:ping` and `app:runtime-info` channels, minimal preload, `__testInvoke` seam for smoke only, `smoke.ts`.
+- Verification: 12 Vitest tests, lint, typecheck, build, and `npm run test:ipc-smoke` (exit 0), with invalid payload and unknown channel rejected, `require`/`process` undefined in the renderer, and only `ping,runtimeInfo` keys exposed.
+- Review deviation/correction: handlers registered once per process and dynamic sender set, to avoid errors with multiple windows.

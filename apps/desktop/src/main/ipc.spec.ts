@@ -59,7 +59,7 @@ const services: IpcServices = {
   },
   stt: {
     status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),
-    transcribe: vi.fn(() => ({ text: 'testo dettato di prova', skipped: false })),
+    transcribe: vi.fn(() => ({ text: 'test transcript', skipped: false })),
   },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
@@ -283,7 +283,7 @@ describe('stt channels', () => {
   });
 
   it('dispatches a valid transcribe request to the gateway', async () => {
-    await expect(run({ audio: audio(16), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: 'testo dettato di prova' });
+    await expect(run({ audio: audio(16), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: 'test transcript' });
     const [request] = (services.stt.transcribe as unknown as { mock: { calls: [{ audio: Uint8Array }][] } }).mock.calls.at(-1) ?? [];
     expect(request?.audio.byteLength).toBe(16);
   });

@@ -5,9 +5,10 @@ project: smart-terminal
 created: 2026-10-23
 id: "M07-T07"
 milestone: "M07"
-depends_on: "T01,T02,T03,T04,T05"
+depends_on: "T01,T02,T03,T04,T05,T10"
 deliverables: "macOS release publication"
 ---
+<!-- gsynchro:v1 id=7419dcb0-9575-4da2-be7c-07aa2d7be87a registered=2026-10-23T10:19:23.502Z -->
 
 # M07 - T07 - macOS release publication
 

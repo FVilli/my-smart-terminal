@@ -8,6 +8,7 @@ milestone: "M07"
 depends_on: "T01,T02"
 deliverables: "Real product screenshots"
 ---
+<!-- gsynchro:v1 id=52eda538-d43b-4adb-bd27-76b007f793e8 registered=2026-10-23T10:19:23.500Z -->
 
 # M07 - T04 - Real product screenshots
 

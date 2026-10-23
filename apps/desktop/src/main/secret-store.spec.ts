@@ -36,7 +36,7 @@ describe('SecretStore', () => {
       expect(store.isSecure()).toBe(false);
       const result = store.set('stt:cloud', 'tok-123');
       expect(result.persisted).toBe(false);
-      expect(result.warning).toMatch(/Keychain/);
+      expect(result.warning).toMatch(/keychain/i);
       expect(fs.existsSync(dir) ? fs.readdirSync(dir) : []).toEqual([]);
       expect(store.get('stt:cloud')).toBe('tok-123');
       expect(new SecretStore(dir, safe).get('stt:cloud')).toBeUndefined();

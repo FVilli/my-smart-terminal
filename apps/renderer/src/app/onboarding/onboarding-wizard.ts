@@ -16,10 +16,10 @@ type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
 
 const MIC_MESSAGES: Record<MicState, string> = {
   idle: '',
-  checking: 'Richiesta permesso microfono…',
-  ok: 'Microfono disponibile. Nessuna registrazione salvata.',
-  denied: 'Permesso microfono negato. Puoi continuare senza.',
-  unavailable: 'Nessun microfono disponibile. Puoi continuare senza.',
+  checking: 'Requesting microphone permission…',
+  ok: 'Microphone available. No recording is saved.',
+  denied: 'Microphone permission denied. You can continue without it.',
+  unavailable: 'No microphone available. You can continue without it.',
 };
 
 /** Wizard di primo avvio a tre step (repo dati, AI, STT): overlay non bloccante per il terminale sottostante. */
@@ -29,39 +29,39 @@ const MIC_MESSAGES: Record<MicState, string> = {
   template: `
     @if (visible()) {
       <div class="backdrop" data-testid="onboarding-overlay">
-        <section class="dialog" role="dialog" aria-modal="true" aria-label="Configurazione iniziale">
+        <section class="dialog" role="dialog" aria-modal="true" aria-label="Initial setup">
           <header>
-            <h2>Configurazione iniziale</h2>
-            <span class="steps" data-testid="onboarding-progress">Passo {{ step() }} di 3</span>
+            <h2>Initial setup</h2>
+            <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span>
           </header>
 
           @if (restartNotice()) {
             <div class="done" data-testid="onboarding-restart-notice">
-              <p>Configurazione salvata. Per applicare repo dati, macchina o remote serve riavviare l'app.</p>
+              <p>Configuration saved. Restart the app to apply the data repository, machine or remote changes.</p>
               @for (warning of warnings(); track warning) {
                 <p class="warning" data-testid="onboarding-warning">{{ warning }}</p>
               }
               <footer>
-                <button type="button" data-testid="onboarding-restart" (click)="relaunch()">Riavvia app</button>
-                <button type="button" data-testid="onboarding-close" (click)="visible.set(false)">Più tardi</button>
+                <button type="button" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
+                <button type="button" data-testid="onboarding-close" (click)="visible.set(false)">Later</button>
               </footer>
             </div>
           } @else {
             @if (state()?.reason === 'corrupt') {
-              <p class="warning" data-testid="onboarding-corrupt">La configurazione precedente non era valida ed è stata messa da parte.</p>
+              <p class="warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
             }
             @switch (step()) {
               @case (1) {
                 <div data-testid="onboarding-step-1">
-                  <label>Nome macchina
+                  <label>Machine name
                     <input data-testid="onboarding-machine" [value]="config().machineName" (input)="patch({ machineName: value($event) })" />
                   </label>
                   @if (errors()['machineName']; as message) { <p class="error" data-testid="onboarding-error-machine">{{ message }}</p> }
-                  <label>Repo dati (percorso assoluto)
+                  <label>Data repository (absolute path)
                     <input data-testid="onboarding-repo" [value]="config().dataRepoPath" (input)="patch({ dataRepoPath: value($event) })" />
                   </label>
                   @if (errors()['dataRepoPath']; as message) { <p class="error" data-testid="onboarding-error-repo">{{ message }}</p> }
-                  <label>Remote Git (opzionale)
+                  <label>Git remote (optional)
                     <input data-testid="onboarding-remote" [value]="config().dataRepoRemote ?? ''" (input)="patch({ dataRepoRemote: value($event) })" />
                   </label>
                   @if (errors()['dataRepoRemote']; as message) { <p class="error" data-testid="onboarding-error-remote">{{ message }}</p> }
@@ -69,7 +69,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               @case (2) {
                 <div data-testid="onboarding-step-2">
-                  <label>Provider AI
+                  <label>AI provider
                     <select data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="patch({ aiProvider: aiProvider($event) })">
                       @for (provider of aiProviders; track provider) {
                         <option [value]="provider" [selected]="provider === config().aiProvider">{{ provider }}</option>
@@ -77,25 +77,25 @@ const MIC_MESSAGES: Record<MicState, string> = {
                     </select>
                   </label>
                   @if (config().aiProvider !== 'none') {
-                    <label>Base URL (opzionale)
+                    <label>Base URL (optional)
                       <input data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
                     @if (errors()['aiBaseUrl']; as message) { <p class="error" data-testid="onboarding-error-ai-url">{{ message }}</p> }
-                    <label>Modello (opzionale)
+                    <label>Model (optional)
                       <input data-testid="onboarding-ai-model" [value]="config().aiModel ?? ''" (input)="patch({ aiModel: value($event) })" />
                     </label>
-                    <label>Token (opzionale, solo keychain)
+                    <label>Token (optional, keychain only)
                       <input type="password" autocomplete="off" data-testid="onboarding-ai-token" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
                     @if (!state()?.secureStorage) {
-                      <p class="warning" data-testid="onboarding-keychain-warning">Keychain non disponibile: il token resterà solo in memoria.</p>
+                      <p class="warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
                   }
                 </div>
               }
               @case (3) {
                 <div data-testid="onboarding-step-3">
-                  <label>Provider STT
+                  <label>STT provider
                     <select data-testid="onboarding-stt-provider" [value]="config().sttProvider" (change)="patch({ sttProvider: sttProvider($event) })">
                       @for (provider of sttProviders; track provider) {
                         <option [value]="provider" [selected]="provider === config().sttProvider">{{ provider }}</option>
@@ -103,22 +103,22 @@ const MIC_MESSAGES: Record<MicState, string> = {
                     </select>
                   </label>
                   @if (config().sttProvider !== 'none') {
-                    <label>Modello (opzionale)
+                    <label>Model (optional)
                       <input data-testid="onboarding-stt-model" [value]="config().sttModel ?? ''" (input)="patch({ sttModel: value($event) })" />
                     </label>
                     @if (config().sttProvider === 'cloud') {
-                      <label>Token (opzionale, solo keychain)
+                      <label>Token (optional, keychain only)
                         <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
                       </label>
                     }
                     @if (config().sttProvider === 'local') {
-                      <label>Comando STT locale (percorso assoluto)
+                      <label>Local STT command (absolute path)
                         <input data-testid="onboarding-stt-command" [value]="config().sttCommand ?? ''" (input)="patch({ sttCommand: value($event) })" />
                       </label>
                       @if (errors()['sttCommand']; as message) { <p class="error" data-testid="onboarding-error-stt-command">{{ message }}</p> }
                     }
                   }
-                  <button type="button" data-testid="onboarding-mic-check" (click)="checkMicrophone()">Verifica microfono</button>
+                  <button type="button" data-testid="onboarding-mic-check" (click)="checkMicrophone()">Check microphone</button>
                   <p class="hint" data-testid="onboarding-mic-status" role="status">{{ micMessage() }}</p>
                 </div>
               }
@@ -129,17 +129,17 @@ const MIC_MESSAGES: Record<MicState, string> = {
             }
             <footer>
               @if (step() === 1) {
-                <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Usa valori predefiniti</button>
+                <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
               } @else {
-                <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Indietro</button>
+                <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button>
               }
               @if (step() > 1) {
-                <button type="button" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Salta</button>
+                <button type="button" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
               }
               @if (step() < 3) {
-                <button type="button" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Avanti</button>
+                <button type="button" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
               } @else {
-                <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Salva</button>
+                <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
               }
             </footer>
           }
@@ -238,7 +238,7 @@ export class OnboardingWizard {
         this.step.set((current + 1) as Step);
       }
     } catch {
-      this.errors.set({ config: 'Validazione non riuscita.' });
+      this.errors.set({ config: 'Validation failed.' });
     } finally {
       this.busy.set(false);
     }
@@ -288,7 +288,7 @@ export class OnboardingWizard {
       });
       this.handleResult(result);
     } catch {
-      this.errors.set({ config: 'Salvataggio non riuscito.' });
+      this.errors.set({ config: 'Could not save.' });
     } finally {
       this.aiToken.set('');
       this.sttToken.set('');
@@ -301,7 +301,7 @@ export class OnboardingWizard {
     try {
       this.handleResult(await this.api.onboardingSkip());
     } catch {
-      this.errors.set({ config: 'Salvataggio non riuscito.' });
+      this.errors.set({ config: 'Could not save.' });
     } finally {
       this.busy.set(false);
     }

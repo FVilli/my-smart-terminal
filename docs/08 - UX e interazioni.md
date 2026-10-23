@@ -1,24 +1,24 @@
 ---
-title: UX e interazioni
+title: UX and interactions
 project: smart-terminal
 type: design
 version: 1
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=48cb6ca1-9a73-4164-b528-4204e5c909ba registered=2026-10-23T07:57:48.553Z -->
-# UX e interazioni
+# UX and interactions
 
-## Riferimento
-Mock approvato: `mockups/Smart Terminal - mock definitivo.png`. Non modificarne la gerarchia senza decisione esplicita: header; tab sessioni; area output; input assistito in basso; barra destra history/clipboard.
+## Reference
+Approved mockup: `mockups/Smart Terminal - mock definitivo.png`. Do not change its hierarchy without an explicit decision: header; session tabs; output area; assisted input at the bottom; right history/clipboard bar.
 
 ## Layout
-Terminale 75%, sidebar 25%, entrambe le colonne `min-width:0`; su finestre strette gestire overflow dei contenuti, senza modificare il rapporto di default. Tema scuro. Output xterm e editor di input **monospace** (`JetBrains Mono`, `Cascadia Code`, `monospace`); UI esterna può usare sans-serif.
+Terminal 75%, sidebar 25%, both columns `min-width:0`; on narrow windows, handle content overflow without changing the default ratio. Dark theme. xterm output and input editor **monospace** (`JetBrains Mono`, `Cascadia Code`, `monospace`); the surrounding UI may use sans-serif.
 
-## Tab e SSH
-Ogni tab rappresenta un PTY distinto e mostra `S<n>` e destinazione; `+` apre menu con Local e alias SSH letti da `~/.ssh/config`. Cambiare tab conserva processo, viewport e bozza. Chiudere tab non tocca altre sessioni.
+## Tabs and SSH
+Each tab represents a distinct PTY and shows `S<n>` and its destination; `+` opens a menu with Local and SSH aliases read from `~/.ssh/config`. Switching tabs preserves the process, viewport, and draft. Closing a tab does not affect other sessions.
 
-## Input e sidebar
-Input assistito sempre visibile in basso, AI correction a sinistra, mic + `Voice ready` in basso a destra. Premere invio effettua un invio deliberato (definire shortcut esplicita per newline). Correzione solo di prompt in linguaggio naturale, non di comandi shell. Sidebar mostra alternativamente History globale (ricerca e filtro macchina) o Clipboard (copia/reinserimento). Il footer mostra GitHub sync e icona primary accesa/spenta.
+## Input and sidebar
+Assisted input is always visible at the bottom, AI correction on the left, mic + `Voice ready` at the bottom right. Pressing Enter performs a deliberate submission (define an explicit shortcut for newline). Correction applies only to natural-language prompts, not shell commands. The sidebar alternates between global History (search and machine filter) and Clipboard (copy/reinsert). The footer shows GitHub sync and a lit/unlit primary icon.
 
-## Stati vuoti/errori
-History senza risultati, repo non configurato, SSH non raggiungibile, microfono negato, AI non disponibile, primary assente e sync offline devono mostrare messaggio localizzato, senza bloccare l'uso del terminale.
+## Empty/error states
+History with no results, an unconfigured repository, unreachable SSH, denied microphone, unavailable AI, absent primary, and offline sync must show a localized message without blocking terminal use.

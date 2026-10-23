@@ -1,34 +1,34 @@
 ---
-title: "M01 - T01 - Scaffold monorepo"
+title: "M01 - T01 - Monorepo scaffold"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M01-T01"
 milestone: "M01"
 depends_on: ""
-deliverables: "Scaffold monorepo"
+deliverables: "Monorepo scaffold"
 ---
 <!-- gsynchro:v1 id=092350b9-daa9-40d0-a249-14981267d8dc registered=2026-10-23T07:57:56.378Z -->
 
-# M01 - T01 - Scaffold monorepo
+# M01 - T01 - Monorepo scaffold
 
-## Obiettivo
-Scaffold monorepo.
+## Objective
+Monorepo scaffold.
 
-## Implementazione vincolata
-Preparare workspace Angular standalone, Electron main/preload e TypeScript shared; script dev/build/lint.
+## Constrained implementation
+Prepare a standalone Angular workspace, Electron main/preload, and shared TypeScript; dev/build/lint scripts.
 
-## Criteri di accettazione
-Avvio finestra Electron con Angular; typecheck e lint senza errori.
+## Acceptance criteria
+Launch an Electron window with Angular; typecheck and lint without errors.
 
 ## Riferimenti
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce a database, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: npm workspaces, Angular 22.2.3 (application builder), Electron 45, bundle esbuild per main/preload, contratti IPC condivisi, protocollo custom `smart-terminal://` per il renderer in produzione, smoke mode.
-- Verifica: `npm run lint`, `npx tsc -p tsconfig.json --noEmit`, `npm run build`, `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` con esito `hasApi: true` e UI Angular renderizzata.
-- Deviazioni: tooling di build (esbuild, concurrently, wait-on, cross-env) e dettagli runtime registrati in `docs/10 - Config locale, coordinatore e sicurezza runtime.md`. Nessun database o servizio remoto aggiunto.
+## Outcome
+- 2026-10-23: completed.
+- Implemented: npm workspaces, Angular 22.2.3 (application builder), Electron 45, esbuild bundle for main/preload, shared IPC contracts, custom `smart-terminal://` protocol for the production renderer, smoke mode.
+- Verification: `npm run lint`, `npx tsc -p tsconfig.json --noEmit`, `npm run build`, `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` with `hasApi: true` and rendered Angular UI.
+- Deviations: build tooling (esbuild, concurrently, wait-on, cross-env) and runtime details recorded in `docs/10 - Config locale, coordinatore e sicurezza runtime.md`. No database or remote service added.

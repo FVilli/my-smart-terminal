@@ -81,7 +81,7 @@ export class SessionsStore {
       this.activeIdState.set(session.id);
       return session.id;
     } catch {
-      this.createErrorState.set(request.kind === 'ssh' ? 'Impossibile avviare la sessione SSH.' : 'Impossibile avviare la shell locale.');
+      this.createErrorState.set(request.kind === 'ssh' ? 'Could not start the SSH session.' : 'Could not start the local shell.');
       return null;
     } finally {
       this.creatingState.set(false);

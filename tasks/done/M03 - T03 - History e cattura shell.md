@@ -1,34 +1,34 @@
 ---
-title: "M03 - T03 - History e cattura shell"
+title: "M03 - T03 - History and shell capture"
 type: task
 project: smart-terminal
 created: 2026-10-22
 id: "M03-T03"
 milestone: "M03"
 depends_on: "T01"
-deliverables: "History e cattura shell"
+deliverables: "History and shell capture"
 ---
 <!-- gsynchro:v1 id=b214312f-aed5-4799-8c99-a530cd628df7 registered=2026-10-23T07:58:03.113Z -->
 
-# M03 - T03 - History e cattura shell
+# M03 - T03 - History and shell capture
 
-## Obiettivo
-History e cattura shell.
+## Objective
+History and shell capture.
 
-## Implementazione vincolata
-Acquisire invii editor e shell con meccanismo affidabile; eventi idempotenti.
+## Constrained implementation
+Capture editor and shell submissions with a reliable mechanism; idempotent events.
 
-## Criteri di accettazione
-history.md aggiornato; password non salvate; nessun logging raw keystroke.
+## Acceptance criteria
+Update history.md; do not save passwords; no raw keystroke logging.
 
 ## Riferimenti
 `docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
 
-## Non fare
-Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+## Do not
+Do not introduce a database, additional remote services, or architectural choices not specified.
 
-## Esito
-- 2026-10-23: completato.
-- Implementato: filtro segreti condiviso, `history:record` con source fisso `assisted`, UUID/timestamp/cwd, idempotenza e atomicità, chiamata renderer solo dopo invio riuscito, smoke editor esteso.
-- Verifica: test filtro/append/limiti; editor smoke con historyAssistedRecorded, historyEnterRecorded, historySensitiveNotRecorded, historyCwdPresent.
-- **Deviazione esplicita**: la shell nativa non è registrata in M03. Nessuna iniezione in `.bashrc`/`.zshrc`, nessun keystroke, nessuna intercettazione TUI; solo invii espliciti dall'editor assistito (`docs/03`).
+## Outcome
+- 2026-10-23: completed.
+- Implemented: shared secret filter, `history:record` with fixed `assisted` source, UUID/timestamp/cwd, idempotency and atomicity, renderer call only after successful submission, extended editor smoke test.
+- Verification: filter/append/limit tests; editor smoke with historyAssistedRecorded, historyEnterRecorded, historySensitiveNotRecorded, historyCwdPresent.
+- **Explicit deviation**: the native shell is not recorded in M03. No injection into `.bashrc`/`.zshrc`, no keystrokes, no TUI interception; only explicit submissions from the assisted editor (`docs/03`).

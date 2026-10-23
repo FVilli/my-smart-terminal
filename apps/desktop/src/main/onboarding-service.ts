@@ -30,17 +30,17 @@ export interface OnboardingServiceOptions {
 }
 
 const MESSAGES = {
-  machineName: 'Nome macchina non valido.',
-  dataRepoPath: 'Percorso non valido: deve essere assoluto, creabile e scrivibile.',
-  dataRepoRemote: 'Remote Git non valido.',
-  aiProvider: 'Provider AI non valido.',
-  aiBaseUrl: 'URL non valido: usa http(s) senza credenziali o query.',
-  aiModel: 'Nome modello non valido.',
-  sttProvider: 'Provider STT non valido.',
-  sttModel: 'Nome modello non valido.',
-  sttCommand: 'Comando non valido: serve il percorso assoluto di un eseguibile.',
-  aiToken: 'Token non valido.',
-  sttToken: 'Token non valido.',
+  machineName: 'Invalid machine name.',
+  dataRepoPath: 'Invalid path: it must be absolute, creatable and writable.',
+  dataRepoRemote: 'Invalid Git remote.',
+  aiProvider: 'Invalid AI provider.',
+  aiBaseUrl: 'Invalid URL: use http(s) without credentials or query.',
+  aiModel: 'Invalid model name.',
+  sttProvider: 'Invalid STT provider.',
+  sttModel: 'Invalid model name.',
+  sttCommand: 'Invalid command: an absolute executable path is required.',
+  aiToken: 'Invalid token.',
+  sttToken: 'Invalid token.',
 } as const;
 
 /** Il percorso esiste ed e' una directory scrivibile, oppure l'antenato esistente piu' vicino lo e' (quindi e' creabile). */
@@ -75,7 +75,7 @@ const isOptionalText = (value: unknown, valid: (text: string) => boolean): boole
 export function validateOnboardingConfig(config: unknown, fieldChecks = true): OnboardingValidationResult {
   const errors: Record<string, string> = {};
   if (typeof config !== 'object' || config === null) {
-    return { ok: false, errors: { config: 'Configurazione non valida.' } };
+    return { ok: false, errors: { config: 'Invalid configuration.' } };
   }
   const c = config as Record<string, unknown>;
   const fail = (field: keyof typeof MESSAGES): void => {
@@ -97,7 +97,7 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
   const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttCommand'].includes(key));
-  if (extra.length > 0) errors['config'] = 'Configurazione non valida.';
+  if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
@@ -202,7 +202,7 @@ export class OnboardingService {
       fs.mkdirSync(next.dataRepoPath, { recursive: true });
       this.options.store.save(next);
     } catch {
-      return { ok: false, errors: { config: 'Impossibile salvare la configurazione.' }, restartRequired: false, warnings: [] };
+      return { ok: false, errors: { config: 'Could not save the configuration.' }, restartRequired: false, warnings: [] };
     }
     this.config = next;
     this.reason = 'valid';
@@ -218,7 +218,7 @@ export class OnboardingService {
           warnings.push(result.warning);
         }
       } catch {
-        warnings.push('Impossibile salvare il token.');
+        warnings.push('Could not save the token.');
       }
     };
     if (next.aiProvider !== 'none') storeToken(`ai:${next.aiProvider}`, request.aiToken);

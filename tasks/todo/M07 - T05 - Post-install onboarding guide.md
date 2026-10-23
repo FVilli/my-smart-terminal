@@ -8,6 +8,7 @@ milestone: "M07"
 depends_on: "T01,T04"
 deliverables: "Post-install onboarding guide"
 ---
+<!-- gsynchro:v1 id=175b4504-ad0d-4519-b37c-403349e47125 registered=2026-10-23T10:19:23.501Z -->
 
 # M07 - T05 - Post-install onboarding guide
 

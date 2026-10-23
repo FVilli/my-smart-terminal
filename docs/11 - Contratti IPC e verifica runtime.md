@@ -1,5 +1,5 @@
 ---
-title: "Contratti IPC e verifica runtime"
+title: "IPC contracts and runtime verification"
 type: contract
 project: smart-terminal
 version: 1
@@ -7,19 +7,19 @@ created: 2026-10-23
 ---
 <!-- gsynchro:v1 id=65893937-7b8b-4a2a-8d10-a731a2aad10b registered=2026-10-23T08:19:15.144Z -->
 
-# Contratti IPC e verifica runtime
+# IPC contracts and runtime verification
 
-Documento operativo: elenca i confini main/preload/renderer e i comandi di verifica. Le fonti normative restano `docs/01`, `docs/06` e `docs/10`.
+Operational document: lists the main/preload/renderer boundaries and verification commands. Normative sources remain `docs/01`, `docs/06`, and `docs/10`.
 
-## Regole
-- `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; il renderer non vede `require`/`process`.
-- Il preload espone solo metodi tipizzati; nessun `invoke` generico in produzione.
-- Ogni canale è whitelisted in `packages/contracts/src/index.ts`, validato nel main (payload, dimensione, sender main-frame e origin) e risponde con errori a codice, senza path o stack.
-- Limite payload JSON 128 KiB; limiti specifici per campo (es. write PTY 64 KiB, dimensioni 1-1000).
-- Eventi main→renderer separati dai canali invocabili e con unsubscribe.
+## Rules
+- `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`; the renderer cannot access `require`/`process`.
+- The preload exposes only typed methods; no generic `invoke` in production.
+- Every channel is whitelisted in `packages/contracts/src/index.ts`, validated in main (payload, size, main-frame sender, and origin) and returns coded errors without paths or stacks.
+- JSON payload limit 128 KiB; field-specific limits (for example, PTY write 64 KiB, dimensions 1-1000).
+- Main→renderer events are separate from invokable channels and support unsubscribe.
 
-## Canali invocabili (stato M01)
-| Canale | Payload | Risposta |
+## Invokable channels (M01 status)
+| Channel | Payload | Response |
 | --- | --- | --- |
 | `app:ping` | nessuno | `{ appVersion, platform }` |
 | `app:runtime-info` | nessuno | `{ appVersion, platform, isPackaged }` |
@@ -29,112 +29,112 @@ Documento operativo: elenca i confini main/preload/renderer e i comandi di verif
 | `terminal:close` | `{ sessionId }` | `void` |
 | `terminal:list` | nessuno | `TerminalSessionInfo[]` |
 | `history:record` (T03) | `{ sessionId, text, agent? }` | `{ recorded: boolean }` |
-| `clipboard:configure` (T04) | `{ enabled?, paused? }` | stato clipboard |
+| `clipboard:configure` (T04) | `{ enabled?, paused? }` | clipboard state |
 | `clipboard:set-active` (T04) | `{ sessionId }` | `void` |
 | `clipboard:clear` (T04) | nessuno | `void` |
-| `search:query` (T05) | `{ query, machine?, sessionId?, from?, to? }` | risultati (cap 100) |
+| `search:query` (T05) | `{ query, machine?, sessionId?, from?, to? }` | results (cap 100) |
 
-Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, exitCode, signal? }`). Ogni finestra ha il proprio `SessionManager`; alla chiusura/distruzione i PTY vengono terminati.
+Events: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, exitCode, signal? }`). Each window has its own `SessionManager`; PTYs are terminated on close/destruction.
 
 ## API preload
-`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `clipboardWrite`, `search`, `searchFacets`, `syncStatus`, `onSyncStatus`, `onRoleChanged`, `onSearchRefreshed`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
+`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `clipboardWrite`, `search`, `searchFacets`, `syncStatus`, `onSyncStatus`, `onRoleChanged`, `onSearchRefreshed`. The `__testInvoke` seam exists only with the startup argument `--smart-terminal-test-ipc`, enabled by smoke tests.
 
-## History e clipboard (M03)
-- `history:record` accetta solo `{sessionId, text, agent?}`, source fisso `assisted`, testo ≤16 KiB, `agent` ≤64 char. Testo sensibile: `{recorded:false}`. Il renderer lo chiama solo dopo un invio riuscito dall'editor; nessun keystroke o shell nativa.
-- Clipboard: opt-in (default off; `SMART_TERMINAL_CLIPBOARD=1` per abilitarla all'avvio), polling 800 ms, max 32 KiB UTF-8, hash SHA-256, dedupe in memoria e contro il file, filtro segreti best-effort, pausa/clear. Associazione alla sessione attiva su tab/focus.
-- `search:query` è case-insensitive, filtra macchina/sessione/data/kind, cap 100, e restituisce entry history/clipboard; l'indice è in memoria e si ricostruisce all'avvio.
+## History and clipboard (M03)
+- `history:record` accepts only `{sessionId, text, agent?}`, fixed source `assisted`, testo ≤16 KiB, `agent` ≤64 char. Sensitive text: `{recorded:false}`. The renderer calls it only after a successful editor submission; no keystrokes or native shell history.
+- Clipboard: opt-in (default off; `SMART_TERMINAL_CLIPBOARD=1` to enable it at startup), polling 800 ms, max 32 KiB UTF-8, hash SHA-256, dedupe in memory and against the file, best-effort secret filter, pause/clear. Associated with the active session on tab/focus.
+- `search:query` is case-insensitive, filters machine/session/date/kind, caps at 100, and returns history/clipboard entries; the index is in memory and rebuilt at startup.
 
-## Persistenza runtime (M03)
-- Repo dati: `SMART_TERMINAL_DATA_REPO` oppure `userData/data`; `sessions/<machine>/` creato localmente. Machine: `SMART_TERMINAL_MACHINE` oppure hostname normalizzato.
-- `counter.md` in `sessions/<machine>/` con `schema_version`, `machine`, `last_session`, `updated_at`; prenotazione atomica sotto lock in `userData/coordinator/locks`, recovery stale, nessun riuso.
-- Directory sessione `YYYY-MM-DD_HH.mm_S<n>_<local|alias>` con `session.md`, `history.md`, `clipboard.md`.
-- Frontmatter comune: `schema_version: 1`, `session_id`, `machine`, `created_at`; `session.md` aggiunge `window_id`, `kind`, `ssh_alias?`, `cwd_initial`, `started_at`, `ended_at?`.
-- Eventi history: `## <ISO8601> · <id>`, campi `source`, `agent?`, `cwd?`, blocco fenced `text`; clipboard: `type`, `source?`, `hash`, blocco `text`. Fence dinamica, dedupe per id/hash.
+## Runtime persistence (M03)
+- Data repository: `SMART_TERMINAL_DATA_REPO` or `userData/data`; `sessions/<machine>/` created locally. Machine: `SMART_TERMINAL_MACHINE` or normalized hostname.
+- `counter.md` in `sessions/<machine>/` with `schema_version`, `machine`, `last_session`, `updated_at`; atomic reservation under lock in `userData/coordinator/locks`, stale recovery, no reuse.
+- Session directory `YYYY-MM-DD_HH.mm_S<n>_<local|alias>` with `session.md`, `history.md`, `clipboard.md`.
+- Common frontmatter: `schema_version: 1`, `session_id`, `machine`, `created_at`; `session.md` aggiunge `window_id`, `kind`, `ssh_alias?`, `cwd_initial`, `started_at`, `ended_at?`.
+- History events: `## <ISO8601> · <id>`, campi `source`, `agent?`, `cwd?`, fenced block `text`; clipboard: `type`, `source?`, `hash`, blocco `text`. Dynamic fence, dedupe by id/hash.
 - `TerminalSessionInfo` espone `sessionId`/`label` (`S<n>`), `machine`, `sessionDirectory`, `startedAt`.
-- History M03: solo invii espliciti dall'editor assistito (`source: assisted`); nessun keystroke o prompt TUI. Deviazione documentata in `docs/03`.
-- Clipboard: opt-in, polling ~800 ms, hash SHA-256, limite 32 KiB, filtro segreti best-effort, pausa/cancellazione, associazione alla sessione attiva.
-- Indice ricerca: rebuild all'avvio, aggiornamento sulle scritture dell'app, refresh dopo Git; solo Markdown sotto `sessions/`, niente symlink, limiti di dimensione.
+- History M03: explicit assisted-editor submissions only (`source: assisted`); no keystrokes or TUI prompts. Deviation documented in `docs/03`.
+- Clipboard: opt-in, polling ~800 ms, hash SHA-256, 32 KiB limit, best-effort secret filter, pause/clear, association with the active session.
+- Search index: rebuilt at startup, updated on app writes, refreshed after Git; Markdown only under `sessions/`, no symlinks, size limits.
 
-## Coordinatore e Git (M04)
-- Lock `userData/coordinator/primary.lock` (mkdir atomico, owner.json, heartbeat 3 s, stale 10 s, recovery con nonce); un solo primary per macchina.
-- Socket Unix `userData/coordinator/coordinator.sock` (`0700`/`0600`) o named pipe Windows; token `0600`; protocollo JSON line-delimited max 1 MiB.
-- Metodi: `ping`, `session.allocate`, `session.end`, `search.query`, `search.upsert`, `search.refresh`, `search.facets`, `sync.status`, `sync.dirty`, `clipboard.state`, `clipboard.configure`, `clipboard.setActive` (sessionDirectory validata), `clipboard.clear`.
-- `AppRuntimeInfo.isPrimary` ed evento `app:role-changed`; evento `sync:status` con `{state,lastSyncAt?,lastError?,remoteConfigured}`; footer dinamico.
+## Coordinator and Git (M04)
+- Lock `userData/coordinator/primary.lock` (atomic mkdir, owner.json, heartbeat 3 s, stale 10 s, recovery with nonce); one primary per machine.
+- Socket Unix `userData/coordinator/coordinator.sock` (`0700`/`0600`) or Windows named pipe; token `0600`; JSON line-delimited protocol max 1 MiB.
+- Methods: `ping`, `session.allocate`, `session.end`, `search.query`, `search.upsert`, `search.refresh`, `search.facets`, `sync.status`, `sync.dirty`, `clipboard.state`, `clipboard.configure`, `clipboard.setActive` (sessionDirectory validata), `clipboard.clear`.
+- `AppRuntimeInfo.isPrimary` and `app:role-changed` event; `sync:status` event with `{state,lastSyncAt?,lastError?,remoteConfigured}`; dynamic footer.
 - Scheduler Git: debounce 10 s, max wait 60 s, fetch 15 s, flush a stop; env `SMART_TERMINAL_SYNC_*`.
-- Git: `GitEngine` seriale, stage solo `sessions/`, commit path-scoped, fetch/rebase/push senza force, conflitti con abort e file preservati, offline con commit locale. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
+- Git: serialized `GitEngine`, stage only `sessions/`, path-scoped commits, fetch/rebase/push without force, conflicts with abort and preserved files, offline with local commits. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
 
-## Display virtuale per gli smoke (Linux)
-- Gli smoke Electron non devono usare il desktop dell'utente. `scripts/run-electron.mjs` avvia l'app su un display Xvfb dedicato (`:99` per default) e tutti gli script `test:*-smoke` e `test:layout` passano da lì.
-- Su sessioni Wayland il solo `DISPLAY=:99` non basta: Electron userebbe `WAYLAND_DISPLAY` e apparirebbe sul desktop. Il wrapper rimuove `WAYLAND_DISPLAY` e forza `ELECTRON_OZONE_PLATFORM_HINT=x11`, `GDK_BACKEND=x11` e `--ozone-platform=x11`.
-- `node_modules/.bin/electron` viene sostituito da uno shim (`npm run setup:test-display`, automatico via `postinstall`) che invoca lo stesso wrapper: anche un comando `electron` diretto resta su Xvfb. Per usare il desktop reale: `SMART_TERMINAL_NO_XVFB=1`.
-- Ordine di ricerca di Xvfb: `SMART_TERMINAL_XVFB_BIN`, `/usr/bin/Xvfb`, `/usr/local/bin/Xvfb`, `~/.local/xvfb/usr/bin/Xvfb`. Se non è disponibile, avvisa e usa il display corrente.
-- Override: `SMART_TERMINAL_XVFB_DISPLAY` (es. `:98`), `SMART_TERMINAL_NO_XVFB=1` per tornare al display corrente (sconsigliato in sessione interattiva).
-- Installazione senza root: `apt-get download xvfb xserver-common xauth`, poi `dpkg-deb -x <deb> ~/.local/xvfb`; l'helper la trova in `~/.local/xvfb/usr/bin/Xvfb`.
-- `scripts/capture-layout.mjs` usa lo stesso wrapper, quindi gli screenshot finiscono in `dist/layout/` senza aprire finestre sul desktop.
-- In CI Linux usare `xvfb-run` o installare Xvfb; su macOS/Windows il wrapper lascia il display nativo dei runner.
+## Virtual display for smoke tests (Linux)
+- Electron smoke tests must not use the user's desktop. `scripts/run-electron.mjs` starts the app on a dedicated Xvfb display (`:99` by default), and all `test:*-smoke` and `test:layout` scripts run through it.
+- In Wayland sessions, `DISPLAY=:99` alone is not enough: Electron would use `WAYLAND_DISPLAY` and appear on the desktop. The wrapper removes `WAYLAND_DISPLAY` and forces `ELECTRON_OZONE_PLATFORM_HINT=x11`, `GDK_BACKEND=x11`, and `--ozone-platform=x11`.
+- `node_modules/.bin/electron` is replaced by a shim (`npm run setup:test-display`, automatic via `postinstall`) that invokes the same wrapper: even a direct `electron` command stays on Xvfb. To use the real desktop: `SMART_TERMINAL_NO_XVFB=1`.
+- Xvfb search order: `SMART_TERMINAL_XVFB_BIN`, `/usr/bin/Xvfb`, `/usr/local/bin/Xvfb`, `~/.local/xvfb/usr/bin/Xvfb`. If unavailable, warn and use the current display.
+- Override: `SMART_TERMINAL_XVFB_DISPLAY` (for example, `:98`), `SMART_TERMINAL_NO_XVFB=1` to return to the current display (not recommended in an interactive session).
+- Rootless installation: `apt-get download xvfb xserver-common xauth`, then `dpkg-deb -x <deb> ~/.local/xvfb`; the helper finds it in `~/.local/xvfb/usr/bin/Xvfb`.
+- `scripts/capture-layout.mjs` uses the same wrapper, so screenshots go to `dist/layout/` without opening windows on the desktop.
+- In Linux CI use `xvfb-run` or install Xvfb; on macOS/Windows the wrapper leaves the runners' native display.
 
 ## Hardening (M06-T02)
-- Protocollo renderer e navigazione con origin esatta, anti-traversal/null byte; symlink rifiutati nei path sessione; socket path lungo con fallback in temp per-utente.
-- IP remote Git validato anche da env; limiti payload per-canale; checklist completa in `docs/13 - Security checklist.md`.
+- Renderer protocol and navigation with exact origin, anti-traversal/null byte; symlinks rejected in session paths; long socket path with per-user temp fallback.
+- Git remote URL also validated from env; per-channel payload limits; full checklist in `docs/13 - Security checklist.md`.
 
 ## PTY
-- `packages/terminal` contiene interfacce e `SessionManager` testabile; l'adapter nativo è nel subpath `@smart-terminal/terminal/node-pty` e va importato solo dal main.
-- File e args sono sempre separati (mai una stringa shell composta da IPC). `cwd` deve essere assoluto ed esistente.
-- `node-pty` va ricompilato per l'ABI di Electron con `npm run rebuild:native`; i test unitari usano un adapter fake e non caricano il binding.
+- `packages/terminal` contains interfaces and a testable `SessionManager`; the native adapter is in subpath `@smart-terminal/terminal/node-pty` and must be imported only by main.
+- Files and args are always separate (never a shell string composed from IPC). `cwd` must be absolute and existing.
+- `node-pty` must be rebuilt for the Electron ABI con `npm run rebuild:native`; unit tests use a fake adapter and do not load the binding.
 
-## Comandi
-| Comando | Cosa verifica |
+## Commands
+| Command | What it verifies |
 | --- | --- |
-| `npm run lint` | ESLint su TS/HTML |
+| `npm run lint` | ESLint on TS/HTML |
 | `npx tsc -p tsconfig.json --noEmit` | typecheck main/packages |
 | `npm run test` | unit test Vitest (IPC, SessionManager, data schema/allocatore, runtime) |
-| `npm run test:data` | test mirati del package data e del runtime dati |
-| `npm run test:coordinator` | elezione multi-processo, takeover, protocollo, Git con repo bare |
-| `npm run test:e2e` | due istanze Electron reali: primary unico, ID distinti, failover e cross-machine su Git bare |
-| `node scripts/run-electron.mjs apps/desktop` | avvio Electron su Xvfb `:99` (usato dagli smoke) |
+| `npm run test:data` | targeted data package and data runtime tests |
+| `npm run test:coordinator` | multi-process election, takeover, protocol, Git with bare repository |
+| `npm run test:e2e` | two real Electron instances: single primary, distinct IDs, failover, and cross-machine operation on bare Git |
+| `node scripts/run-electron.mjs apps/desktop` | Electron startup on Xvfb `:99` (usato dagli smoke) |
 | `npm run build` | bundle main/preload + Angular production |
-| `npm run test:ipc-smoke` | finestra Electron, API valida, rifiuto payload/canale, renderer senza Node |
-| `npm run test:pty-smoke` | rebuild nativo + shell reale: output, input, resize, list, exit |
-| `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` | smoke UI/IPC equivalente |
-| `SMART_TERMINAL_PTY_SMOKE=1 npx electron apps/desktop` | smoke PTY (richiede rebuild nativo) |
-| `npm run test:layout` | screenshot 1440x900 e 1024x700, ratio 75/25, nessun overflow (main+sidebar) |
-| `npm run test:tabs-smoke` | due tab, switch senza kill, chiusura |
-| `npm run test:editor-smoke` | Invio/Shift+Invio, marker eseguito, bozza svuotata, bozze per tab |
-| `npm run test:sidebar-smoke` | cambio Clipboard/History, placeholder, footer sync/primary |
-| `npm run test:clipboard-smoke` | opt-in, pausa, evento reale, hash, pattern sensibile ignorato |
-| `npm run test:search-smoke` | invio assistito indicizzato, filtri, sensibile escluso, rebuild da disco |
+| `npm run test:ipc-smoke` | Electron window, valid API, payload/channel rejection, renderer without Node |
+| `npm run test:pty-smoke` | native rebuild + real shell: output, input, resize, list, exit |
+| `SMART_TERMINAL_SMOKE=1 npx electron apps/desktop` | smoke UI/IPC equivalent |
+| `SMART_TERMINAL_PTY_SMOKE=1 npx electron apps/desktop` | smoke PTY (requires native rebuild) |
+| `npm run test:layout` | screenshot 1440x900 e 1024x700, ratio 75/25, no overflow (main+sidebar) |
+| `npm run test:tabs-smoke` | two tabs, switch without kill, close |
+| `npm run test:editor-smoke` | Enter/Shift+Enter, executed marker, cleared draft, per-tab drafts |
+| `npm run test:sidebar-smoke` | Clipboard/History switch, placeholder, sync/primary footer |
+| `npm run test:clipboard-smoke` | opt-in, pause, real event, hash, sensitive pattern ignored |
+| `npm run test:search-smoke` | indexed assisted submission, filters, sensitive content excluded, rebuild from disk |
 
 ## STT (M05-T04)
-- Canali `stt:status` e `stt:transcribe {audio: Uint8Array, mimeType}`; audio ≤10 MiB, MIME `audio/*` senza parametri, limite payload per canale. Risposta `{text, skipped, reason?}`.
-- Provider locale (`stt_command` assoluto, stdin, no shell/no file) o cloud OpenAI (`stt:cloud`, `/audio/transcriptions`); token e audio restano nel main e non vengono loggati.
-- Renderer: push-to-talk, permessi/deny, `Voice ready`/`Ascolto…`/`Trascrivo…`/errori, risultato editabile senza invio automatico, nessuna registrazione persistente.
-- Smoke `test:stt-smoke` con `SMART_TERMINAL_STT_TEST_MODE=1`; nessun audio reale/API reale.
+- Channels `stt:status` and `stt:transcribe {audio: Uint8Array, mimeType}`; audio ≤10 MiB, MIME `audio/*` without parameters, per-channel payload limit. Response `{text, skipped, reason?}`.
+- Local provider (absolute `stt_command`, stdin, no shell/no file) or OpenAI cloud (`stt:cloud`, `/audio/transcriptions`); tokens and audio remain in main and are not logged.
+- Renderer: push-to-talk, permissions/deny, `Voice ready`/`Listening…`/`Transcribing…`/errors, editable result without automatic submission, no persistent recording.
+- Smoke `test:stt-smoke` with `SMART_TERMINAL_STT_TEST_MODE=1`; no real audio/API.
 
 ## AI correction (M05-T03)
-- Canali `ai:status` e `ai:correct {text}`; `text` ≤16 KiB. Il main legge config/token, salta comandi shell e chiama l'adapter; risposta `{original, corrected, changed, skipped, reason?}`.
-- Il renderer mostra solo stato/risultato, applica la correzione alla bozza e non invia mai automaticamente. Token e chiamate provider restano nel main.
-- Smoke `test:ai-smoke` con `SMART_TERMINAL_AI_TEST_MODE=1`; nessuna rete reale.
+- Channels `ai:status` and `ai:correct {text}`; `text` ≤16 KiB. Main reads config/token, skips shell commands, and calls the adapter; response `{original, corrected, changed, skipped, reason?}`.
+- The renderer shows only status/result, applies the correction to the draft, and never submits automatically. Tokens and provider calls remain in main.
+- Smoke `test:ai-smoke` with `SMART_TERMINAL_AI_TEST_MODE=1`; no real network.
 
 ## Sidebar globale e sync (M04-T04)
-- History: ricerca case-insensitive con debounce ~200 ms, filtro macchina dalle facet dell'indice, voci da tutte le macchine sincronizzate, copy e inserimento nella bozza (mai invio automatico).
-- Clipboard: lista delle voci catturate, copy/inserimento, controlli opt-in/pausa/clear; il polling è posseduto dal primary anche per le finestre secondary via RPC.
-- Footer: `GitHub synced/syncing/offline/error`, "Repo non configurato" se manca il remote, indicatore primary dal ruolo reale.
-- Refresh: evento `sync:status`/`search:refreshed`, focus finestra, polling 5 s dello stato e 15 s della lista; errori non bloccano il PTY.
-- Il fetch periodico integra i commit remoti quando il working tree tracked è pulito; i prompt di un'altra macchina diventano visibili senza scritture locali.
+- History: case-insensitive search with ~200 ms debounce, machine filter from index facets, entries from all synchronized machines, copy and insert into the draft (never automatic submission).
+- Clipboard: list of captured entries, copy/insert, opt-in/pause/clear controls; polling is owned by the primary even for secondary windows through RPC.
+- Footer: `GitHub synced/syncing/offline/error`, "Repo not configured" if the remote is missing, primary indicator from the actual role.
+- Refresh: `sync:status`/`search:refreshed` event, window focus, 5 s status polling and 15 s list polling; errors do not block the PTY.
+- Periodic fetch integrates remote commits when the tracked working tree is clean; prompts from another machine become visible without local writes.
 
 ## SSH e onboarding (M05)
-- `ssh:aliases` legge `~/.ssh/config` (Include/glob); `createTerminal` accetta `{kind:'local'|'ssh', sshAlias?}`. Errori SSH non bloccano altre sessioni.
+- `ssh:aliases` reads `~/.ssh/config` (Include/glob); `createTerminal` accepts `{kind:'local'|'ssh', sshAlias?}`. SSH errors do not block other sessions.
 - Config: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`) con i campi di `docs/10`; onboarding `onboarding:state|validate|save|skip`, `secrets:status|logout`, `app:relaunch`.
-- Secret: `safeStorage`, file `0600`; su Linux backend `basic_text`/sconosciuto o cifratura assente → solo memoria per la sessione, warning esplicito, mai plaintext.
+- Secrets: `safeStorage`, files `0600`; on Linux, `basic_text`/unknown backend or unavailable encryption -> session memory only, explicit warning, never plaintext.
 - Env: `SMART_TERMINAL_SSH_CONFIG`, `SMART_TERMINAL_SSH_BINARY`, `SMART_TERMINAL_CONFIG_PATH`, `SMART_TERMINAL_USER_DATA`.
 - Smoke: `test:ssh-smoke`, `test:onboarding-smoke`.
 
-## Editor assistito
-- Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.
-- L'invio aggiunge `\r` se assente, non supera 64 KiB UTF-8, svuota la bozza solo in caso di successo.
-- Il key handler è solo sulla textarea: xterm/TUI non vengono intercettati e non esistono listener globali.
-- AI correction e microfono sono attivi da M05 (provider/keychain/permessi).
+## Assisted editor
+- Enter submits to the active PTY; Shift+Enter inserts a newline; IME does not submit. The submit button is enabled only with a non-empty draft and a running session.
+- Submission adds `\r` if absent, does not exceed 64 KiB UTF-8, and clears the draft only on success.
+- The key handler is only on the textarea: xterm/TUI are not intercepted and there are no global listeners.
+- AI correction and microphone have been active since M05 (provider/keychain/permissions).
 
-## Debito noto
-- Il protocollo `smart-terminal://` e `will-navigate` saranno oggetto di hardening in M06 (origin esatta, path traversal, null byte).
-- Il coordinatore, la sync Git e la ricerca globale in UI non sono ancora attivi (M04).
+## Known debt
+- The `smart-terminal://` and `will-navigate` protocol will be hardened in M06 (exact origin, path traversal, null byte).
+- The coordinator, Git sync, and global UI search are not active yet (M04).

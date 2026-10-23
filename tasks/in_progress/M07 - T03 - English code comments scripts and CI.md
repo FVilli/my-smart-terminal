@@ -8,6 +8,7 @@ milestone: "M07"
 depends_on: "T02"
 deliverables: "English code comments, scripts and CI"
 ---
+<!-- gsynchro:v1 id=7cfcb9c5-a0ca-4119-b584-f7ac6b666372 registered=2026-10-23T10:19:23.499Z -->
 
 # M07 - T03 - English code comments, scripts and CI
 

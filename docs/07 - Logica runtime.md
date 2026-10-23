@@ -1,28 +1,28 @@
 ---
-title: Logica runtime e stati
+title: Runtime logic and states
 project: smart-terminal
 type: architecture
 version: 1
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=a2a5d44f-2779-46ee-b847-04365a633dde registered=2026-10-23T07:57:47.694Z -->
-# Logica runtime
+# Runtime logic
 
-## Avvio
-1. Avvia finestra Electron senza single-instance lock globale.
-2. Connetti al coordinatore locale via IPC; se assente, tenta elezione primary con lock OS e verifica del proprietario.
-3. Primary apre clone dati, inizializza contatore per macchina, indice Markdown e GitSyncManager.
-4. Ogni finestra crea i propri PTY, locale o `ssh <alias>` via OpenSSH.
-5. UI si sottoscrive agli eventi sessione, history, clipboard, sync e primary.
+## Startup
+1. Start an Electron window without a global single-instance lock.
+2. Connect to the local coordinator via IPC; if absent, attempt primary election with an OS lock and owner verification.
+3. The primary opens the data clone, initializes the per-machine counter, Markdown index, and GitSyncManager.
+4. Each window creates its own PTYs, local or `ssh <alias>` through OpenSSH.
+5. The UI subscribes to session, history, clipboard, sync, and primary events.
 
-## Sessione
-Nuova tab -> richiedi ID atomico al coordinatore -> crea `sessions/<hostname>/YYYY-MM-DD_HH.mm_S<n>_<local|ssh-host>/` -> inizializza `session.md`, `history.md`, `clipboard.md` con frontmatter -> avvia PTY. Ogni sessione ha una bozza input separata. Cambio tab non termina il processo. Chiusura tab: conferma se attiva, termina PTY ordinatamente, aggiorna `session.md` e pianifica sync.
+## Session
+New tab -> request an atomic ID from the coordinator -> create `sessions/<hostname>/YYYY-MM-DD_HH.mm_S<n>_<local|ssh-host>/` -> initialize `session.md`, `history.md`, `clipboard.md` with frontmatter -> start the PTY. Each session has a separate input draft. Switching tabs does not terminate the process. Closing a tab: confirm if active, terminate the PTY cleanly, update `session.md`, and schedule sync.
 
-## Eventi e cattura
-La scrittura Markdown è immediata e atomica (tmp + rename dove applicabile). History nativa acquisita tramite shell integration quando disponibile; prompt degli agenti tramite editor assistito o adapter verificati. Non interpretare sequenze di tasti TUI come prompt. Clipboard rilevata per istanza di servizio, deduplicata e filtrata; non catturare segreti riconosciuti e permetti pausa/cancellazione.
+## Events and capture
+Markdown writes are immediate and atomic (tmp + rename where applicable). Native history is captured through shell integration when available; agent prompts use a verified assisted editor or adapter. Do not interpret TUI keystrokes as prompts. Clipboard is detected per service instance, deduplicated, and filtered; do not capture recognized secrets and allow pause/clear.
 
 ## Primary
-Il ruolo primary è locale alla macchina: un solo coordinatore in scrittura per clone e contatore. Al crash: lock recuperabile, nuova elezione e rescan delle cartelle prima di assegnare ID. L'indicatore nella UI mostra primary/non-primary e non concede privilegi extra al renderer.
+The primary role is local to the machine: one write coordinator per clone and counter. After a crash: recoverable lock, new election, and folder rescan before assigning IDs. The UI indicator shows primary/non-primary and grants no extra privileges to the renderer.
 
-## Stati di sincronizzazione
-`synced`, `dirty`, `syncing`, `offline`, `error`. Dirty dopo scrittura locale; debounce push 10 s e massimo 60 s con attività continua; fetch ogni 15 s. In caso di push respinto: fetch, rebase e retry limitato con backoff. Mai force-push; sui conflitti blocca il sync, preserva file e mostra errore. History remota visualizzabile dopo integrazione dei commit.
+## Sync states
+`synced`, `dirty`, `syncing`, `offline`, `error`. Dirty after a local write; debounce push 10 s and maximum 60 s with continuous activity; fetch every 15 s. If a push is rejected: fetch, rebase, and limited retry with backoff. Never force-push; on conflicts, stop sync, preserve files, and show an error. Remote history becomes visible after commit integration.

@@ -13,7 +13,7 @@ export interface SttServiceOptions {
   testMode?: boolean;
 }
 
-export const STT_TEST_TEXT = 'testo dettato di prova';
+export const STT_TEST_TEXT = 'test transcript';
 
 const CLOUD_TOKEN_KEY = 'stt:cloud';
 
@@ -55,8 +55,8 @@ export class SttService {
         ? testWarning
         : undefined
       : config.sttProvider === 'cloud'
-        ? 'Token STT non configurato.'
-        : 'Comando STT locale non configurato.';
+        ? 'STT token not configured.'
+        : 'Local STT command not configured.';
     return {
       configured,
       provider: config.sttProvider,

@@ -1,38 +1,38 @@
 ---
-title: "AI, voce e sicurezza"
+title: "AI, voice, and security"
 type: spec
 project: smart-terminal
 created: 2026-10-22
 ---
 <!-- gsynchro:v1 id=8517ddcb-12aa-4e8a-aac4-22d53c6b7a18 registered=2026-10-23T07:57:46.061Z -->
 
-# AI, voce e sicurezza
+# AI, voice, and security
 
 ## AI correction
-Provider Anthropic, OpenAI e OpenAI-compatible locale tramite interfaccia comune. Correggere solo refusi nei prompt dell'editor assistito; preservare codice, path, comandi, flag e significato. Timeout e fallback all'originale. Mai alterare o eseguire automaticamente i comandi di shell. Conservare originali solo se policy di privacy lo consente.
+Anthropic, OpenAI, and local OpenAI-compatible providers through a common interface. Correct only typos in assisted-editor prompts; preserve code, paths, commands, flags, and meaning. Timeout and fallback to the original. Never alter or automatically execute shell commands. Keep originals only if the privacy policy allows it.
 
-## Implementazione AI correction (M05)
-- Adapter Anthropic, OpenAI e OpenAI-compatible nel package `ai`, chiamati solo dal main; token da `safeStorage`/keychain e mai nel renderer.
-- Prompt vincolato: correggere solo refusi, preservare codice/path/URL/comandi/flag/significato, restituire solo il testo. `temperature: 0`, timeout 8 s, fallback all'originale su errore/timeout/risposta vuota.
-- I testi che sembrano comandi shell vengono saltati; la correzione è solo su click esplicito, aggiorna la bozza editabile e richiede review prima dell'invio. Nessuna esecuzione automatica.
-- Errori AI non bloccano terminale o invio. Test seam `SMART_TERMINAL_AI_TEST_MODE=1` solo per smoke, mai in produzione.
+## AI correction implementation (M05)
+- Anthropic, OpenAI, and OpenAI-compatible adapters in the `ai` package, called only from main; tokens from `safeStorage`/keychain and never in the renderer.
+- Constrained prompt: correct only typos, preserve code/paths/URLs/commands/flags/meaning, return only the text. `temperature: 0`, 8 s timeout, fallback to the original on error/timeout/empty response.
+- Text that appears to be shell commands is skipped; correction occurs only on explicit click, updates the editable draft, and requires review before submission. No automatic execution.
+- AI errors do not block the terminal or submission. Test seam `SMART_TERMINAL_AI_TEST_MODE=1` for smoke tests only, never in production.
 
 ## Voice
-STT locale oppure cloud configurabile; microfono push-to-talk, permessi espliciti, bozza modificabile prima dell'invio. Nessuna registrazione permanente audio per default.
+Configurable local or cloud STT; push-to-talk microphone, explicit permissions, editable draft before submission. No permanent audio recording by default.
 
-## Implementazione STT (M05)
-- `LocalSttAdapter`: comando assoluto configurato (`stt_command`), audio via stdin, mai shell, nessun file temporaneo, timeout 30 s. `OpenAiSttAdapter`: multipart `/audio/transcriptions`, token `stt:cloud`, modello `stt_model`/`whisper-1`.
-- Push-to-talk nel renderer: permesso microfono esplicito, `MediaRecorder` solo in memoria, stop a 60 s, risultato aggiunto alla bozza editabile senza invio automatico. Nessuna registrazione permanente; stop/scarto su cambio tab o destroy.
-- Errori/permesso negato mostrano messaggi localizzati e non bloccano terminale o invio. Test seam `SMART_TERMINAL_STT_TEST_MODE=1` solo per smoke.
+## STT implementation (M05)
+- `LocalSttAdapter`: configured absolute command (`stt_command`), audio through stdin, never a shell, no temporary files, 30 s timeout. `OpenAiSttAdapter`: multipart `/audio/transcriptions`, `stt:cloud` token, `stt_model`/`whisper-1` model.
+- Push-to-talk in the renderer: explicit microphone permission, `MediaRecorder` in memory only, stop at 60 s, result appended to the editable draft without automatic submission. No permanent recording; stop/discard on tab change or destroy.
+- Errors/denied permission show localized messages and do not block the terminal or submission. Test seam `SMART_TERMINAL_STT_TEST_MODE=1` for smoke tests only.
 
-## Segreti
-Token nel keychain OS, SSH via client OpenSSH/agent e `~/.ssh/config`; non salvare chiavi, password o contenuti sensibili in history/clipboard/repo. Filtri configurabili e modalità pausa raccolta; logout/revoca provider.
+## Secrets
+Tokens in the OS keychain, SSH through the OpenSSH client/agent and `~/.ssh/config`; do not save keys, passwords, or sensitive content in history/clipboard/repository. Configurable filters and collection-pause mode; provider logout/revocation.
 
 ## Clipboard
-- Raccolta opt-in esplicita, con pausa e cancellazione; una sola istanza di polling per macchina (main del primary in M04).
-- Polling ~800 ms, deduplica SHA-256 in memoria, limite 32 KiB, scarto di contenuti vuoti/oversize.
-- Filtro best-effort per chiavi private, token, password e URL con credenziali: non garantisce di riconoscere ogni segreto.
-- Associazione alla sessione attiva aggiornata su cambio tab e focus finestra.
+- Explicit opt-in collection, with pause and deletion; one polling instance per machine (primary's main in M04).
+- Polling ~800 ms, in-memory SHA-256 deduplication, 32 KiB limit, discard empty/oversize content.
+- Best-effort filter for private keys, tokens, passwords, and URLs with credentials: it does not guarantee recognition of every secret.
+- Association with the active session updated on tab change and window focus.
 
-## Errori
-AI/STT indisponibili non interrompono terminale e scrittura locale.
+## Errors
+Unavailable AI/STT do not interrupt the terminal or local writing.

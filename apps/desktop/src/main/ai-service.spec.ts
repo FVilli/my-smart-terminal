@@ -31,8 +31,8 @@ describe('AiService', () => {
   it('corrects in test mode without network and preserves paths', async () => {
     const service = new AiService({ ...stores(config()), testMode: true });
     expect(service.status()).toMatchObject({ configured: true, hasToken: true });
-    const result = await service.correct({ text: 'Questo e un testo con /tmp/x' });
-    expect(result).toMatchObject({ changed: true, skipped: false, corrected: 'Questo è un testo con /tmp/x' });
+    const result = await service.correct({ text: 'This is a sentance with /tmp/x' });
+    expect(result).toMatchObject({ changed: true, skipped: false, corrected: 'This is a sentence with /tmp/x' });
   });
 
   it('skips shell commands and missing tokens without calling the provider', async () => {

@@ -52,20 +52,20 @@ export class AiStore {
 
 export function correctionNotice(result: CorrectionResult): string {
   if (!result.skipped) {
-    return 'Correzione AI applicata: rivedi prima di inviare.';
+    return 'AI correction applied: review before sending.';
   }
   switch (result.reason) {
     case 'shell':
-      return 'Il testo sembra un comando shell: correzione AI non applicata.';
+      return 'The text looks like a shell command: AI correction was not applied.';
     case 'missing-token':
-      return 'Token AI mancante: configura il provider nelle impostazioni.';
+      return 'AI token missing: configure the provider in settings.';
     case 'unconfigured':
-      return 'Provider AI non configurato.';
+      return 'AI provider is not configured.';
     case 'timeout':
-      return 'AI non disponibile (timeout): testo originale mantenuto.';
+      return 'AI unavailable (timeout): original text kept.';
     case 'empty':
-      return 'Nessuna correzione necessaria.';
+      return 'No correction needed.';
     default:
-      return 'AI non disponibile: testo originale mantenuto.';
+      return 'AI unavailable: original text kept.';
   }
 }

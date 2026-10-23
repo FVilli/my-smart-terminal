@@ -1,5 +1,5 @@
 ---
-title: "Config locale, coordinatore e sicurezza runtime"
+title: "Local configuration, coordinator, and runtime security"
 type: adr
 project: smart-terminal
 version: 1
@@ -7,51 +7,51 @@ created: 2026-10-23
 ---
 <!-- gsynchro:v1 id=37a01d97-fc66-464e-8edf-bbf5a5e3ae23 registered=2026-10-23T08:09:36.838Z -->
 
-# ADR - Config locale, coordinatore e sicurezza runtime
+# ADR - Local configuration, coordinator, and runtime security
 
-## Stato
-Accettato per M01-M06. Le decisioni integrano `docs/01`, `docs/03`, `docs/04`, `docs/06` e `docs/07` senza cambiare lo stack.
+## Status
+Accepted for M01-M06. The decisions integrate `docs/01`, `docs/03`, `docs/04`, `docs/06`, and `docs/07` without changing the stack.
 
-## Contesto
-Servono: configurazione iniziale prima che esista un clone dati, più finestre Electron indipendenti sulla stessa macchina, un solo scrittore Git, credenziali fuori dai Markdown condivisi. Le specifiche non fissano il trasporto IPC locale, il formato della config né il meccanismo keychain.
+## Context
+Needed: initial configuration before a data clone exists, multiple independent Electron windows on the same machine, a single Git writer, and credentials outside shared Markdown. The specifications do not fix the local IPC transport, config format, or keychain mechanism.
 
-## Decisioni
+## Decisions
 
-### D1 - Configurazione non segreta locale
-- La config non segreta è Markdown locale in `app.getPath('userData')/config/config.md`; **non** è sincronizzata e **non** vive nel clone dati.
-- Il clone dati contiene solo `sessions/`; il suo percorso è a sua volta config per-macchina. Prima dell'onboarding il default è `userData/data`, creato localmente con `sessions/`: shell e PTY funzionano senza rete/AI/Git. Override di test: `SMART_TERMINAL_DATA_REPO`.
-- Il contatore `S<n>` vive in `sessions/<machine>/counter.md` (metadata versionato), protetto dal lock del primary; dettagli in `docs/03`.
-- Schema (`schema_version: 1`, frontmatter flat): `machine_name`, `data_repo_path`, `data_repo_remote?`, `ai_provider` (`none|anthropic|openai|openai-compatible`), `ai_base_url?`, `ai_model?`, `stt_provider` (`none|local|cloud`), `stt_model?`, `stt_command?` (path assoluto per il provider locale), `sync_debounce_ms?`, `sync_max_wait_ms?`, `sync_fetch_interval_ms?`, `clipboard_enabled?`. Nessun token, chiave o password.
-- Percorso: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`); backup `.bak` dell'ultima versione valida, quarantena `.corrupt`, ripristino solo se il backup è valido. Precedenza env > config > default (repo, machine, remote, tempi, clipboard) senza mutare `process.env`.
-- Scrittura atomica (file temporaneo nella stessa directory + rename) e parser validante con default sicuri. File illeggibile o schema ignoto: backup del file e ripristino dei default, senza bloccare il terminale.
-- La machine identity è `machine_name` normalizzata (niente slash); non deriva da hostname di rete e non viene condivisa.
+### D1 - Local non-secret configuration
+- Non-secret config is local Markdown at `app.getPath('userData')/config/config.md`; it is **not** synchronized and does **not** live in the data clone.
+- The data clone contains only `sessions/`; its path is also per-machine config. Before onboarding, the default is `userData/data`, created locally with `sessions/`: shell and PTY work without network/AI/Git. Test override: `SMART_TERMINAL_DATA_REPO`.
+- The `S<n>` counter lives in `sessions/<machine>/counter.md` (versioned metadata), protected by the primary lock; details in `docs/03`.
+- Schema (`schema_version: 1`, flat frontmatter): `machine_name`, `data_repo_path`, `data_repo_remote?`, `ai_provider` (`none|anthropic|openai|openai-compatible`), `ai_base_url?`, `ai_model?`, `stt_provider` (`none|local|cloud`), `stt_model?`, `stt_command?` (absolute path for the local provider), `sync_debounce_ms?`, `sync_max_wait_ms?`, `sync_fetch_interval_ms?`, `clipboard_enabled?`. No token, key, or password.
+- Path: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`); `.bak` backup of the last valid version, `.corrupt` quarantine, restore only if the backup is valid. Precedence env > config > default (repo, machine, remote, timings, clipboard) without mutating `process.env`.
+- Atomic writes (temporary file in the same directory + rename) and validating parser with safe defaults. Unreadable file or unknown schema: back up the file and restore defaults without blocking the terminal.
+- Machine identity is normalized `machine_name` (no slash); it is not derived from network hostname and is not shared.
 
-### D2 - Coordinatore primary locale
-- Ogni finestra Electron avvia il proprio main; **nessun** single-instance lock globale.
-- Elezione: directory lock `userData/coordinator/lock/` creata atomicamente (`mkdir`) contenente `owner.json` con `pid`, `nonce`, `created_at`, `heartbeat_at`. Il lock non impedisce l'avvio di altre finestre.
-- Trasporto: Unix domain socket `userData/coordinator/coordinator.sock` con directory `0700` e socket `0600`; su Windows named pipe `\\.\pipe\smart-terminal-<hash(userData)>`, autenticazione a nonce. Protocollo JSON-RPC con metodi whitelisted, payload massimo 1 MiB, validazione dei parametri.
-- Heartbeat ogni 3 s; takeover consentito solo se il lock è stale (heartbeat oltre 10 s) e il PID non è più vivo, o se l'endpoint non risponde; l'acquisizione finale usa di nuovo `mkdir` atomico. I secondari restano client finché l'endpoint risponde.
-- Protocollo JSON line-delimited (max 1 MiB) con token in `userData/coordinator/token` (`0600`, confronto constant-time) e metodi whitelisted; il client rilegge il token a ogni richiesta, così dopo un takeover raggiunge il nuovo primary.
-- Se il primary non è raggiungibile, l'allocazione secondaria ripiega sull'allocatore su file con lock condiviso (stesso `primary.lock`/lock allocatore): nessun blocco fino al takeover e nessun ID duplicato. Il ruolo resta `secondary` finché il takeover non riesce.
-- Limite noto: il path Unix socket ha un massimo di ~108 caratteri; userData molto profondi richiedono un path più corto (hardening M06).
-- Il coordinatore è l'unico proprietario di contatori macchina, scritture condivise, indice e Git. Il renderer non riceve privilegi dal ruolo primary.
-- L'allocazione `S<n>` è incapsulata dietro un servizio: M03 usa il lock locale, M04 la espone dal primary via IPC locale senza creare un secondo lock incompatibile.
+### D2 - Local primary coordinator
+- Each Electron window starts its own main process; **no** global single-instance lock.
+- Election: lock directory `userData/coordinator/lock/` created atomically (`mkdir`) containing `owner.json` with `pid`, `nonce`, `created_at`, `heartbeat_at`. The lock does not prevent other windows from starting.
+- Transport: Unix domain socket `userData/coordinator/coordinator.sock` with directory `0700` and socket `0600`; on Windows, named pipe `\\.\pipe\smart-terminal-<hash(userData)>`, nonce authentication. JSON-RPC protocol with whitelisted methods, maximum 1 MiB payload, parameter validation.
+- Heartbeat every 3 s; takeover allowed only if the lock is stale (heartbeat older than 10 s) and the PID is no longer alive, or if the endpoint does not respond; final acquisition uses atomic `mkdir` again. Secondaries remain clients while the endpoint responds.
+- JSON line-delimited protocol (max 1 MiB) with token in `userData/coordinator/token` (`0600`, constant-time comparison) and whitelisted methods; the client rereads the token for every request, so after a takeover it reaches the new primary.
+- If the primary is unreachable, secondary allocation falls back to the shared-lock file allocator (same `primary.lock`/allocator lock): no blocking until takeover and no duplicate IDs. The role remains `secondary` until takeover succeeds.
+- Known limit: the Unix socket path has a maximum of ~108 characters; very deep userData paths require a shorter path (M06 hardening).
+- The coordinator is the sole owner of machine counters, shared writes, index, and Git. The renderer receives no privileges from the primary role.
+- `S<n>` allocation is wrapped behind a service: M03 uses the local lock, M04 exposes it from the primary through local IPC without creating a second incompatible lock.
 
-### D3 - Credenziali e keychain
-- I token AI/STT sono gestiti solo nel processo main con Electron `safeStorage`, mai nel renderer e mai in chiaro. File cifrati `userData/secrets/<provider>.json` con permessi `0600` e scrittura atomica; il renderer vede solo l'elenco delle chiavi presenti.
-- Su Linux si considera il backend effettivo: se è `basic_text` o la cifratura non è disponibile, il token non viene persistito; è ammessa solo una credenziale in memoria per la sessione, con indicazione esplicita nella UI. Nessun fallback plaintext.
-- Logout/revoca eliminano il token dal keychain e dalla memoria.
+### D3 - Credentials and keychain
+- AI/STT tokens are managed only in the main process with Electron `safeStorage`, never in the renderer or in plaintext. Encrypted files `userData/secrets/<provider>.json` use permissions `0600` and atomic writes; the renderer sees only the list of present keys.
+- On Linux, the effective backend matters: if it is `basic_text` or encryption is unavailable, the token is not persisted; only an in-memory session credential is allowed, with an explicit UI indication. No plaintext fallback.
+- Logout/revocation removes the token from the keychain and memory.
 
-### D4 - Toolchain e test
-- npm workspaces con la struttura di `docs/06`; versioni esatte nel lockfile. Tooling di sviluppo: `esbuild` per bundle main/preload, `concurrently`/`wait-on`/`cross-env` per il dev workflow, `electron-builder` per i pacchetti. Non sono runtime aggiuntivi.
-- Angular application builder con output `dist/apps/renderer/browser`; Electron carica `file://` in produzione e l'URL del dev server in sviluppo.
-- Vitest per package e integration test; adapter PTY iniettabile e mock nei test unitari. Test coordinatore/Git con processi child, directory temporanee e repository bare locali, senza display. Smoke Electron con `xvfb-run` in CI Linux.
+### D4 - Toolchain and tests
+- npm workspaces follow the structure in `docs/06`; exact versions are in the lockfile. Development tooling: `esbuild` for main/preload bundles, `concurrently`/`wait-on`/`cross-env` for the dev workflow, and `electron-builder` for packages. These are not additional runtimes.
+- Angular application builder outputs to `dist/apps/renderer/browser`; Electron loads `file://` in production and the dev-server URL in development.
+- Vitest for package and integration tests; injectable PTY adapter and mocks in unit tests. Coordinator/Git tests use child processes, temporary directories, and local bare repositories, without a display. Electron smoke tests use `xvfb-run` in Linux CI.
 
-## Conseguenze
-- La config locale non è condivisa tra macchine: nome macchina e path restano corretti per ogni installazione.
-- Un crash del primary è recuperabile senza perdere sessioni; i PTY delle finestre restano attivi.
-- Se manca un keyring adeguato, AI/STT cloud restano disabilitati ma terminale, Markdown e Git continuano a funzionare.
-- I test di portabilità richiedono la pipeline OS corrispondente per `node-pty` e packaging.
+## Consequences
+- Local configuration is not shared between machines: machine name and paths remain correct for each installation.
+- A primary crash is recoverable without losing sessions; window PTYs remain active.
+- Without a suitable keyring, cloud AI/STT remain disabled while the terminal, Markdown, and Git continue to work.
+- Portability tests require the corresponding OS pipeline for `node-pty` and packaging.
 
-## Riferimenti
+## References
 `docs/01 - Architettura.md`, `docs/03 - Markdown schema.md`, `docs/04 - Sync Git.md`, `docs/05 - AI Voice Sicurezza.md`, `docs/06 - Stack e struttura codice.md`, `docs/07 - Logica runtime.md`.
