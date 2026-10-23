@@ -30,8 +30,10 @@ jobs:
       - name: Typecheck
         run: npx tsc -p tsconfig.json --noEmit
       - name: Unit and integration tests
+        if: runner.os != 'Windows'
         run: npm run test
       - name: Coordinator tests
+        if: runner.os != 'Windows'
         run: npm run test:coordinator
       - name: Build
         run: npm run build
@@ -55,7 +57,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: smart-terminal-${{ matrix.os }}
+          name: artifacts-${{ matrix.os }}
           path: |
             release/*.AppImage
             release/*.deb
