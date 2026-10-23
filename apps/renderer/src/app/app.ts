@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { AiStore } from './ai/ai-store';
+import { AppearanceStore } from './appearance/appearance-store';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import { AssistedInput } from './assisted-input/assisted-input';
 import { OnboardingWizard } from './onboarding/onboarding-wizard';
@@ -31,6 +32,7 @@ export class App {
   protected readonly clipboardCapture = inject(ClipboardCaptureStore);
   protected readonly ai = inject(AiStore);
   protected readonly stt = inject(SttStore);
+  private readonly appearance = inject(AppearanceStore);
   /** Coordinator role for this instance (updated by the main process through `app:role-changed`). */
   protected readonly isPrimary = signal(false);
   protected readonly sshAliases = signal<readonly string[]>([]);
@@ -70,6 +72,7 @@ export class App {
     this.sync.start();
     this.search.start();
     const api = window.smartTerminal;
+    void api.onboardingState().then((state) => this.appearance.set(state.config.terminalFont ?? 'jetbrains')).catch(() => undefined);
     void api.runtimeInfo().then((info) => this.isPrimary.set(info.isPrimary));
     api.onRoleChanged((event) => this.isPrimary.set(event.isPrimary));
   }

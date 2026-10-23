@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
+  TERMINAL_FONTS,
+  type TerminalFontId,
   type AiProvider,
   type OnboardingConfig,
   type OnboardingSaveResult,
@@ -14,8 +16,9 @@ import {
 } from '@smart-terminal/contracts';
 import { SttStore } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
+import { AppearanceStore } from '../appearance/appearance-store';
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
 
 const MIC_MESSAGES: Record<MicState, string> = {
@@ -37,7 +40,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
         <section class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
           <header>
             <h2>{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
-            <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span>
+            @if (!editMode()) { <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span> }
           </header>
 
           @if (restartNotice()) {
@@ -52,6 +55,14 @@ const MIC_MESSAGES: Record<MicState, string> = {
               </footer>
             </div>
           } @else {
+            @if (editMode()) {
+              <div role="tablist" aria-label="Settings sections" class="settings-tabs">
+                <button type="button" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
+                <button type="button" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
+                <button type="button" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
+                <button type="button" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
+              </div>
+            }
             @if (state()?.reason === 'corrupt') {
               <p class="warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
             }
@@ -175,20 +186,30 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   <button type="button" class="help-link" data-testid="onboarding-help-stt" (click)="openHelp('stt')">STT setup guide</button>
                 </div>
               }
+              @case (4) {
+                <div data-testid="settings-appearance">
+                  <label>Terminal monospace font
+                    <select data-testid="settings-terminal-font" [value]="config().terminalFont ?? 'jetbrains'" (change)="patch({ terminalFont: terminalFont($event) })">
+                      @for (font of terminalFonts; track font.id) { <option [value]="font.id">{{ font.label }}</option> }
+                    </select>
+                  </label>
+                  <p class="hint">Fonts must be installed on your system. If a font is missing, the next font in the stack is used.</p>
+                </div>
+              }
             }
             @if (errors()['config']; as message) { <p class="error" data-testid="onboarding-error-config">{{ message }}</p> }
             @for (warning of warnings(); track warning) {
               <p class="warning" data-testid="onboarding-warning">{{ warning }}</p>
             }
             <footer>
-              @if (step() === 1) {
+              @if (!editMode() && step() === 1) {
                 <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
               }
-              <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button>
-              @if (step() > 1) {
+              @if (!editMode()) { <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
+              @if (!editMode() && step() > 1) {
                 <button type="button" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
               }
-              @if (step() < 3) {
+              @if (!editMode() && step() < 3) {
                 <button type="button" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
               } @else {
                 <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
@@ -213,6 +234,8 @@ const MIC_MESSAGES: Record<MicState, string> = {
     header { display: flex; justify-content: space-between; align-items: baseline; }
     h2 { margin: 0 0 12px; font-size: 18px; }
     .steps, .hint { color: var(--text-muted); font-size: 12px; }
+    .settings-tabs { display: flex; gap: 6px; margin: 8px 0 12px; }
+    [role='tab'][aria-selected='true'] { border-color: var(--accent); color: var(--accent); }
     label { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 2px; font-size: 13px; }
     input, select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); }
     .error { margin: 4px 0 0; color: var(--danger); font-size: 12px; }
@@ -235,6 +258,8 @@ export class OnboardingWizard {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
   private readonly stt = inject(SttStore);
   private readonly settings = inject(SettingsStore);
+  private readonly appearance = inject(AppearanceStore);
+  protected readonly terminalFonts = TERMINAL_FONTS;
   protected readonly aiProviders = AI_PROVIDERS;
   protected readonly sttProviders = STT_PROVIDERS;
   protected readonly visible = signal(false);
@@ -271,7 +296,8 @@ export class OnboardingWizard {
     try {
       const state = await this.api.onboardingState();
       this.state.set(state);
-      this.config.set(state.config);
+      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains' });
+      this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.visible.set(state.required);
       this.initialSnapshot = JSON.stringify(this.payload());
     } catch {
@@ -283,7 +309,8 @@ export class OnboardingWizard {
     try {
       const state = await this.api.onboardingState();
       this.state.set(state);
-      this.config.set(state.config);
+      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains' });
+      this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.errors.set({});
       this.warnings.set([]);
       this.aiToken.set('');
@@ -323,6 +350,7 @@ export class OnboardingWizard {
   }
 
   private close(): void {
+    this.appearance.set(this.state()?.config.terminalFont ?? 'jetbrains');
     this.visible.set(false);
     this.editMode.set(false);
     this.settings.close();
@@ -342,6 +370,15 @@ export class OnboardingWizard {
 
   protected aiProvider(event: Event): AiProvider {
     return AI_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
+  }
+
+  protected terminalFont(event: Event): TerminalFontId {
+    return TERMINAL_FONTS.find((font) => font.id === this.value(event))?.id ?? 'jetbrains';
+  }
+
+  protected selectTab(step: Step): void {
+    this.errors.set({});
+    this.step.set(step);
   }
 
   protected sttProvider(event: Event): SttProvider {
@@ -438,12 +475,13 @@ export class OnboardingWizard {
 
   /** Removes empty optional fields before sending them to the main process. */
   private payload(): OnboardingConfig {
-    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, ...required } = this.config();
+    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, terminalFont, ...required } = this.config();
     const optional = {
       dataRepoRemote,
       aiBaseUrl,
       aiModel,
       sttModel,
+      terminalFont,
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
     };
@@ -548,6 +586,7 @@ export class OnboardingWizard {
     }
     // STT state may change as soon as it is saved: the microphone resynchronizes without a restart.
     void this.stt.load();
+    this.appearance.set(this.payload().terminalFont ?? 'jetbrains');
     if (result.restartRequired) {
       this.restartNotice.set(true);
     } else if (result.warnings.length === 0) {

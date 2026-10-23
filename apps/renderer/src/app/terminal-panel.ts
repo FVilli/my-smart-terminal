@@ -14,6 +14,7 @@ import {
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { SessionsStore } from './sessions-store';
+import { AppearanceStore } from './appearance/appearance-store';
 
 const TERMINAL_THEME = {
   background: '#171e25',
@@ -40,6 +41,7 @@ export class TerminalPanel implements OnDestroy {
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('host');
   private readonly zone = inject(NgZone);
   private readonly store = inject(SessionsStore);
+  private readonly appearance = inject(AppearanceStore);
 
   protected readonly session = computed(() => this.store.sessions().find((s) => s.id === this.sessionId()) ?? null);
 
@@ -69,6 +71,14 @@ export class TerminalPanel implements OnDestroy {
     });
 
     effect(() => {
+      const stack = this.appearance.fontStack();
+      if (this.terminal !== null) {
+        this.terminal.options.fontFamily = stack;
+        queueMicrotask(() => this.fitAndResize());
+      }
+    });
+
+    effect(() => {
       const session = this.session();
       if (session?.status === 'exited' && !this.exitAnnounced) {
         this.exitAnnounced = true;
@@ -90,7 +100,7 @@ export class TerminalPanel implements OnDestroy {
   private start(): void {
     const id = this.sessionId();
     const terminal = new Terminal({
-      fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace",
+      fontFamily: this.appearance.fontStack(),
       fontSize: 14,
       cursorBlink: true,
       theme: TERMINAL_THEME,

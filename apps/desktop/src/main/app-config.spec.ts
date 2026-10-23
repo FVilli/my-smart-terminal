@@ -26,6 +26,7 @@ const full: AppConfig = {
   syncMaxWaitMs: 5000,
   syncFetchIntervalMs: 60000,
   clipboardEnabled: true,
+  terminalFont: 'cascadia',
 };
 const minimal: AppConfig = { machineName: 'host', dataRepoPath: '/data', aiProvider: 'none', sttProvider: 'none' };
 
@@ -42,6 +43,7 @@ describe('app config', () => {
     ['unknown field', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\napi_key: sk-123\n---\n'],
     ['relative path', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: rel/d\nai_provider: none\nstt_provider: none\n---\n'],
     ['bad provider', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: evil\nstt_provider: none\n---\n'],
+    ['invalid terminal font', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nterminal_font: "url(javascript:evil)"\n---\n'],
     ['url with credentials', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: openai\nai_base_url: "https://u:p@x.com"\nstt_provider: none\n---\n'],
     ['bad ms', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nsync_debounce_ms: -5\n---\n'],
     ['remote option', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\ndata_repo_remote: "--upload-pack=x"\nai_provider: none\nstt_provider: none\n---\n'],

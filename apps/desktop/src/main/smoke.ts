@@ -614,57 +614,28 @@ export function runSttSmoke(window: BrowserWindow): void {
 
 const SETTINGS_SCRIPT = `(async () => {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const waitFor = async (predicate, timeoutMs = 8000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(50); }
-    return predicate();
-  };
+  const waitFor = async (predicate, timeoutMs = 8000) => { const start = Date.now(); while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(50); } return predicate(); };
   const q = (id) => document.querySelector('[data-testid="' + id + '"]');
   const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
   const result = {};
   result.settingsButton = await waitFor(() => !!q('settings-open'));
-  click('settings-open');
-  result.opened = await waitFor(() => !!q('onboarding-overlay'));
-  result.step1 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 1 of 3'));
-  click('onboarding-next');
-  result.step2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
-  click('onboarding-back');
-  result.backToStep1 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 1 of 3'));
-  click('onboarding-next');
-  await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
-  click('onboarding-next');
-  result.step3 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
-  click('onboarding-back');
-  result.backToStep2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
-  click('onboarding-cancel');
-  result.cancelCloses = await waitFor(() => !q('onboarding-overlay'));
-  click('settings-open');
-  await waitFor(() => !!q('onboarding-overlay'));
-  const machine = q('onboarding-machine');
-  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-  setter.call(machine, 'changed-machine');
-  machine.dispatchEvent(new Event('input', { bubbles: true }));
-  await sleep(50);
-  click('onboarding-cancel');
-  result.dirtyConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
-  click('onboarding-keep-editing');
-  result.keepEditing = await waitFor(() => !q('onboarding-discard-confirm') && !!q('onboarding-overlay'));
-  click('onboarding-cancel');
-  await waitFor(() => !!q('onboarding-discard-confirm'));
-  click('onboarding-discard');
-  result.discardCloses = await waitFor(() => !q('onboarding-overlay'));
-  click('settings-open');
-  await waitFor(() => !!q('onboarding-overlay'));
+  click('settings-open'); result.opened = await waitFor(() => !!q('onboarding-overlay'));
+  result.noProgress = !q('onboarding-progress');
+  result.tabs = ['repository','ai','stt','appearance'].every((tab) => !!q('settings-tab-' + tab));
+  click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));
+  click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
+  click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
+  click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font'));
+  if (q('settings-terminal-font')) { q('settings-terminal-font').value = 'system'; q('settings-terminal-font').dispatchEvent(new Event('change', { bubbles: true })); }
+  click('onboarding-cancel'); result.dirtyConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  result.escapeCloses = await waitFor(() => !q('onboarding-overlay'));
-  click('settings-open');
-  await waitFor(() => !!q('onboarding-overlay'));
+  result.escapeConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
+  click('onboarding-discard'); await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay'));
   result.savedValuesReloaded = q('onboarding-machine')?.value === 'settings-smoke';
-  click('onboarding-cancel');
-  await waitFor(() => !q('onboarding-overlay'));
+  click('onboarding-cancel'); await waitFor(() => !q('onboarding-overlay'));
   return result;
 })()`;
-
 /** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */
 
 const REMOTE_SETUP_SCRIPT = `(async () => {
@@ -703,8 +674,8 @@ const AI_SETUP_SCRIPT = `(async () => {
   result.settings = await waitFor(() => !!q('settings-open'));
   click('settings-open');
   await waitFor(() => !!q('onboarding-overlay'));
-  click('onboarding-next');
-  result.step2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  click('settings-tab-ai');
+  result.step2 = await waitFor(() => !!q('onboarding-ai-provider'));
   result.button = await waitFor(() => !!q('onboarding-test-ai'));
   click('onboarding-test-ai');
   result.resultVisible = await waitFor(() => !!q('onboarding-ai-result'), 20000);
@@ -731,10 +702,8 @@ const STT_SETUP_SCRIPT = `(async () => {
   result.settings = await waitFor(() => !!q('settings-open'));
   click('settings-open');
   await waitFor(() => !!q('onboarding-overlay'));
-  click('onboarding-next');
-  await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
-  click('onboarding-next');
-  result.step3 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
+  click('settings-tab-stt');
+  result.step3 = await waitFor(() => !!q('onboarding-stt-provider'));
   result.button = await waitFor(() => !!q('onboarding-test-stt'));
   const context = new AudioContext();
   const destination = context.createMediaStreamDestination();

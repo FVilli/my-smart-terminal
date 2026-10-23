@@ -10,7 +10,7 @@ import {
   writeFileAtomic,
   type FrontmatterData,
 } from '@smart-terminal/data';
-import { AI_PROVIDERS, STT_PROVIDERS, type AiProvider, type SttProvider } from '@smart-terminal/contracts';
+import { AI_PROVIDERS, STT_PROVIDERS, TERMINAL_FONT_IDS, type TerminalFontId, type AiProvider, type SttProvider } from '@smart-terminal/contracts';
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
@@ -30,6 +30,7 @@ export interface AppConfig {
   syncMaxWaitMs?: number;
   syncFetchIntervalMs?: number;
   clipboardEnabled?: boolean;
+  terminalFont?: TerminalFontId;
 }
 
 export class AppConfigError extends Error {
@@ -54,6 +55,7 @@ const KNOWN_KEYS = [
   'sync_max_wait_ms',
   'sync_fetch_interval_ms',
   'clipboard_enabled',
+  'terminal_font',
 ] as const;
 
 const hasControlCharacters = (value: string): boolean => [...value].some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127);
@@ -79,6 +81,7 @@ export const configValidators = {
   },
   modelName: (value: string): boolean => value.length > 0 && value.length <= 128 && !hasControlCharacters(value),
   /** Local executable: absolute path, no arguments or shell metacharacters. */
+  terminalFont: (value: string): boolean => TERMINAL_FONT_IDS.some((id) => id === value),
   sttCommand: (value: string): boolean =>
     value.length > 0 && value.length <= 4096 && !hasControlCharacters(value) && path.isAbsolute(value),
 };
@@ -136,6 +139,7 @@ export function parseAppConfig(content: string): AppConfig {
   if (clipboard !== undefined && clipboard !== null && typeof clipboard !== 'boolean') {
     throw new AppConfigError('clipboard_enabled');
   }
+  const terminalFont = optionalString(known, 'terminal_font', configValidators.terminalFont);
   const remote = optionalString(known, 'data_repo_remote', configValidators.dataRepoRemote);
   const baseUrl = optionalString(known, 'ai_base_url', configValidators.aiBaseUrl);
   const aiModel = optionalString(known, 'ai_model', configValidators.modelName);
@@ -148,6 +152,7 @@ export function parseAppConfig(content: string): AppConfig {
     machineName: requiredString(known, 'machine_name', configValidators.machineName),
     dataRepoPath: requiredString(known, 'data_repo_path', configValidators.dataRepoPath),
     ...(remote !== undefined && { dataRepoRemote: remote }),
+    ...(terminalFont !== undefined && { terminalFont: terminalFont as TerminalFontId }),
     aiProvider: provider(known, 'ai_provider', AI_PROVIDERS),
     ...(baseUrl !== undefined && { aiBaseUrl: baseUrl }),
     ...(aiModel !== undefined && { aiModel }),
@@ -177,6 +182,7 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.syncMaxWaitMs !== undefined && { sync_max_wait_ms: config.syncMaxWaitMs }),
     ...(config.syncFetchIntervalMs !== undefined && { sync_fetch_interval_ms: config.syncFetchIntervalMs }),
     ...(config.clipboardEnabled !== undefined && { clipboard_enabled: config.clipboardEnabled }),
+    ...(config.terminalFont !== undefined && { terminal_font: config.terminalFont }),
   };
   // Reads back what it is about to write: an unreadable config must never reach disk.
   const content = serializeFrontmatter(data);

@@ -96,6 +96,16 @@ describe('OnboardingService', () => {
     expect(service.state().secureStorage).toBe(false);
   });
 
+  it('persists a selected terminal font and rejects non-preset values', () => {
+    const { service, store } = setup();
+    expect(service.save({ config: valid({ terminalFont: 'fira' }) })).toMatchObject({ ok: true });
+    expect(parseAppConfig(fs.readFileSync(store.filePath, 'utf8')).terminalFont).toBe('fira');
+    expect(service.state().config.terminalFont).toBe('fira');
+    const invalid = service.validate({ ...valid(), terminalFont: 'url(javascript:evil)' });
+    expect(invalid.ok).toBe(false);
+    expect(invalid.errors).toHaveProperty('terminalFont');
+  });
+
   it('works with every optional step skipped and without a token', () => {
     const { service } = setup();
     const result = service.save({ config: valid({ aiProvider: 'none' }) });

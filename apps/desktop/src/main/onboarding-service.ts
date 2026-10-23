@@ -5,6 +5,8 @@ import { normalizeMachine } from '@smart-terminal/data';
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
+  TERMINAL_FONT_IDS,
+  type TerminalFontId,
   type OnboardingConfig,
   type OnboardingSaveRequest,
   type OnboardingSaveResult,
@@ -46,6 +48,7 @@ const MESSAGES = {
   sttProvider: 'Invalid STT provider.',
   sttModel: 'Invalid model name.',
   sttCommand: 'Invalid command: an absolute executable path is required.',
+  terminalFont: 'Invalid terminal font.',
   aiToken: 'Invalid token.',
   sttToken: 'Invalid token.',
 } as const;
@@ -103,7 +106,8 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!STT_PROVIDERS.some((p) => p === c['sttProvider'])) fail('sttProvider');
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttCommand'].includes(key));
+  if (c['terminalFont'] !== undefined && c['terminalFont'] !== '' && !TERMINAL_FONT_IDS.some((id) => id === c['terminalFont'])) fail('terminalFont');
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttCommand', 'terminalFont'].includes(key));
   if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -135,6 +139,7 @@ export class OnboardingService {
       dataRepoPath: path.join(this.options.userDataPath, 'data'),
       aiProvider: 'none',
       sttProvider: 'none',
+      terminalFont: 'jetbrains',
     };
   }
 
@@ -149,6 +154,7 @@ export class OnboardingService {
       sttProvider: config.sttProvider,
       ...(config.sttModel !== undefined && { sttModel: config.sttModel }),
       ...(config.sttCommand !== undefined && { sttCommand: config.sttCommand }),
+      terminalFont: config.terminalFont ?? 'jetbrains',
     };
   }
 
@@ -214,6 +220,7 @@ export class OnboardingService {
       dataRepoPath: path.resolve(input.dataRepoPath),
       aiProvider: input.aiProvider,
       sttProvider: input.sttProvider,
+      terminalFont: (input.terminalFont ?? 'jetbrains') as TerminalFontId,
     } as AppConfig;
     for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel', 'sttCommand'] as const) {
       delete next[key];

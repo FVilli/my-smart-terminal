@@ -207,6 +207,17 @@ export interface ClipboardWriteRequest {
   text: string;
 }
 
+export const TERMINAL_FONTS = [
+  { id: 'jetbrains', label: 'JetBrains Mono', stack: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace" },
+  { id: 'cascadia', label: 'Cascadia Code', stack: "'Cascadia Code', 'JetBrains Mono', ui-monospace, monospace" },
+  { id: 'fira', label: 'Fira Code', stack: "'Fira Code', 'JetBrains Mono', ui-monospace, monospace" },
+  { id: 'source-code-pro', label: 'Source Code Pro', stack: "'Source Code Pro', 'JetBrains Mono', ui-monospace, monospace" },
+  { id: 'ubuntu-mono', label: 'Ubuntu Mono', stack: "'Ubuntu Mono', 'JetBrains Mono', ui-monospace, monospace" },
+  { id: 'system', label: 'System monospace', stack: 'ui-monospace, monospace' },
+] as const;
+export const TERMINAL_FONT_IDS = TERMINAL_FONTS.map(({ id }) => id);
+export type TerminalFontId = (typeof TERMINAL_FONT_IDS)[number];
+
 export const AI_PROVIDERS = ['none', 'anthropic', 'openai', 'openai-compatible'] as const;
 export const STT_PROVIDERS = ['none', 'local', 'cloud'] as const;
 export type AiProvider = (typeof AI_PROVIDERS)[number];
@@ -215,6 +226,7 @@ export const SECRET_TOKEN_MAX_LENGTH = 4096;
 
 /** Configuration fields editable by the wizard (no secrets). */
 export interface OnboardingConfig {
+  terminalFont?: TerminalFontId;
   machineName: string;
   dataRepoPath: string;
   dataRepoRemote?: string;
