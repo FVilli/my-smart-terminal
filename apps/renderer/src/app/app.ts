@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
+import { AiStore } from './ai/ai-store';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import { AssistedInput } from './assisted-input/assisted-input';
 import { OnboardingWizard } from './onboarding/onboarding-wizard';
@@ -27,6 +28,7 @@ export class App {
   protected readonly search = inject(SearchStore);
   protected readonly sync = inject(SyncStatusStore);
   protected readonly clipboardCapture = inject(ClipboardCaptureStore);
+  protected readonly ai = inject(AiStore);
   /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
   protected readonly isPrimary = signal(false);
   protected readonly sshAliases = signal<readonly string[]>([]);
@@ -49,6 +51,7 @@ export class App {
     });
     window.addEventListener('focus', () => {
       this.clipboardCapture.refresh();
+      this.ai.load();
       this.sync.refresh();
       this.search.refresh();
     });

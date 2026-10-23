@@ -39,7 +39,8 @@
     "rebuild:native": "electron-rebuild -f -w node-pty",
     "package": "npm run build && electron-builder --config electron-builder.yml",
     "setup:test-display": "node scripts/setup-electron-wrapper.mjs",
-    "postinstall": "node scripts/setup-electron-wrapper.mjs"
+    "postinstall": "node scripts/setup-electron-wrapper.mjs",
+    "test:ai-smoke": "npm run build && node scripts/ai-smoke.mjs"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",

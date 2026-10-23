@@ -27,6 +27,8 @@ export const IPC_CHANNELS = {
   secretsStatus: 'secrets:status',
   secretsLogout: 'secrets:logout',
   appRelaunch: 'app:relaunch',
+  aiStatus: 'ai:status',
+  aiCorrect: 'ai:correct',
 } as const;
 
 /** Eventi main -> renderer (non invocabili dal renderer). */
@@ -43,6 +45,7 @@ export const HISTORY_MAX_TEXT_BYTES = 16 * 1024;
 export const HISTORY_MAX_AGENT_LENGTH = 64;
 export const SEARCH_MAX_QUERY_LENGTH = 256;
 export const CLIPBOARD_WRITE_MAX_BYTES = 32 * 1024;
+export const AI_CORRECTION_MAX_TEXT_BYTES = 16 * 1024;
 export const TERMINAL_MIN_DIMENSION = 1;
 export const TERMINAL_MAX_DIMENSION = 1000;
 
@@ -260,6 +263,29 @@ export interface SecretsLogoutRequest {
   key: string;
 }
 
+export interface AiStatus {
+  configured: boolean;
+  provider: AiProvider;
+  model?: string;
+  hasToken: boolean;
+  secureStorage: boolean;
+  warning?: string;
+}
+
+export interface AiCorrectRequest {
+  text: string;
+}
+
+export type CorrectionReason = 'shell' | 'unconfigured' | 'missing-token' | 'timeout' | 'provider-error' | 'empty';
+
+export interface CorrectionResult {
+  original: string;
+  corrected: string;
+  changed: boolean;
+  skipped: boolean;
+  reason?: CorrectionReason;
+}
+
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {
@@ -293,6 +319,8 @@ export interface SmartTerminalApi {
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;
   /** Riavvia l'app (relaunch + exit). */
   appRelaunch(): Promise<void>;
+  aiStatus(): Promise<AiStatus>;
+  aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;

@@ -6,10 +6,11 @@ import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { listSshAliases } from '@smart-terminal/terminal';
 import { readWindowSize, runCapture } from './capture';
-import { runClipboardSmoke, runOnboardingSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
+import { runAiSmoke, runClipboardSmoke, runOnboardingSmoke, runSshSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
 import { AppConfigStore, resolveConfigPath } from './app-config';
 import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
 import { OnboardingService } from './onboarding-service';
+import { AiService } from './ai-service';
 import { SecretStore } from './secret-store';
 import { DataRuntime } from './data-runtime';
 import { ClipboardGatewayAdapter } from './clipboard-gateway';
@@ -46,6 +47,7 @@ const editorSmokeTest = process.env['SMART_TERMINAL_EDITOR_SMOKE'] === '1';
 const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
 const clipboardSmokeTest = process.env['SMART_TERMINAL_CLIPBOARD_SMOKE'] === '1';
 const searchSmokeTest = process.env['SMART_TERMINAL_SEARCH_SMOKE'] === '1';
+const aiSmokeTest = process.env['SMART_TERMINAL_AI_SMOKE'] === '1';
 const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
 const sshSmokeTest = process.env['SMART_TERMINAL_SSH_SMOKE'] === '1';
 const onboardingSmokeTest = process.env['SMART_TERMINAL_ONBOARDING_SMOKE'] === '1';
@@ -135,6 +137,10 @@ function createWindow(): BrowserWindow {
     runSearchSmoke(window);
   }
 
+  if (aiSmokeTest) {
+    runAiSmoke(window);
+  }
+
   if (clipboardSmokeTest) {
     runClipboardSmoke(window);
   }
@@ -196,11 +202,12 @@ app.whenReady().then(async () => {
   });
 
   const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator, config });
+  const secrets = new SecretStore(path.join(userDataPath, 'secrets'), safeStorage);
   const onboarding = new OnboardingService({
     userDataPath,
     env: process.env,
     store: configStore,
-    secrets: new SecretStore(path.join(userDataPath, 'secrets'), safeStorage),
+    secrets,
     runningPaths: runtime.paths,
     runningRemote: resolveGitRemote(process.env, config),
     initialLoad: configLoad,
@@ -218,6 +225,11 @@ app.whenReady().then(async () => {
     onRecorded: (sessionDirectory) => runtime.notifyWrite(sessionDirectory),
   });
   const clipboardCapture = new ClipboardGatewayAdapter(runtime, (senderId, sessionId) => host.resolveSession(senderId, sessionId));
+  const ai = new AiService({
+    configStore,
+    secrets,
+    testMode: process.env['SMART_TERMINAL_AI_TEST_MODE'] === '1',
+  });
   registerAppProtocol();
   registerIpcHandlers(
     () => ipcSenderIds,
@@ -232,6 +244,7 @@ app.whenReady().then(async () => {
       clipboardWriter: { writeText: (text) => clipboard.writeText(text) },
       ssh: { aliases: () => listSshAliases() },
       onboarding,
+      ai,
       app: {
         relaunch: () => {
           terminalHost?.closeAll();

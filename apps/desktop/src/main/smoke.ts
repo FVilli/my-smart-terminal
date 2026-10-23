@@ -42,6 +42,8 @@ const IPC_SCRIPT = `(async () => {
 })()`;
 
 const EXPECTED_KEYS = [
+  'aiCorrect',
+  'aiStatus',
   'appRelaunch',
   'clipboardClear',
   'clipboardConfigure',
@@ -462,6 +464,55 @@ function readAllClipboardEvents(): ReturnType<typeof parseClipboardDocument>['ev
 }
 
 /** Smoke attivo con SMART_TERMINAL_CLIPBOARD_SMOKE=1: abilita la cattura via UI, scrive nella clipboard Electron e verifica clipboard.md. */
+
+const AI_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const textarea = () => document.querySelector('[data-testid="assisted-textarea"]');
+  const aiButton = () => document.querySelector('[data-testid="ai-correction"]');
+  const notice = () => document.querySelector('[data-testid="ai-notice"]');
+  const setText = (value) => {
+    const el = textarea();
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const result = {};
+  try {
+    const status = await api.aiStatus();
+    result.statusConfigured = status.configured === true && status.hasToken === true;
+    result.buttonDisabledWhenEmpty = await waitFor(() => aiButton() && aiButton().disabled === true, 8000);
+    setText('Questo e un testo con un refuso');
+    await sleep(100);
+    result.buttonEnabledWithDraft = aiButton().disabled === false;
+    aiButton().click();
+    result.corrected = await waitFor(() => textarea().value.startsWith('Questo è'), 8000);
+    result.noticeReview = await waitFor(() => notice() && notice().textContent.includes('rivedi'), 4000);
+    result.notSent = (await api.search({ query: 'refuso' })).entries.length === 0;
+    setText('git status');
+    await sleep(100);
+    aiButton().click();
+    result.shellSkipped = await waitFor(() => notice() && notice().textContent.includes('comando shell'), 4000);
+    result.shellDraftUnchanged = textarea().value === 'git status';
+    result.noAutoSend = (await api.search({ query: 'git status' })).entries.length === 0;
+  } finally {
+    // nessuna pulizia necessaria
+  }
+  return result;
+})()`;
+
+/** Smoke AI attivo con SMART_TERMINAL_AI_SMOKE=1: richiede SMART_TERMINAL_AI_TEST_MODE=1 e config provider. */
+export function runAiSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, AI_SCRIPT, 'SMART_TERMINAL_AI_SMOKE_RESULT');
+}
+
 export function runClipboardSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {

@@ -99,6 +99,11 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test:clipboard-smoke` | opt-in, pausa, evento reale, hash, pattern sensibile ignorato |
 | `npm run test:search-smoke` | invio assistito indicizzato, filtri, sensibile escluso, rebuild da disco |
 
+## AI correction (M05-T03)
+- Canali `ai:status` e `ai:correct {text}`; `text` ≤16 KiB. Il main legge config/token, salta comandi shell e chiama l'adapter; risposta `{original, corrected, changed, skipped, reason?}`.
+- Il renderer mostra solo stato/risultato, applica la correzione alla bozza e non invia mai automaticamente. Token e chiamate provider restano nel main.
+- Smoke `test:ai-smoke` con `SMART_TERMINAL_AI_TEST_MODE=1`; nessuna rete reale.
+
 ## Sidebar globale e sync (M04-T04)
 - History: ricerca case-insensitive con debounce ~200 ms, filtro macchina dalle facet dell'indice, voci da tutte le macchine sincronizzate, copy e inserimento nella bozza (mai invio automatico).
 - Clipboard: lista delle voci catturate, copy/inserimento, controlli opt-in/pausa/clear; il polling è posseduto dal primary anche per le finestre secondary via RPC.

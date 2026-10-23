@@ -4,6 +4,7 @@
  */
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
+  AI_CORRECTION_MAX_TEXT_BYTES,
   CLIPBOARD_WRITE_MAX_BYTES,
   HISTORY_MAX_AGENT_LENGTH,
   HISTORY_MAX_TEXT_BYTES,
@@ -13,11 +14,14 @@ import {
   TERMINAL_MAX_WRITE_BYTES,
   TERMINAL_MIN_DIMENSION,
   type AppPingResult,
+  type AiCorrectRequest,
+  type AiStatus,
   type AppRuntimeInfo,
   type ClipboardCaptureState,
   type ClipboardConfigureRequest,
   type ClipboardSetActiveRequest,
   type ClipboardWriteRequest,
+  type CorrectionResult,
   type HistoryRecordRequest,
   type HistoryRecordResult,
   type IpcChannel,
@@ -119,6 +123,11 @@ export interface SyncGateway {
   status(): Promise<SyncStatusEvent>;
 }
 
+export interface AiGateway {
+  status(): AiStatus | Promise<AiStatus>;
+  correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
+}
+
 /** Scrittura di testo nella clipboard di sistema (pulsante Copia). */
 export interface ClipboardTextWriter {
   writeText(text: string): void;
@@ -151,6 +160,7 @@ export interface IpcServices {
   clipboard: ClipboardGateway;
   sync: SyncGateway;
   clipboardWriter: ClipboardTextWriter;
+  ai: AiGateway;
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -233,6 +243,15 @@ export const validateClipboardWrite = singleRequest<ClipboardWriteRequest>(
     Buffer.byteLength(v['text'], 'utf8') <= CLIPBOARD_WRITE_MAX_BYTES,
 );
 
+export const validateAiCorrect = singleRequest<AiCorrectRequest>(
+  (v) =>
+    hasExactKeys(v, ['text']) &&
+    typeof v['text'] === 'string' &&
+    v['text'].trim().length > 0 &&
+    Buffer.byteLength(v['text'], 'utf8') <= AI_CORRECTION_MAX_TEXT_BYTES &&
+    !/[\u0000-\u001f\u007f]/.test(v['text']),
+);
+
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
 export const validateSearchQuery = singleRequest<SearchQueryRequest>(
@@ -284,6 +303,8 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.secretsStatus]: ChannelDefinition<[], SecretsStatus>;
   [IPC_CHANNELS.secretsLogout]: ChannelDefinition<[SecretsLogoutRequest], SecretsStatus>;
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
+  [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
+  [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
 }
 
 export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
@@ -383,6 +404,14 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.appRelaunch]: {
       validate: noArguments,
       handle: () => services.app.relaunch(),
+    },
+    [IPC_CHANNELS.aiStatus]: {
+      validate: noArguments,
+      handle: () => services.ai.status(),
+    },
+    [IPC_CHANNELS.aiCorrect]: {
+      validate: validateAiCorrect,
+      handle: (_sender, request) => services.ai.correct(request),
     },
   };
 }

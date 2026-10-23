@@ -53,6 +53,10 @@ const services: IpcServices = {
     logout: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
   },
   app: { relaunch: vi.fn() },
+  ai: {
+    status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
+    correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),
+  },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };

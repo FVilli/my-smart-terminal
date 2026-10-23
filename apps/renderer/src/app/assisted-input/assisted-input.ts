@@ -1,11 +1,22 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { AiStore, correctionNotice } from '../ai/ai-store';
 
 @Component({
   selector: 'app-assisted-input',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="row">
-      <button type="button" class="icon ai" data-testid="ai-correction" aria-label="AI correction" disabled>AI</button>
+      <button
+        type="button"
+        class="icon ai"
+        data-testid="ai-correction"
+        aria-label="AI correction"
+        [disabled]="!canCorrect()"
+        [attr.title]="ai.status().warning ?? 'Correggi i refusi con AI'"
+        (click)="correctWithAi()"
+      >
+        {{ ai.busy() ? '…' : 'AI' }}
+      </button>
       <textarea
         class="editor"
         data-testid="assisted-textarea"
@@ -24,6 +35,9 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
         <span class="voice-label">Voice ready</span>
       </div>
     </div>
+    @if (notice(); as message) {
+      <p class="notice" data-testid="ai-notice">{{ message }}</p>
+    }
   `,
   styles: `
     :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 10px 12px; }
@@ -39,6 +53,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
     .voice { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px; }
     .voice .icon { flex: 1; }
     .voice-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .notice { margin: 8px 0 0; min-height: 16px; color: var(--text-muted); font-size: 12px; }
   `,
 })
 export class AssistedInput {
@@ -47,7 +62,10 @@ export class AssistedInput {
   readonly disabled = input(false);
   readonly draftChange = output<string>();
   readonly submitted = output<string>();
+  private readonly ai = inject(AiStore);
+  protected readonly notice = signal<string | null>(null);
   protected readonly canSend = computed(() => !this.disabled() && this.draft().trim().length > 0);
+  protected readonly canCorrect = computed(() => this.ai.canCorrect() && this.draft().trim().length > 0);
 
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) {
@@ -60,6 +78,17 @@ export class AssistedInput {
   protected send(): void {
     if (this.canSend()) {
       this.submitted.emit(this.draft());
+    }
+  }
+
+  protected async correctWithAi(): Promise<void> {
+    const result = await this.ai.correct(this.draft());
+    if (result === null) {
+      return;
+    }
+    this.notice.set(correctionNotice(result));
+    if (!result.skipped && result.changed) {
+      this.draftChange.emit(result.corrected);
     }
   }
 }

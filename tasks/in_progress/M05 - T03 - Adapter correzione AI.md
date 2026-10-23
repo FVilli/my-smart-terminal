@@ -26,3 +26,9 @@ Nessuna correzione dei comandi shell; timeout fallback; test path/codice preserv
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato (dopo due worker parziali; integrazione finalizzata dal parent).
+- Implementato: libreria AI (prompt vincolato, shell detection conservativa, adapter Anthropic/OpenAI/OpenAI-compatible, timeout/fallback), `AiService` main con config/token dinamici e test mode, IPC `ai:status`/`ai:correct`, preload, `AiStore`, pulsante AI con review e nessun auto-send.
+- Verifica: 330 test, adapter con fetch fake/timeout, `test:ai-smoke` con status, correzione, avviso review, nessun invio, shell saltata; smoke editor/sidebar/tabs/layout verdi.
+- Deviazioni: test mode deterministico solo per smoke (`SMART_TERMINAL_AI_TEST_MODE=1`); shell detection conservativa (meglio saltare che alterare un comando).
