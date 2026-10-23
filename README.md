@@ -107,7 +107,7 @@ Requirements: **Node.js 24**, Git, OpenSSH. Linux smoke tests require Xvfb (the 
 npm ci
 npm run dev          # Angular + Electron in development
 npm run build
-npm run test         # unit + integration (395 tests)
+npm run test         # unit + integration (404 tests)
 npm run test:e2e     # two Electron instances, failover, and cross-machine
 npm run lint
 npx tsc -p tsconfig.json --noEmit
@@ -160,7 +160,7 @@ packages/ai/        AI and STT providers
 
 ## Status and known limitations
 
-v1.1.1 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
+v1.2.0 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
 
 ## License
 

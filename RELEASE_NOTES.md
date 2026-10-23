@@ -1,6 +1,32 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.2.0
+
+Input, settings and self-hosted providers release.
+
+### Added
+
+- Input-surface keyboard contract: Ctrl/Cmd+Shift+E focuses the composer, Escape returns to the terminal without losing the draft, and the composer keeps focus after sending.
+- Tabbed Settings after first run: Repository, AI, STT and Appearance; Appearance includes persisted terminal monospace font selection.
+- Self-hosted OpenAI-compatible AI configuration with `/v1` base URL, custom models, test-before-save, and sanitized HTTP diagnostics.
+- Self-hosted STT configuration with base URL, custom model, `verbose_json` response format and language.
+- New Linux application/README branding and runtime window icon.
+
+### Changed
+
+- Removed the File/Edit/View/Window menu on Linux/Windows; macOS keeps only the essential application menu.
+- Window title now includes the runtime version.
+- Sidebar and history/clipboard palette unified with the terminal/input surfaces.
+- Zoom via Ctrl/Cmd+minus/plus/0, including keyboard/numpad variants.
+
+### Fixed
+
+- Ctrl/Cmd+plus zoom now works alongside zoom-out and reset.
+- The Linux package/menu uses the Smart Terminal icon instead of the stock Electron icon.
+- AI Test uses the current unsaved wizard values and entered token, so it works before saving.
+- CI Linux-only script verification and packaging-icon tracking.
+
 ## v1.1.1
 
 Linux installation and branding release.

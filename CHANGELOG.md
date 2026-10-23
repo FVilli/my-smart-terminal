@@ -1,6 +1,19 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.2.0
+
+### Added
+- Composer focus shortcut/back-to-terminal behavior and tabbed Settings with Appearance/font.
+- Self-hosted AI and STT configuration, including `/v1`, custom models, `verbose_json`, language and test-before-save.
+- New Linux/README branding and runtime icon.
+
+### Changed
+- Removed non-essential application menus, versioned title, unified palette, zoom shortcuts.
+
+### Fixed
+- Ctrl+plus zoom, package/menu icon, AI Test-before-save and CI Linux-only verification.
+
 ## 1.1.1
 
 ### Added
