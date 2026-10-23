@@ -73,6 +73,20 @@ describe('AiService connection test', () => {
     await expect(service.testConnection()).resolves.toMatchObject({ ok: true, provider: 'openai', response: 'OK' });
   });
 
+  it('tests the current unsaved wizard values and entered token', async () => {
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://unsloth.example/v1/chat/completions');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer sk-unsloth-entered');
+      return new Response(JSON.stringify({ choices: [{ message: { content: 'OK' } }] }), { status: 200 });
+    });
+    const result = await new AiService({ ...stores(config({ aiProvider: 'none' }), null), fetch: fetcher as typeof fetch }).testConnection({
+      config: { machineName: 'host', dataRepoPath: '/tmp/data', aiProvider: 'openai-compatible', aiBaseUrl: 'https://unsloth.example/v1', aiModel: 'unsloth/gemma-test:UD', sttProvider: 'none' },
+      aiToken: 'sk-unsloth-entered',
+    });
+    expect(result).toMatchObject({ ok: true, provider: 'openai-compatible' });
+    expect(JSON.stringify(result)).not.toContain('sk-unsloth-entered');
+  });
+
   it('reports a sanitized HTTP status from Test AI', async () => {
     const fetcher = vi.fn(async () => new Response('unauthorized', { status: 401 }));
     const result = await new AiService({ ...stores(config({ aiBaseUrl: 'https://example.test/v1' })), fetch: fetcher as typeof fetch }).testConnection();

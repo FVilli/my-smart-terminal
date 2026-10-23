@@ -676,6 +676,9 @@ const AI_SETUP_SCRIPT = `(async () => {
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-ai');
   result.step2 = await waitFor(() => !!q('onboarding-ai-provider'));
+  const provider = q('onboarding-ai-provider'); provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  const base = q('onboarding-ai-url'); base.value = 'https://unsloth.example/v1'; base.dispatchEvent(new Event('input', { bubbles: true }));
+  const model = q('onboarding-ai-model'); model.value = 'custom/model:v1'; model.dispatchEvent(new Event('input', { bubbles: true }));
   result.button = await waitFor(() => !!q('onboarding-test-ai'));
   click('onboarding-test-ai');
   result.resultVisible = await waitFor(() => !!q('onboarding-ai-result'), 20000);
@@ -704,7 +707,14 @@ const STT_SETUP_SCRIPT = `(async () => {
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-stt');
   result.step3 = await waitFor(() => !!q('onboarding-stt-provider'));
-  result.button = await waitFor(() => !!q('onboarding-test-stt'));
+  const provider = q('onboarding-stt-provider'); provider.value = 'cloud'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  await waitFor(() => !!q('onboarding-stt-url'));
+  result.fields = !!q('onboarding-stt-url') && !!q('onboarding-stt-format') && !!q('onboarding-stt-language');
+  const base = q('onboarding-stt-url'); base.value = 'https://unsloth.example/v1'; base.dispatchEvent(new Event('input', { bubbles: true }));
+  const model = q('onboarding-stt-model'); model.value = 'parakeet-tdt-0.6b-v3'; model.dispatchEvent(new Event('input', { bubbles: true }));
+  q('onboarding-stt-format').value = 'verbose_json'; q('onboarding-stt-format').dispatchEvent(new Event('change', { bubbles: true }));
+  const language = q('onboarding-stt-language'); language.value = 'en'; language.dispatchEvent(new Event('input', { bubbles: true }));
+  return result;
   const context = new AudioContext();
   const destination = context.createMediaStreamDestination();
   const oscillator = context.createOscillator();

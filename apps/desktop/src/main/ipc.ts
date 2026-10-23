@@ -39,6 +39,7 @@ import {
   type SearchQueryRequest,
   type SearchQueryResult,
   type HelpTopic,
+  type SetupTestAiRequest,
   type SetupTestAiResult,
   type SttStatus,
   type SttTranscribeRequest,
@@ -52,6 +53,7 @@ import {
 } from '@smart-terminal/contracts';
 import { TerminalError, isValidSshAlias } from '@smart-terminal/terminal';
 import { isAudioMimeType } from '@smart-terminal/ai';
+import { validateOnboardingConfig } from './onboarding-service';
 
 export const MAX_PAYLOAD_BYTES = 128 * 1024;
 
@@ -137,7 +139,7 @@ export interface SyncGateway {
 export interface AiGateway {
   status(): AiStatus | Promise<AiStatus>;
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
-  testConnection(): SetupTestAiResult | Promise<SetupTestAiResult>;
+  testConnection(request?: SetupTestAiRequest): SetupTestAiResult | Promise<SetupTestAiResult>;
 }
 
 export interface SttGateway {
@@ -280,6 +282,13 @@ export const validateHelpTopic = singleRequest<HelpTopic>(
   (v) => hasExactKeys(v, ['topic']) && (v['topic'] === 'repository' || v['topic'] === 'ai' || v['topic'] === 'stt' || v['topic'] === 'troubleshooting'),
 );
 
+export const validateSetupTestAi = singleRequest<SetupTestAiRequest>(
+  (v) =>
+    hasExactKeys(v, ['config'], ['aiToken']) &&
+    isPlainRecord(v['config']) &&
+    (v['aiToken'] === undefined || (typeof v['aiToken'] === 'string' && v['aiToken'].length <= 4096 && !/[\u0000-\u001f\u007f]/.test(v['aiToken']))),
+);
+
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
 export const validateSttTranscribe = singleRequest<SttTranscribeRequest>(
@@ -343,7 +352,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
-  [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[], SetupTestAiResult>;
+  [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
@@ -460,8 +469,12 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       handle: (_sender, request) => services.ai.correct(request),
     },
     [IPC_CHANNELS.setupTestAi]: {
-      validate: noArguments,
-      handle: () => services.ai.testConnection(),
+      validate: validateSetupTestAi,
+      handle: (_sender, request) => {
+        const validation = validateOnboardingConfig(request.config, false);
+        if (!validation.ok) return { ok: false, provider: request.config.aiProvider, error: 'Invalid AI configuration.' };
+        return services.ai.testConnection(request);
+      },
     },
     [IPC_CHANNELS.helpOpen]: {
       validate: validateHelpTopic,

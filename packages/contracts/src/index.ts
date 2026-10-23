@@ -271,6 +271,12 @@ export interface OnboardingValidateRequest {
 export const HELP_TOPICS = ['repository', 'ai', 'stt', 'troubleshooting'] as const;
 export type HelpTopic = (typeof HELP_TOPICS)[number];
 
+export interface SetupTestAiRequest {
+  config: OnboardingConfig;
+  /** Token currently entered in the wizard; if omitted, the stored token is used. */
+  aiToken?: string;
+}
+
 export interface SetupTestAiResult {
   ok: boolean;
   provider: AiProvider;
@@ -399,7 +405,7 @@ export interface SmartTerminalApi {
   /** Skips the wizard by saving a configuration with default values. */
   onboardingSkip(): Promise<OnboardingSaveResult>;
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
-  setupTestAi(): Promise<SetupTestAiResult>;
+  setupTestAi(request: SetupTestAiRequest): Promise<SetupTestAiResult>;
   helpOpen(topic: HelpTopic): Promise<void>;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */

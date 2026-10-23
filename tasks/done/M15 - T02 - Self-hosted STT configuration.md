@@ -19,3 +19,8 @@ Add optional `sttBaseUrl`, `sttResponseFormat` (`json`/`verbose_json`) and `sttL
 
 ## Acceptance
 Mock transcription works with the provided base/model/format; old configs load unchanged; token/audio handled safely.
+
+## Outcome
+- Added optional `stt_base_url`, `stt_response_format` (`json`/`verbose_json`) and `stt_language` with backwards-compatible parsing.
+- STT request forwards base URL, format and language; endpoint composes `<base>/audio/transcriptions`; verbose_json `text` is parsed; token/audio safety preserved.
+- Unit coverage includes Unsloth-style base/model/format and config round-trip.

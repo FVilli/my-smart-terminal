@@ -2,6 +2,7 @@ import type {
   AiCorrectRequest,
   AiStatus,
   CorrectionResult,
+  SetupTestAiRequest,
   SetupTestAiResult,
 } from '@smart-terminal/contracts';
 import { correctText, isShellCommand } from '@smart-terminal/ai';
@@ -56,15 +57,16 @@ export class AiService {
     };
   }
 
-  async testConnection(): Promise<SetupTestAiResult> {
-    const config = this.currentConfig();
+  async testConnection(request?: SetupTestAiRequest): Promise<SetupTestAiResult> {
+    const config = request?.config ?? this.currentConfig();
     if (config === undefined || config.aiProvider === 'none') {
       return { ok: false, provider: 'none', error: 'AI provider is not configured.' };
     }
     if (this.testMode) {
       return { ok: true, provider: config.aiProvider, latencyMs: 0, response: 'OK', ...(config.aiModel !== undefined ? { model: config.aiModel } : {}) };
     }
-    const token = this.options.secrets.get(`ai:${config.aiProvider}`);
+    const entered = request?.aiToken?.trim();
+    const token = entered !== undefined && entered.length > 0 ? entered : this.options.secrets.get(`ai:${config.aiProvider}`);
     if (token === undefined) {
       return { ok: false, provider: config.aiProvider, error: 'AI token is not configured.' };
     }

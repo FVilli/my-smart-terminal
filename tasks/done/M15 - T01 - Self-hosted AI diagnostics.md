@@ -19,3 +19,8 @@ Keep `/chat/completions` composition but normalize trailing slashes; make explic
 
 ## Acceptance
 Mock chat works for `https://host/v1` + custom model + bearer token; test failure messages are actionable/sanitized; no secret leakage.
+
+## Outcome
+- AI Test now accepts the current unsaved wizard config and entered token (via `SetupTestAiRequest`), so testing before Save works.
+- OpenAI-compatible base URL `/v1`, custom model names and token are supported; provider errors expose only sanitized HTTP status (e.g. HTTP 401), never token/body.
+- Added unit coverage for unsaved values and sanitized 401/500; no secrets in results.

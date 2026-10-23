@@ -13,6 +13,7 @@ import {
   type OnboardingState,
   type SmartTerminalApi,
   type SttProvider,
+  type SttResponseFormat,
 } from '@smart-terminal/contracts';
 import { SttStore } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
@@ -108,19 +109,22 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   <label>AI provider
                     <select data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="patch({ aiProvider: aiProvider($event) })">
                       @for (provider of aiProviders; track provider) {
-                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ provider }}</option>
+                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ provider === 'openai-compatible' ? 'OpenAI-compatible (self-hosted)' : provider }}</option>
                       }
                     </select>
                   </label>
                   @if (config().aiProvider !== 'none') {
                     <label>Base URL (optional)
+                      <span class="hint">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
                       <input data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
                     @if (errors()['aiBaseUrl']; as message) { <p class="error" data-testid="onboarding-error-ai-url">{{ message }}</p> }
                     <label>Model (optional)
+                      <span class="hint">Custom model names may contain / and :.</span>
                       <input data-testid="onboarding-ai-model" [value]="config().aiModel ?? ''" (input)="patch({ aiModel: value($event) })" />
                     </label>
-                    <label>Token (optional, keychain only)
+                    <label>Token (required for cloud/self-hosted; keychain only)
+                      <span class="hint">Stored in the system keychain only.</span>
                       <input type="password" autocomplete="off" data-testid="onboarding-ai-token" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
                     @if (!state()?.secureStorage) {
@@ -156,9 +160,22 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   </label>
                   @if (config().sttProvider !== 'none') {
                     <label>Model (optional)
+                      <span class="hint">Cloud model; self-hosted Parakeet model IDs are also supported.</span>
                       <input data-testid="onboarding-stt-model" [value]="config().sttModel ?? ''" (input)="patch({ sttModel: value($event) })" />
                     </label>
                     @if (config().sttProvider === 'cloud') {
+                      <label>Base URL (optional)
+                        <span class="hint">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
+                        <input data-testid="onboarding-stt-url" [value]="config().sttBaseUrl ?? ''" (input)="patch({ sttBaseUrl: value($event) })" />
+                      </label>
+                      <label>Response format
+                        <select data-testid="onboarding-stt-format" [value]="config().sttResponseFormat ?? 'json'" (change)="patch({ sttResponseFormat: sttResponseFormat($event) })">
+                          <option value="json">json</option><option value="verbose_json">verbose_json</option>
+                        </select>
+                      </label>
+                      <label>Language (optional)
+                        <input data-testid="onboarding-stt-language" placeholder="e.g. en" [value]="config().sttLanguage ?? ''" (input)="patch({ sttLanguage: value($event) })" />
+                      </label>
                       <label>Token (optional, keychain only)
                         <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
                       </label>
@@ -385,6 +402,10 @@ export class OnboardingWizard {
     return STT_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
   }
 
+  protected sttResponseFormat(event: Event): SttResponseFormat {
+    return this.value(event) === 'verbose_json' ? 'verbose_json' : 'json';
+  }
+
   protected patch(change: Partial<OnboardingConfig>): void {
     this.config.update((current) => ({ ...current, ...change }));
     if ('dataRepoPath' in change || 'dataRepoRemote' in change || 'machineName' in change) {
@@ -393,7 +414,7 @@ export class OnboardingWizard {
     if ('aiProvider' in change || 'aiBaseUrl' in change || 'aiModel' in change) {
       this.aiTestResult.set(null);
     }
-    if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change) {
+    if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change || 'sttBaseUrl' in change || 'sttResponseFormat' in change || 'sttLanguage' in change) {
       this.sttTestResult.set(null);
     }
   }
@@ -453,7 +474,7 @@ export class OnboardingWizard {
     this.testingAi.set(true);
     this.aiTestResult.set(null);
     try {
-      this.aiTestResult.set(await this.api.setupTestAi());
+      this.aiTestResult.set(await this.api.setupTestAi({ config: this.payload(), ...(this.aiToken() !== '' ? { aiToken: this.aiToken() } : {}) }));
     } catch {
       this.aiTestResult.set({ ok: false, provider: this.config().aiProvider, error: 'AI test could not run.' });
     } finally {
@@ -475,12 +496,15 @@ export class OnboardingWizard {
 
   /** Removes empty optional fields before sending them to the main process. */
   private payload(): OnboardingConfig {
-    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, terminalFont, ...required } = this.config();
+    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, sttBaseUrl, sttResponseFormat, sttLanguage, terminalFont, ...required } = this.config();
     const optional = {
       dataRepoRemote,
       aiBaseUrl,
       aiModel,
       sttModel,
+      sttBaseUrl,
+      sttResponseFormat,
+      sttLanguage,
       terminalFont,
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
