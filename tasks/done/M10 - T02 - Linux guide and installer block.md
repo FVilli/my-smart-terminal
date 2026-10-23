@@ -38,3 +38,8 @@ README.md; docs/12; docs/14; electron-builder.yml; docs/18.
 
 ## Do not
 Do not add dependencies, app changes, or a destructive uninstall script.
+
+## Outcome
+- Added `docs/21 - Linux installation guide.md` with a checksum-verified `.deb` block using `apt`, an AppImage block that keeps the file in `~/Applications`, FUSE fallback, launch/update/uninstall, data separation, optional reversible cleanup and troubleshooting.
+- All six Bash blocks pass `bash -n`; only the not-yet-created macOS link remains unresolved.
+- Reviewer note applied: AppImage is no longer downloaded into a temporary directory that is deleted before the user can rerun it.
