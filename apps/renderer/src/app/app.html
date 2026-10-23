@@ -1,3 +1,45 @@
-<main class="workspace" aria-label="Smart Terminal">
-  <app-terminal-panel />
+<main class="shell" aria-label="Smart Terminal">
+  <section class="main-column">
+    <app-header />
+    <app-session-tabs
+      [sessions]="store.sessions()"
+      [activeId]="store.activeId()"
+      (selected)="store.select($event)"
+      (closed)="requestClose($event)"
+      (createLocal)="createLocal()"
+    />
+    @if (pendingCloseId(); as closingId) {
+      <div class="notice" role="alertdialog" aria-label="Conferma chiusura" data-testid="close-confirm">
+        <span>Chiudere la sessione attiva? Il processo verrà terminato.</span>
+        <button type="button" data-testid="close-confirm-yes" (click)="confirmClose()">Chiudi sessione</button>
+        <button type="button" data-testid="close-confirm-no" (click)="cancelClose()">Annulla</button>
+      </div>
+    }
+    @if (store.createError(); as error) {
+      <div class="notice notice--error" role="alert" data-testid="create-error">
+        <span>{{ error }}</span>
+        <button type="button" data-testid="create-retry" (click)="createLocal()">Riprova</button>
+      </div>
+    }
+    <app-terminal-workarea>
+      @for (session of store.sessions(); track session.id) {
+        <app-terminal-panel [sessionId]="session.id" [active]="session.id === store.activeId()" />
+      }
+      @if (store.sessions().length === 0 && !store.creating()) {
+        <div class="empty-state" data-testid="empty-state">
+          <p>Nessuna sessione aperta.</p>
+          <button type="button" data-testid="empty-create" (click)="createLocal()">Nuova sessione locale</button>
+        </div>
+      }
+    </app-terminal-workarea>
+    <app-assisted-input
+      [draft]="store.activeDraft()"
+      [disabled]="store.activeSession() === null"
+      (draftChange)="setDraft($event)"
+    />
+    <app-status-footer />
+  </section>
+  <aside class="sidebar" data-testid="sidebar">
+    <app-sidebar-panel />
+  </aside>
 </main>

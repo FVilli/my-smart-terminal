@@ -1,11 +1,61 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { AssistedInput } from './assisted-input/assisted-input';
+import { AppHeader } from './header/app-header';
+import { SessionTabs } from './session-tabs/session-tabs';
+import { SessionsStore } from './sessions-store';
+import { SidebarPanel } from './sidebar-panel/sidebar-panel';
+import { StatusFooter } from './status-footer/status-footer';
 import { TerminalPanel } from './terminal-panel';
+import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 
 @Component({
   selector: 'app-root',
-  imports: [TerminalPanel],
+  imports: [AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  protected readonly store = inject(SessionsStore);
+  /** Tab attivo in attesa di conferma di chiusura (dialogo inline, non bloccante). */
+  protected readonly pendingCloseId = signal<string | null>(null);
+
+  constructor() {
+    void this.store.createLocal();
+  }
+
+  protected requestClose(id: string): void {
+    const sessions = this.store.sessions();
+    const target = sessions.find((session) => session.id === id);
+    const needsConfirm =
+      target !== undefined && id === this.store.activeId() && sessions.length > 1 && target.status === 'running';
+    if (needsConfirm) {
+      this.pendingCloseId.set(id);
+      return;
+    }
+    this.store.close(id);
+  }
+
+  protected confirmClose(): void {
+    const id = this.pendingCloseId();
+    this.pendingCloseId.set(null);
+    if (id !== null) {
+      this.store.close(id);
+    }
+  }
+
+  protected cancelClose(): void {
+    this.pendingCloseId.set(null);
+  }
+
+  protected createLocal(): void {
+    void this.store.createLocal();
+  }
+
+  protected setDraft(text: string): void {
+    const id = this.store.activeId();
+    if (id !== null) {
+      this.store.setDraft(id, text);
+    }
+  }
+}

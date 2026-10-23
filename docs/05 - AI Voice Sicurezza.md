@@ -17,5 +17,11 @@ STT locale oppure cloud configurabile; microfono push-to-talk, permessi esplicit
 ## Segreti
 Token nel keychain OS, SSH via client OpenSSH/agent e `~/.ssh/config`; non salvare chiavi, password o contenuti sensibili in history/clipboard/repo. Filtri configurabili e modalità pausa raccolta; logout/revoca provider.
 
+## Clipboard
+- Raccolta opt-in esplicita, con pausa e cancellazione; una sola istanza di polling per macchina (main del primary in M04).
+- Polling ~800 ms, deduplica SHA-256 in memoria, limite 32 KiB, scarto di contenuti vuoti/oversize.
+- Filtro best-effort per chiavi private, token, password e URL con credenziali: non garantisce di riconoscere ogni segreto.
+- Associazione alla sessione attiva aggiornata su cambio tab e focus finestra.
+
 ## Errori
 AI/STT indisponibili non interrompono terminale e scrittura locale.

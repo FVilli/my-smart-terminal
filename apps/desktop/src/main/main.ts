@@ -4,7 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { TEST_IPC_ARGUMENT } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
-import { runSmoke } from './smoke';
+import { readWindowSize, runCapture } from './capture';
+import { runSmoke, runTabsSmoke } from './smoke';
 import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
@@ -25,6 +26,8 @@ protocol.registerSchemesAsPrivileged([
 const devServerUrl = process.env['SMART_TERMINAL_DEV_SERVER_URL'];
 const smokeTest = process.env['SMART_TERMINAL_SMOKE'] === '1';
 const ptySmokeTest = process.env['SMART_TERMINAL_PTY_SMOKE'] === '1';
+const tabsSmokeTest = process.env['SMART_TERMINAL_TABS_SMOKE'] === '1';
+const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 const terminalHost = new TerminalHost(new NodePtyAdapter());
 
@@ -51,11 +54,10 @@ function registerAppProtocol(): void {
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
-    width: 1440,
-    height: 900,
+    ...readWindowSize(),
     minWidth: 960,
     minHeight: 600,
-    backgroundColor: '#0b0f14',
+    backgroundColor: '#171e25',
     show: false,
     title: 'Smart Terminal',
     webPreferences: {
@@ -85,6 +87,14 @@ function createWindow(): BrowserWindow {
   }
 
   trackIpcWindow(window, ipcSenderIds, terminalHost);
+
+  if (capturePath) {
+    runCapture(window, capturePath);
+  }
+
+  if (tabsSmokeTest) {
+    runTabsSmoke(window);
+  }
 
   if (smokeTest || ptySmokeTest) {
     runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');

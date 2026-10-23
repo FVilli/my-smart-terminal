@@ -116,3 +116,56 @@ export function runSmoke(window: BrowserWindow, mode: 'ipc' | 'pty' = 'ipc'): vo
     }, 1200);
   });
 }
+
+const TABS_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (selector) => Array.from(document.querySelectorAll('[data-testid="' + selector + '"]'));
+  const count = async () => (await api.listTerminals()).length;
+  const result = {};
+  result.initialSession = await waitFor(async () => q('session-tab').length === 1 && (await count()) === 1, 8000);
+  q('session-plus')[0].click();
+  await sleep(50);
+  q('session-new-local')[0].click();
+  result.twoTabs = await waitFor(async () => q('session-tab').length === 2 && (await count()) === 2, 8000);
+  result.panelsMounted = q('terminal-panel').length === 2;
+  const tabs = () => q('session-tab');
+  tabs()[0].click();
+  await sleep(200);
+  const firstActive = tabs()[0].getAttribute('aria-selected') === 'true';
+  tabs()[1].click();
+  await sleep(200);
+  const secondActive = tabs()[1].getAttribute('aria-selected') === 'true';
+  result.switchKeepsSessions = firstActive && secondActive && (await count()) === 2 && q('terminal-panel').length === 2;
+  const closeButtons = q('session-tab-close');
+  closeButtons[0].click();
+  result.closedOne = await waitFor(async () => q('session-tab').length === 1 && (await count()) === 1, 8000);
+  return result;
+})()`;
+
+/** Smoke UI attivo con SMART_TERMINAL_TABS_SMOKE=1: crea/seleziona/chiude tab via DOM e verifica terminal:list. */
+export function runTabsSmoke(window: BrowserWindow): void {
+  window.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      void window.webContents
+        .executeJavaScript(TABS_SCRIPT)
+        .then((result: Record<string, boolean>) => {
+          const ok = Object.values(result).every((value) => value === true);
+          console.log('SMART_TERMINAL_TABS_SMOKE_RESULT', JSON.stringify({ ...result, ok }));
+          app.exit(ok ? 0 : 1);
+        })
+        .catch((error: unknown) => {
+          console.error('SMART_TERMINAL_SMOKE_ERROR', error);
+          app.exit(1);
+        });
+    }, 1200);
+  });
+}

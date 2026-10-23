@@ -26,3 +26,9 @@ Confronto visivo con mock, nessun overflow al resize.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: shell 75/25 con componenti standalone `app-header`, `session-tabs`, `terminal-workarea`, `assisted-input`, `sidebar-panel`, `status-footer`; palette dal mock, font mono, colonne `min-width:0`, input/footer nella colonna sinistra, sidebar a tutta altezza.
+- Verifica: `npm run test:layout` a 1440x900 e 1024x700 con ratio 0.75, `overflow:false`, screenshot in `dist/layout/`; lint/typecheck/build/test verdi.
+- Nota: header aggiunto in review del parent per rispettare la gerarchia di `docs/08`.

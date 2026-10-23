@@ -21,6 +21,8 @@
     "typecheck:node": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:layout": "npm run build && node scripts/capture-layout.mjs",
+    "test:tabs-smoke": "npm run build && cross-env SMART_TERMINAL_TABS_SMOKE=1 electron apps/desktop",
     "test:ipc-smoke": "npm run build && cross-env SMART_TERMINAL_SMOKE=1 electron apps/desktop",
     "test:pty-smoke": "npm run rebuild:native && npm run build && cross-env SMART_TERMINAL_PTY_SMOKE=1 electron apps/desktop",
     "test:watch": "vitest",

@@ -25,3 +25,14 @@ Frontmatter con `session_id`, `machine`, `window_id`, `kind`, `ssh_alias` eventu
 
 ## Concorrenti
 Solo il proprietario della sessione modifica i suoi tre file; il coordinatore assegna ID e serializza operazioni Git. Markdown leggibili e versionati; nessun database persistente.
+
+## Contatore `S<n>`
+- `sessions/<machine>/counter.md` è metadata versionato nel repo dati (non è un file di sessione): frontmatter `schema_version`, `machine`, `last_session`, `updated_at`.
+- L'allocazione avviene sotto il lock del primary (`userData/coordinator/`, `mkdir` atomico, PID/nonce/heartbeat) e prenota l'ID **prima** di restituirlo; i buchi dopo un crash sono accettabili, il riuso no.
+- Bootstrap o contatore invalido: ricostruzione del massimo `S<n>` dalle directory esistenti, poi ripartenza dal successivo.
+- In M03 l'allocatore è un servizio dietro interfaccia; M04 lo espone dal primary senza introdurre un secondo lock.
+
+## Copertura history MVP
+- M03 registra gli invii dell'editor assistito (`source: assisted`).
+- La shell history nativa non è coperta in MVP: nessuna iniezione in `.bashrc`/`.zshrc`/startup, nessuna intercettazione di keystroke o prompt TUI. Un'integrazione OSC già presente può essere accettata solo se verificata e affidabile.
+- Deviazione esplicita rispetto a M03-T03, da mantenere nei release notes.

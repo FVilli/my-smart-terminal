@@ -19,7 +19,8 @@ Servono: configurazione iniziale prima che esista un clone dati, più finestre E
 
 ### D1 - Configurazione non segreta locale
 - La config non segreta è Markdown locale in `app.getPath('userData')/config/config.md`; **non** è sincronizzata e **non** vive nel clone dati.
-- Il clone dati contiene solo `sessions/`; il suo percorso è a sua volta config per-macchina.
+- Il clone dati contiene solo `sessions/`; il suo percorso è a sua volta config per-macchina. Prima dell'onboarding il default è `userData/data`, creato localmente con `sessions/`: shell e PTY funzionano senza rete/AI/Git. Override di test: `SMART_TERMINAL_DATA_REPO`.
+- Il contatore `S<n>` vive in `sessions/<machine>/counter.md` (metadata versionato), protetto dal lock del primary; dettagli in `docs/03`.
 - Schema minimo (`schema_version: 1`): `machine_name`, `data_repo_path`, `data_repo_remote`, `ai.provider` (`anthropic|openai|openai-compatible`), `ai.base_url`, `ai.model`, `stt.provider` (`local|cloud`), `sync.debounce_ms`, `sync.max_wait_ms`, `sync.fetch_interval_ms`, `clipboard.enabled`, preferenze UI. Nessun token, chiave o password.
 - Scrittura atomica (file temporaneo nella stessa directory + rename) e parser validante con default sicuri. File illeggibile o schema ignoto: backup del file e ripristino dei default, senza bloccare il terminale.
 - La machine identity è `machine_name` normalizzata (niente slash); non deriva da hostname di rete e non viene condivisa.
@@ -30,6 +31,7 @@ Servono: configurazione iniziale prima che esista un clone dati, più finestre E
 - Trasporto: Unix domain socket `userData/coordinator/coordinator.sock` con directory `0700` e socket `0600`; su Windows named pipe `\\.\pipe\smart-terminal-<hash(userData)>`, autenticazione a nonce. Protocollo JSON-RPC con metodi whitelisted, payload massimo 1 MiB, validazione dei parametri.
 - Heartbeat periodico. Takeover consentito solo se il lock è stale (heartbeat oltre 10 s), il PID non è più vivo o l'endpoint non risponde; l'acquisizione finale usa di nuovo `mkdir` atomico. I secondari restano client finché l'endpoint risponde.
 - Il coordinatore è l'unico proprietario di contatori macchina, scritture condivise, indice e Git. Il renderer non riceve privilegi dal ruolo primary.
+- L'allocazione `S<n>` è incapsulata dietro un servizio: M03 usa il lock locale, M04 la espone dal primary via IPC locale senza creare un secondo lock incompatibile.
 
 ### D3 - Credenziali e keychain
 - I token AI/STT sono gestiti solo nel processo main con Electron `safeStorage`, mai nel renderer e mai in chiaro.
