@@ -33,3 +33,9 @@ M10 docs/21; electron-builder.yml; scripts/check-links.mjs; docs/13.
 
 ## Do not
 Do not remove the app data folder or external repositories; do not run as root; do not add arbitrary remote execution.
+
+## Outcome
+- Root `install.sh` and `uninstall.sh` (POSIX sh): normal-user guard, x86_64 check, pinned v1.1.1 with env override, `--deb`/`--appimage`, checksum verification, apt only for .deb with stdin redirected, XDG AppImage install + icon + desktop entry, cache refresh, data-preserving uninstall.
+- Added `scripts/verify-linux-install-scripts.mjs` and `test:linux-install`; fake-PATH tests cover deb, AppImage menu/files, piped stdin and uninstall preserving a sentinel user-data folder. CI runs it.
+- Fixed the initial fake AppImage pattern and replaced the permissive uninstall `|| :` with an explicit package-status check.
+- Guard added against installing the AppImage over an existing `.deb` to avoid duplicate menu entries.

@@ -38,6 +38,8 @@ jobs:
         run: npm run test:docs-links
       - name: Installation documentation verification
         run: npm run test:install-docs
+      - name: Linux install scripts verification
+        run: npm run test:linux-install
       - name: Unit and integration tests
         if: runner.os != 'Windows'
         run: npm run test

@@ -56,7 +56,8 @@
     "test:ai-setup-smoke": "npm run build && node scripts/ai-setup-smoke.mjs",
     "test:stt-setup-smoke": "npm run build && node scripts/stt-setup-smoke.mjs",
     "test:docs-links": "node scripts/check-links.mjs",
-    "test:install-docs": "node scripts/verify-installation-docs.mjs"
+    "test:install-docs": "node scripts/verify-installation-docs.mjs",
+    "test:linux-install": "node scripts/verify-linux-install-scripts.mjs"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",
