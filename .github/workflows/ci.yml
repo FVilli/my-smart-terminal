@@ -56,6 +56,11 @@ jobs:
           npm run test:layout
           npm run test:stt-smoke
           npm run test:ai-smoke
+          npm run test:settings-smoke
+          npm run test:remote-setup-smoke
+          npm run test:ai-setup-smoke
+          npm run test:stt-setup-smoke
+          npm run test:docs-links
           npm run test:e2e
       - name: Package
         run: npm run package:${{ runner.os == 'Linux' && 'linux' || runner.os == 'macOS' && 'mac' || 'win' }}

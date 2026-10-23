@@ -65,21 +65,21 @@ Real screenshots from the English build (1440×872 content area, Xvfb capture):
 
 ## Download
 
-> **v1.0.0 — published, unsigned artifacts, no auto-update.**
+> **v1.1.0 — published, unsigned artifacts, no auto-update.**
 
 **Download: https://github.com/FVilli/my-smart-terminal/releases/latest**
 
 | Platform | Artifact |
 | --- | --- |
-| Ubuntu / Linux x86_64 | `Smart.Terminal-1.0.0-linux-x86_64.AppImage`, `Smart.Terminal-1.0.0-linux-amd64.deb` |
-| macOS Apple Silicon | `Smart.Terminal-1.0.0-mac-arm64.dmg` |
-| Windows x64 | `Smart.Terminal-1.0.0-win-x64.exe` |
+| Ubuntu / Linux x86_64 | `Smart.Terminal-1.1.0-linux-x86_64.AppImage`, `Smart.Terminal-1.1.0-linux-amd64.deb` |
+| macOS Apple Silicon | `Smart.Terminal-1.1.0-mac-arm64.dmg` |
+| Windows x64 | `Smart.Terminal-1.1.0-win-x64.exe` |
 | All platforms | `SHA256SUMS` |
 
 Linux quick start:
 
 ```bash
-VERSION=1.0.0
+VERSION=1.1.0
 BASE="https://github.com/FVilli/my-smart-terminal/releases/download/v${VERSION}"
 
 # AppImage (no installation)
@@ -96,7 +96,7 @@ sudo dpkg -i "Smart.Terminal-${VERSION}-linux-amd64.deb"
 # or open "Smart Terminal" from the applications menu
 ```
 
-If FUSE is unavailable: `"./Smart.Terminal-1.0.0-linux-x86_64.AppImage" --appimage-extract-and-run`. Download `SHA256SUMS` from the same release and verify artifacts before use. macOS builds are currently arm64 (Apple Silicon); Windows builds are x64.
+If FUSE is unavailable: `"./Smart.Terminal-1.1.0-linux-x86_64.AppImage" --appimage-extract-and-run`. Download `SHA256SUMS` from the same release and verify artifacts before use. macOS builds are currently arm64 (Apple Silicon); Windows builds are x64.
 
 ## First run
 
@@ -184,7 +184,7 @@ packages/ai/        AI and STT providers
 
 ## Status and known limitations
 
-v1.0.0 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
+v1.1.0 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
 
 ## License
 

@@ -1,6 +1,31 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.1.0
+
+Layout, settings and verified setup release.
+
+### Added
+
+- Reopenable settings wizard from a header gear icon, with Back/Next/Cancel, Escape, dirty confirmation and restart guidance only for repository/machine/remote changes.
+- Real “Test repository” setup verification: writes `instances/<machine>-<installation-id>.md`, commits path-scoped and pushes to the configured remote (local-only when no remote; recoverable failure keeps the local commit).
+- “Test AI” provider verification and “Test transcription” STT verification in the wizard, with no automatic submission and no persisted audio.
+- In-app help links for repository, AI and STT setup, mapped to fixed documentation URLs.
+- Repository, AI provider and STT setup guides with real English screenshots.
+- Linux desktop entry/package verification in CI.
+
+### Changed
+
+- Layout aligned with the approved mock: 48 px header, 54 px tab bar with `#384a5d` active tab, black sidebar, taller assisted input and terminal-background footer.
+- Git scope extended to `sessions/` and `instances/`; unrelated paths are still never staged.
+- New setup smoke tests and Markdown link checker in CI.
+
+### Fixed
+
+- Setup is no longer trapped: every step can go back/forward and Cancel/Escape works.
+- Settings can be reopened after onboarding.
+- Linux packages expose a verified application-menu entry and icon.
+
 ## v1.0.0
 
 First user release of My Smart Terminal. Release date: not specified.

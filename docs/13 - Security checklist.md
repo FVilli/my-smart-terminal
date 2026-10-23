@@ -60,4 +60,4 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - No auto-update in V1; manual updates.
 
 ## Verification commands
-`npm run test`, `npm run test:coordinator`, `npm run test:e2e`, `npm run test:ipc-smoke`, `npm run test:stt-smoke`, `npm run test:ai-smoke`, `npm run lint`, `npx tsc -p tsconfig.json --noEmit`.
+`npm run test`, `npm run test:coordinator`, `npm run test:e2e`, `npm run test:ipc-smoke`, `npm run test:stt-smoke`, `npm run test:ai-smoke`, `npm run test:settings-smoke`, `npm run test:remote-setup-smoke`, `npm run test:ai-setup-smoke`, `npm run test:stt-setup-smoke`, `npm run test:docs-links`, `npm run lint`, `npx tsc -p tsconfig.json --noEmit`.

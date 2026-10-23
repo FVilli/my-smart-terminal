@@ -10,7 +10,7 @@ created: 2026-10-23
 
 This guide takes you from the first launch to a working local or SSH session. Shells and PTYs work without Git, AI, speech-to-text (STT), or a network connection.
 
-> **Download status:** v1.0.0 is published at https://github.com/FVilli/my-smart-terminal/releases/latest. Verify `SHA256SUMS` before installing. Artifacts are unsigned and there is no auto-update.
+> **Download status:** v1.1.0 is published at https://github.com/FVilli/my-smart-terminal/releases/latest. Verify `SHA256SUMS` before installing. Artifacts are unsigned and there is no auto-update.
 
 ## Launch the application
 
