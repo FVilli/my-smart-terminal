@@ -4,6 +4,7 @@ type: guide
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=edcd86f6-08fa-4e17-acd6-b7965753115c registered=2026-10-23T11:00:07.867Z -->
 
 # Post-install onboarding
 
