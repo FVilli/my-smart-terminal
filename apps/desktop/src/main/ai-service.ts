@@ -2,6 +2,7 @@ import type {
   AiCorrectRequest,
   AiStatus,
   CorrectionResult,
+  SetupTestAiResult,
 } from '@smart-terminal/contracts';
 import { correctText, isShellCommand } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
@@ -52,6 +53,44 @@ export class AiService {
       hasToken,
       secureStorage: this.options.secrets.isSecure(),
       ...(!hasToken ? { warning: 'AI token not configured.' } : this.testMode ? { warning: 'AI test mode active.' } : {}),
+    };
+  }
+
+  async testConnection(): Promise<SetupTestAiResult> {
+    const config = this.currentConfig();
+    if (config === undefined || config.aiProvider === 'none') {
+      return { ok: false, provider: 'none', error: 'AI provider is not configured.' };
+    }
+    if (this.testMode) {
+      return { ok: true, provider: config.aiProvider, latencyMs: 0, response: 'OK', ...(config.aiModel !== undefined ? { model: config.aiModel } : {}) };
+    }
+    const token = this.options.secrets.get(`ai:${config.aiProvider}`);
+    if (token === undefined) {
+      return { ok: false, provider: config.aiProvider, error: 'AI token is not configured.' };
+    }
+    const started = Date.now();
+    const result = await correctText({
+      provider: config.aiProvider,
+      text: 'This is a sentance with a typo',
+      token,
+      ...(config.aiBaseUrl !== undefined ? { baseUrl: config.aiBaseUrl } : {}),
+      ...(config.aiModel !== undefined ? { model: config.aiModel } : {}),
+      timeoutMs: this.timeoutMs,
+      ...(this.fetchFn !== undefined ? { fetch: this.fetchFn } : {}),
+    });
+    if (result.skipped) {
+      return {
+        ok: false,
+        provider: config.aiProvider,
+        error: result.reason === 'timeout' ? 'AI request timed out.' : 'AI provider did not respond successfully.',
+      };
+    }
+    return {
+      ok: true,
+      provider: config.aiProvider,
+      latencyMs: Date.now() - started,
+      response: result.corrected.slice(0, 120),
+      ...(config.aiModel !== undefined ? { model: config.aiModel } : {}),
     };
   }
 

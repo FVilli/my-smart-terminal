@@ -6,6 +6,7 @@ import {
   type OnboardingConfig,
   type OnboardingSaveResult,
   type RemoteSetupResult,
+  type SetupTestAiResult,
   type OnboardingState,
   type SmartTerminalApi,
   type SttProvider,
@@ -111,6 +112,21 @@ const MIC_MESSAGES: Record<MicState, string> = {
                     </label>
                     @if (!state()?.secureStorage) {
                       <p class="warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
+                    }
+                    <div class="test-row">
+                      <button type="button" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
+                        {{ testingAi() ? 'Testing…' : 'Test AI' }}
+                      </button>
+                      <span class="hint">Sends a minimal request to verify provider, model and token.</span>
+                    </div>
+                    @if (aiTestResult(); as result) {
+                      <p class="remote-result" [class.ok]="result.ok" [class.error]="!result.ok" data-testid="onboarding-ai-result" role="status">
+                        @if (result.ok) {
+                          AI responded in {{ result.latencyMs }} ms{{ result.model ? ' (' + result.model + ')' : '' }}.
+                        } @else {
+                          AI test failed: {{ result.error }}
+                        }
+                      </p>
                     }
                   }
                 </div>
@@ -220,6 +236,8 @@ export class OnboardingWizard {
   protected readonly confirmDiscard = signal(false);
   protected readonly testingRemote = signal(false);
   protected readonly remoteResult = signal<RemoteSetupResult | null>(null);
+  protected readonly testingAi = signal(false);
+  protected readonly aiTestResult = signal<SetupTestAiResult | null>(null);
   private initialSnapshot = '';
 
   constructor() {
@@ -316,6 +334,21 @@ export class OnboardingWizard {
     this.config.update((current) => ({ ...current, ...change }));
     if ('dataRepoPath' in change || 'dataRepoRemote' in change || 'machineName' in change) {
       this.remoteResult.set(null);
+    }
+    if ('aiProvider' in change || 'aiBaseUrl' in change || 'aiModel' in change) {
+      this.aiTestResult.set(null);
+    }
+  }
+
+  protected async testAiProvider(): Promise<void> {
+    this.testingAi.set(true);
+    this.aiTestResult.set(null);
+    try {
+      this.aiTestResult.set(await this.api.setupTestAi());
+    } catch {
+      this.aiTestResult.set({ ok: false, provider: this.config().aiProvider, error: 'AI test could not run.' });
+    } finally {
+      this.testingAi.set(false);
     }
   }
 

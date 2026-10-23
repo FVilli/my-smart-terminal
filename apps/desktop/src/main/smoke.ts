@@ -71,6 +71,7 @@ const EXPECTED_KEYS = [
   'searchFacets',
   'secretsLogout',
   'secretsStatus',
+  'setupTestAi',
   'setupTestRemote',
   'sshAliases',
   'sttStatus',
@@ -682,6 +683,34 @@ const REMOTE_SETUP_SCRIPT = `(async () => {
 })()`;
 
 /** Remote registration smoke, enabled by SMART_TERMINAL_REMOTE_SETUP_SMOKE=1. */
+
+const AI_SETUP_SCRIPT = `(async () => {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs = 15000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) { if (predicate()) return true; await sleep(100); }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
+  const result = {};
+  result.settings = await waitFor(() => !!q('settings-open'));
+  click('settings-open');
+  await waitFor(() => !!q('onboarding-overlay'));
+  click('onboarding-next');
+  result.step2 = await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 2 of 3'));
+  result.button = await waitFor(() => !!q('onboarding-test-ai'));
+  click('onboarding-test-ai');
+  result.resultVisible = await waitFor(() => !!q('onboarding-ai-result'), 20000);
+  result.responseShown = await waitFor(() => (q('onboarding-ai-result')?.textContent ?? '').includes('responded'), 20000);
+  return result;
+})()`;
+
+/** AI setup smoke, enabled by SMART_TERMINAL_AI_SETUP_SMOKE=1. */
+export function runAiSetupSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, AI_SETUP_SCRIPT, 'SMART_TERMINAL_AI_SETUP_SMOKE_RESULT');
+}
+
 export function runRemoteSetupSmoke(window: BrowserWindow): void {
   runUiSmoke(window, REMOTE_SETUP_SCRIPT, 'SMART_TERMINAL_REMOTE_SETUP_SMOKE_RESULT', async () => {
     const bare = process.env['SMART_TERMINAL_REMOTE_SETUP_BARE'] ?? '';

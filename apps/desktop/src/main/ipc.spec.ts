@@ -57,6 +57,7 @@ const services: IpcServices = {
   ai: {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
     correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),
+    testConnection: vi.fn(() => Promise.resolve({ ok: true, provider: 'openai' as const, latencyMs: 0, response: 'OK' })),
   },
   stt: {
     status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),

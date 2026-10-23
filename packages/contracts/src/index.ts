@@ -25,6 +25,7 @@ export const IPC_CHANNELS = {
   onboardingSave: 'onboarding:save',
   onboardingSkip: 'onboarding:skip',
   setupTestRemote: 'setup:test-remote',
+  setupTestAi: 'setup:test-ai',
   secretsStatus: 'secrets:status',
   secretsLogout: 'secrets:logout',
   appRelaunch: 'app:relaunch',
@@ -249,6 +250,15 @@ export interface OnboardingValidateRequest {
   config: OnboardingConfig;
 }
 
+export interface SetupTestAiResult {
+  ok: boolean;
+  provider: AiProvider;
+  model?: string;
+  latencyMs?: number;
+  response?: string;
+  error?: string;
+}
+
 export interface RemoteSetupResult {
   ok: boolean;
   /** The instance registration was committed locally. */
@@ -367,6 +377,7 @@ export interface SmartTerminalApi {
   /** Skips the wizard by saving a configuration with default values. */
   onboardingSkip(): Promise<OnboardingSaveResult>;
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
+  setupTestAi(): Promise<SetupTestAiResult>;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;

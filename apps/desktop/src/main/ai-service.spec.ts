@@ -64,3 +64,15 @@ describe('AiService', () => {
     expect(result).toMatchObject({ corrected: 'text', skipped: true, reason: 'provider-error' });
   });
 });
+
+describe('AiService connection test', () => {
+  it('reports a deterministic success in test mode', async () => {
+    const service = new AiService({ ...stores(config()), testMode: true });
+    await expect(service.testConnection()).resolves.toMatchObject({ ok: true, provider: 'openai', response: 'OK' });
+  });
+
+  it('reports unconfigured and missing-token states', async () => {
+    await expect(new AiService(stores(config({ aiProvider: 'none' })) as never).testConnection()).resolves.toMatchObject({ ok: false, provider: 'none' });
+    await expect(new AiService(stores(config(), null) as never).testConnection()).resolves.toMatchObject({ ok: false, error: 'AI token is not configured.' });
+  });
+});

@@ -38,6 +38,7 @@ import {
   type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchQueryResult,
+  type SetupTestAiResult,
   type SttStatus,
   type SttTranscribeRequest,
   type SttTranscribeResult,
@@ -135,6 +136,7 @@ export interface SyncGateway {
 export interface AiGateway {
   status(): AiStatus | Promise<AiStatus>;
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
+  testConnection(): SetupTestAiResult | Promise<SetupTestAiResult>;
 }
 
 export interface SttGateway {
@@ -331,6 +333,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
+  [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[], SetupTestAiResult>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
 }
@@ -444,6 +447,10 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.aiCorrect]: {
       validate: validateAiCorrect,
       handle: (_sender, request) => services.ai.correct(request),
+    },
+    [IPC_CHANNELS.setupTestAi]: {
+      validate: noArguments,
+      handle: () => services.ai.testConnection(),
     },
     [IPC_CHANNELS.sttStatus]: {
       validate: noArguments,
