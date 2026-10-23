@@ -31,7 +31,7 @@
       @if (store.sessions().length === 0 && !store.creating()) {
         <div class="empty-state" data-testid="empty-state">
           <p>No open sessions.</p>
-          <button type="button" data-testid="empty-create" (click)="createLocal()">New session locale</button>
+          <button type="button" data-testid="empty-create" (click)="createLocal()">New local session</button>
         </div>
       }
     </app-terminal-workarea>
