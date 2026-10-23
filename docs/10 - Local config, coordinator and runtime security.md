@@ -37,6 +37,11 @@ Needed: initial configuration before a data clone exists, multiple independent E
 - The coordinator is the sole owner of machine counters, shared writes, index, and Git. The renderer receives no privileges from the primary role.
 - `S<n>` allocation is wrapped behind a service: M03 uses the local lock, M04 exposes it from the primary through local IPC without creating a second incompatible lock.
 
+### D2b - Installation identity and setup verification
+- `userData/installation.md` is local Markdown with `schema_version: 1`, `installation_id` (UUID generated once) and `created_at`; it is not synchronized and contains no secrets.
+- Setup verification writes `instances/<machine>-<installation-id>.md` (app version, platform, architecture, timestamps) and performs an explicit path-scoped commit and push when a remote exists.
+- Git scope is `sessions/` plus `instances/`; no other path is staged, no force push. A failed push keeps the local commit and exposes a recoverable error. Tracked changes outside those directories refuse the setup test.
+
 ### D3 - Credentials and keychain
 - AI/STT tokens are managed only in the main process with Electron `safeStorage`, never in the renderer or in plaintext. Encrypted files `userData/secrets/<provider>.json` use permissions `0600` and atomic writes; the renderer sees only the list of present keys.
 - On Linux, the effective backend matters: if it is `basic_text` or encryption is unavailable, the token is not persisted; only an in-memory session credential is allowed, with an explicit UI indication. No plaintext fallback.

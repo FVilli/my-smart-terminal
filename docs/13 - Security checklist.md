@@ -48,7 +48,7 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - [x] Primary lock with atomic mkdir, nonce, heartbeat, stale recovery; renderer gains no privileges from the role.
 - [x] Unix socket `0600` in `0700` directory or named pipe; token `0600` constant-time; JSON line protocol max 1 MiB, whitelisted methods/params.
 - [x] Socket path over ~100 chars -> private per-user temp directory (tested fallback).
-- [x] Git through `execFile`, validated branch, remote rejects `-`, control/whitespace and embedded passwords; stage only `sessions/`; never `--force`.
+- [x] Git through `execFile`, validated branch, remote rejects `-`, control/whitespace and embedded passwords; stage only `sessions/` + `instances/`; never `--force`.
 - [x] SSH: validated alias, separate file+args, no key read/copied, inherited agent.
 
 ## Accepted residual risks

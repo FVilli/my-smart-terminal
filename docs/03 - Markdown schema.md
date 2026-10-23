@@ -23,6 +23,9 @@ Event sections with timestamp, `text` type, source when available, and a fenced 
 ## session.md
 Frontmatter with `session_id`, `machine`, `window_id`, `kind`, optional `ssh_alias`, `cwd_initial`, `started_at`, and `ended_at` when closed. State can be derived; no continuous heartbeat updates.
 
+## Instance registration
+The data repository may contain `instances/<machine>-<installation-id>.md`, a non-sensitive installation record written by setup verification. Frontmatter: `schema_version: 1`, `instance_id`, `machine`, `app_version`, `platform`, `arch`, `created_at`, `updated_at`; no usernames, home paths, network hostnames, tokens or secrets. The stable `installation_id` lives in local `userData/installation.md`, outside the synchronized repository. Setup verifies the record with a real, path-scoped commit and push; a failed push keeps the local commit for the next sync.
+
 ## Concurrent access
 Only the session owner modifies its three files; the coordinator assigns IDs and serializes Git operations. Markdown is readable and versioned; no persistent database.
 

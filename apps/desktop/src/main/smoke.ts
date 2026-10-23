@@ -71,6 +71,7 @@ const EXPECTED_KEYS = [
   'searchFacets',
   'secretsLogout',
   'secretsStatus',
+  'setupTestRemote',
   'sshAliases',
   'sttStatus',
   'sttTranscribe',

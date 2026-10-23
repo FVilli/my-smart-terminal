@@ -124,10 +124,15 @@ Events: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 
 ## SSH e onboarding (M05)
 - `ssh:aliases` reads `~/.ssh/config` (Include/glob); `createTerminal` accepts `{kind:'local'|'ssh', sshAlias?}`. SSH errors do not block other sessions.
-- Config: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`) con i campi di `docs/10`; onboarding `onboarding:state|validate|save|skip`, `secrets:status|logout`, `app:relaunch`.
+- Config: `userData/config/config.md` (override `SMART_TERMINAL_CONFIG_PATH`) with the fields in `docs/10`; onboarding `onboarding:state|validate|save|skip`, `secrets:status|logout`, `app:relaunch`.
 - Secrets: `safeStorage`, files `0600`; on Linux, `basic_text`/unknown backend or unavailable encryption -> session memory only, explicit warning, never plaintext.
 - Env: `SMART_TERMINAL_SSH_CONFIG`, `SMART_TERMINAL_SSH_BINARY`, `SMART_TERMINAL_CONFIG_PATH`, `SMART_TERMINAL_USER_DATA`.
 - Smoke: `test:ssh-smoke`, `test:onboarding-smoke`.
+
+## Setup verification (M09)
+- `setup:test-remote {config}` is an explicit action that writes and pushes `instances/<machine>-<installation-id>.md`; result `{ok, committed, pushed, localOnly, state, commit?, path?, error?}`.
+- No remote: local-only commit. Push/offline failure: local commit kept, recoverable result. Dirty tracked files outside `sessions/`/`instances/` are refused.
+- `installation.md` identity is local-only; token/keychain rules are unchanged.
 
 ## Assisted editor
 - Enter submits to the active PTY; Shift+Enter inserts a newline; IME does not submit. The submit button is enabled only with a non-empty draft and a running session.

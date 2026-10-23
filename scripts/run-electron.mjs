@@ -63,7 +63,11 @@ if (process.platform === 'linux' && process.env['SMART_TERMINAL_NO_XVFB'] !== '1
     display = virtualDisplay;
     console.log(`[run-electron] display virtuale ${virtualDisplay}`);
   } else {
-    console.warn('[run-electron] Xvfb not found: using the current display');
+    console.error(
+      '[run-electron] FATAL: Xvfb is required to avoid opening Electron on the user desktop. ' +
+      'Install Xvfb (see docs/11) or explicitly set SMART_TERMINAL_NO_XVFB=1 for an intentional desktop launch.',
+    );
+    process.exit(1);
   }
 }
 
