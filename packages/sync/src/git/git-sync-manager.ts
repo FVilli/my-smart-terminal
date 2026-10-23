@@ -9,6 +9,8 @@ export interface GitSyncManagerOptions extends GitEngineOptions {
   timers?: SyncSchedulerOptions['timers'];
   /** Tempo massimo di attesa del flush finale in `stop()` (default 5 s). */
   flushTimeoutMs?: number;
+  /** Invocato dopo un fetch periodico che ha integrato commit remoti. */
+  onRemoteIntegrated?: (result: { changed: boolean }) => void;
 }
 
 const DEFAULT_FLUSH_TIMEOUT_MS = 5_000;
@@ -20,13 +22,16 @@ export class GitSyncManager {
   private readonly flushTimeoutMs: number;
 
   constructor(options: GitSyncManagerOptions) {
-    const { debounceMs, maxWaitMs, fetchIntervalMs, timers, flushTimeoutMs, ...engineOptions } = options;
+    const { debounceMs, maxWaitMs, fetchIntervalMs, timers, flushTimeoutMs, onRemoteIntegrated, ...engineOptions } = options;
     this.engine = new GitEngine(engineOptions);
     this.flushTimeoutMs = flushTimeoutMs ?? DEFAULT_FLUSH_TIMEOUT_MS;
     this.scheduler = new SyncScheduler({
       sync: () => this.engine.syncOnce(),
       fetch: async () => {
-        const status = await this.engine.fetchOnly();
+        const { changed, status } = await this.engine.integrateRemote();
+        if (changed) {
+          onRemoteIntegrated?.({ changed });
+        }
         if (status.state === 'dirty') {
           this.scheduler.notifyDirty(); // remote tornato raggiungibile: ritenta il push
         }
@@ -46,6 +51,11 @@ export class GitSyncManager {
       // l'errore e' riportato dal primo syncOnce(): l'avvio dell'app non deve dipendere da Git
     }
     this.scheduler.start();
+  }
+
+  /** Solo `git fetch origin` (nessuna integrazione); il timer usa `integrateRemote`. */
+  fetchOnly(): Promise<SyncStatus> {
+    return this.engine.fetchOnly();
   }
 
   get status(): SyncStatus {
@@ -81,6 +91,6 @@ export class GitSyncManager {
   }
 
   asServices(): Pick<CoordinatorServices, 'syncStatus' | 'syncDirty'> {
-    return { syncStatus: () => this.status, syncDirty: () => this.markDirty() };
+    return { syncStatus: () => ({ ...this.status, remoteConfigured: this.remoteConfigured }), syncDirty: () => this.markDirty() };
   }
 }

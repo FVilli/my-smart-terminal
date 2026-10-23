@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import { AssistedInput } from './assisted-input/assisted-input';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
-import type { SidebarTab } from './session.model';
+import { SearchStore } from './search/search-store';
 import { SessionsStore } from './sessions-store';
 import { SidebarPanel } from './sidebar-panel/sidebar-panel';
 import { StatusFooter } from './status-footer/status-footer';
+import { SyncStatusStore } from './sync-status/sync-status-store';
 import { TerminalPanel } from './terminal-panel';
 import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 
@@ -22,16 +23,34 @@ export class App {
   /** Tab attivo in attesa di conferma di chiusura (dialogo inline, non bloccante). */
   protected readonly pendingCloseId = signal<string | null>(null);
 
-  protected readonly sidebarTab = signal<SidebarTab>('clipboard');
+  protected readonly search = inject(SearchStore);
+  protected readonly sync = inject(SyncStatusStore);
+  protected readonly clipboardCapture = inject(ClipboardCaptureStore);
   /** Ruolo coordinator di questa istanza (aggiornato dal main via `app:role-changed`). */
   protected readonly isPrimary = signal(false);
-
-  private readonly clipboardCapture = inject(ClipboardCaptureStore);
 
   constructor() {
     void this.store.createLocal();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
-    window.addEventListener('focus', () => this.clipboardCapture.refresh());
+    // Un nuovo `lastSyncAt` (anche letto dal primary via RPC) significa che un pull puo' aver portato dati nuovi.
+    effect(() => {
+      const lastSyncAt = this.sync.status().lastSyncAt;
+      if (lastSyncAt !== undefined) {
+        untracked(() => this.search.refresh());
+      }
+    });
+    effect(() => {
+      if (this.store.historyRecorded() > 0) {
+        untracked(() => this.search.refresh());
+      }
+    });
+    window.addEventListener('focus', () => {
+      this.clipboardCapture.refresh();
+      this.sync.refresh();
+      this.search.refresh();
+    });
+    this.sync.start();
+    this.search.start();
     const api = window.smartTerminal;
     void api.runtimeInfo().then((info) => this.isPrimary.set(info.isPrimary));
     api.onRoleChanged((event) => this.isPrimary.set(event.isPrimary));
@@ -67,6 +86,14 @@ export class App {
 
   protected send(text: string): void {
     void this.store.sendActive(text);
+  }
+
+  /** Inserisce il testo nella bozza della sessione attiva, senza invio automatico. */
+  protected insertText(text: string): void {
+    const id = this.store.activeId();
+    if (id !== null) {
+      this.store.setDraft(id, text);
+    }
   }
 
   protected setDraft(text: string): void {

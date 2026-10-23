@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const binDir = path.resolve('node_modules', '.bin');
+const shimPath = path.join(binDir, 'electron');
+const wrapper = path.resolve('scripts', 'run-electron.mjs');
+
+if (!fs.existsSync(binDir)) {
+  console.error('[setup-electron-wrapper] node_modules/.bin non trovato: esegui npm install');
+  process.exit(1);
+}
+
+const script = `#!/bin/sh
+# Shim generato da scripts/setup-electron-wrapper.mjs.
+# Instrada ogni invocazione di "electron" sul display virtuale Xvfb, mai sul desktop utente.
+exec node "${wrapper}" "$@"
+`;
+
+try {
+  fs.rmSync(shimPath, { force: true });
+  fs.writeFileSync(shimPath, script, { mode: 0o755 });
+  console.log(`[setup-electron-wrapper] installato ${shimPath}`);
+} catch (error) {
+  console.error('[setup-electron-wrapper] impossibile installare lo shim', error);
+  process.exit(1);
+}

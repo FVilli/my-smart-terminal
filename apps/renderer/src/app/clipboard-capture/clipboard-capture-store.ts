@@ -1,5 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
-import type { ClipboardCaptureState, SmartTerminalApi } from '@smart-terminal/contracts';
+import { Injectable, signal } from '@angular/core';
+import type { ClipboardCaptureState, ClipboardConfigureRequest, SmartTerminalApi } from '@smart-terminal/contracts';
 
 /** Stato (sintetico) della cattura clipboard opt-in; la fonte di verita' e' il main process. */
 @Injectable({ providedIn: 'root' })
@@ -11,27 +11,13 @@ export class ClipboardCaptureStore {
 
   readonly state = this.stateSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
-  readonly statusLabel = computed(() => {
-    const { enabled, paused } = this.stateSignal();
-    if (!enabled) {
-      return 'Cattura disattivata';
-    }
-    return paused ? 'Cattura in pausa' : 'Cattura attiva';
-  });
 
   constructor() {
     void this.run(() => this.api.clipboardState());
   }
 
-  setEnabled(enabled: boolean): void {
-    void this.run(() => this.api.clipboardConfigure({ enabled, paused: false }));
-  }
-
-  togglePause(): void {
-    const { enabled, paused } = this.stateSignal();
-    if (enabled) {
-      void this.run(() => this.api.clipboardConfigure({ enabled, paused: !paused }));
-    }
+  configure(request: ClipboardConfigureRequest): void {
+    void this.run(() => this.api.clipboardConfigure(request));
   }
 
   clearDedupe(): void {

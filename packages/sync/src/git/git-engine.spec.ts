@@ -273,6 +273,81 @@ describe('GitEngine.fetchOnly', () => {
   });
 });
 
+describe('GitEngine.integrateRemote', () => {
+  it('integrates remote commits on an idle machine without committing or pushing', async () => {
+    const a = machineRepo('a');
+    const b = machineRepo('b');
+    await a.engine.initIfNeeded();
+    writeSession(b.repo, 'b', 's2', 'from-b');
+    await b.engine.syncOnce();
+    commands.length = 0;
+    const result = await a.engine.integrateRemote();
+    expect(result.changed).toBe(true);
+    expect(result.status.state).toBe('synced');
+    expect(fs.readFileSync(path.join(a.repo, 'sessions', 'b', 's2', 'history.md'), 'utf8')).toBe('from-b');
+    expect(commands.some((c) => c[0] === 'commit' || c[0] === 'push')).toBe(false);
+    expect(git(a.repo, 'rev-parse', 'HEAD')).toBe(git(remote, 'rev-parse', 'main'));
+    expect((await a.engine.integrateRemote()).changed).toBe(false);
+  });
+
+  it('is a no-op without a remote or while the remote branch does not exist', async () => {
+    const local = machineRepo('l', { remote: undefined });
+    commands.length = 0;
+    expect(await local.engine.integrateRemote()).toMatchObject({ changed: false });
+    expect(commands).toEqual([]);
+    const a = machineRepo('a');
+    expect((await a.engine.integrateRemote()).changed).toBe(false);
+  });
+
+  it('does not integrate over uncommitted tracked changes and loses nothing', async () => {
+    const a = machineRepo('a');
+    const b = machineRepo('b');
+    const file = writeSession(a.repo, 'a', 's1', 'v1');
+    await a.engine.syncOnce();
+    writeSession(b.repo, 'b', 's2', 'from-b');
+    await b.engine.syncOnce();
+    fs.writeFileSync(file, 'v2-dirty');
+    const result = await a.engine.integrateRemote();
+    expect(result.changed).toBe(false);
+    expect(fs.readFileSync(file, 'utf8')).toBe('v2-dirty');
+    expect(fs.existsSync(path.join(a.repo, 'sessions', 'b'))).toBe(false);
+    await a.engine.syncOnce();
+    expect(fs.existsSync(path.join(a.repo, 'sessions', 'b', 's2', 'history.md'))).toBe(true);
+  });
+
+  it('aborts the rebase on conflict, reports error and preserves files', async () => {
+    const a = machineRepo('a');
+    const b = machineRepo('b');
+    const fileA = writeSession(a.repo, 'a', 's1', 'base');
+    await a.engine.syncOnce();
+    await b.engine.syncOnce();
+    fs.writeFileSync(path.join(b.repo, 'sessions', 'a', 's1', 'history.md'), 'remote-change');
+    await b.engine.syncOnce();
+    // commit locale divergente su A, non pushato
+    fs.writeFileSync(fileA, 'local-change');
+    git(a.repo, 'add', '--', 'sessions');
+    git(a.repo, 'commit', '-m', 'local');
+    const result = await a.engine.integrateRemote();
+    expect(result.changed).toBe(false);
+    expect(result.status.state).toBe('error');
+    expect(fs.readFileSync(fileA, 'utf8')).toBe('local-change');
+    expect(fs.existsSync(path.join(a.repo, '.git', 'rebase-merge'))).toBe(false);
+  });
+
+  it('sets offline and recovers to synced when reachable again', async () => {
+    const a = machineRepo('a');
+    writeSession(a.repo, 'a', 's1');
+    await a.engine.syncOnce();
+    const moved = `${remote}.moved`;
+    fs.renameSync(remote, moved);
+    expect((await a.engine.integrateRemote()).status).toMatchObject({ state: 'offline', lastError: 'Remote unreachable' });
+    fs.renameSync(moved, remote);
+    const recovered = await a.engine.integrateRemote();
+    expect(recovered.status.state).toBe('synced');
+    expect(recovered.status.lastError).toBeUndefined();
+  });
+});
+
 describe('GitSyncManager', () => {
   it('debounces markDirty through the scheduler and exposes status through services', async () => {
     const repo = path.join(root, 'a');
@@ -317,6 +392,26 @@ describe('GitSyncManager', () => {
     await manager.stop();
     expect(commands.some((c) => c[0] === 'commit' || c[0] === 'push')).toBe(false);
     expect(git(repoB, 'status', '--porcelain')).toContain('sessions/');
+  });
+
+  it('periodic fetch integrates remote commits, fires onRemoteIntegrated and never commits or pushes', async () => {
+    const a = machineRepo('a');
+    writeSession(a.repo, 'a', 's1', 'from-a');
+    await a.engine.syncOnce();
+    commands.length = 0;
+    const repoB = path.join(root, 'b');
+    const integrated: { changed: boolean }[] = [];
+    const managerCommands: string[][] = [];
+    const manager = new GitSyncManager({ repoPath: repoB, machine: 'b', remote, fetchIntervalMs: 40, onCommand: (args) => managerCommands.push([...args]), onRemoteIntegrated: (r) => integrated.push(r) });
+    await manager.start();
+    await waitUntil(() => integrated.length > 0 || fs.existsSync(path.join(repoB, 'sessions', 'a', 's1', 'history.md')));
+    writeSession(a.repo, 'a', 's3', 'second');
+    await a.engine.syncOnce();
+    await waitUntil(() => fs.existsSync(path.join(repoB, 'sessions', 'a', 's3', 'history.md')));
+    await waitUntil(() => integrated.length > 0);
+    await manager.stop();
+    expect(integrated.every((r) => r.changed)).toBe(true);
+    expect(managerCommands.some((c) => c[0] === 'commit' || c[0] === 'push')).toBe(false);
   });
 
   it('flush at close commits local files even when the remote is offline', async () => {

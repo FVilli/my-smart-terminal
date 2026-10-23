@@ -16,6 +16,8 @@ export interface TerminalSessionView {
 }
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'error';
+/** Stato del badge nel footer: `unconfigured` quando non esiste un remote Git. */
+export type SyncBadgeState = SyncState | 'unconfigured';
 export type SidebarTab = 'clipboard' | 'history';
 
 export const SYNC_LABELS: Record<SyncState, string> = {
@@ -24,3 +26,17 @@ export const SYNC_LABELS: Record<SyncState, string> = {
   offline: 'GitHub offline',
   error: 'GitHub sync error',
 };
+
+export const SYNC_UNCONFIGURED_LABEL = 'Repo non configurato';
+
+/** Badge del footer dallo stato del primary: `dirty` (modifiche in attesa) e' mostrato come `syncing`. */
+export function syncBadge(
+  state: 'synced' | 'dirty' | 'syncing' | 'offline' | 'error',
+  remoteConfigured: boolean,
+): { state: SyncBadgeState; label: string } {
+  if (!remoteConfigured) {
+    return { state: 'unconfigured', label: SYNC_UNCONFIGURED_LABEL };
+  }
+  const normalized: SyncState = state === 'dirty' ? 'syncing' : state;
+  return { state: normalized, label: SYNC_LABELS[normalized] };
+}

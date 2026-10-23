@@ -46,7 +46,13 @@ function makeServices(userData: string, overrides: Partial<CoordinatorServices> 
     searchQuery: () => [],
     searchUpsert: () => undefined,
     searchRefresh: () => undefined,
-    syncStatus: () => ({ state: 'synced' }),
+    syncStatus: () => ({ state: 'synced', remoteConfigured: false }),
+    searchFacets: () => [],
+    clipboardState: () => ({ enabled: false, paused: false, lastEventAt: null }),
+    clipboardConfigure: () => ({ enabled: false, paused: false, lastEventAt: null }),
+    clipboardSetActive: () => ({ enabled: false, paused: false, lastEventAt: null }),
+    clipboardClear: () => ({ enabled: false, paused: false, lastEventAt: null }),
+    sessionEnd: () => undefined,
     syncDirty: () => undefined,
     ...overrides,
   };
@@ -255,11 +261,56 @@ describe('RPC server', () => {
     expect(await client.request('search.upsert', { sessionDirectory: 'sessions/m/x' })).toEqual({ ok: true });
     expect(upserts).toEqual(['sessions/m/x']);
     expect(await client.request('search.query', { query: 'hi' })).toMatchObject({ entries: [{ text: 'hi' }] });
-    expect(await client.request('sync.status')).toEqual({ state: 'synced' });
+    expect(await client.request('sync.status')).toEqual({ state: 'synced', remoteConfigured: false });
     expect(await client.request('sync.dirty')).toEqual({ ok: true });
     expect(await client.request('search.refresh')).toEqual({ ok: true });
     const both = await rawExchange(line({ id: 'a' }) + line({ id: 'b' }));
     expect(both).toContain('"id":"a"');
+    await server.stop();
+  });
+
+  it('serves facets/clipboard/session.end and validates their params strictly', async () => {
+    const calls: string[] = [];
+    const server = await startServer({
+      searchFacets: () => ['a', 'b'],
+      clipboardSetActive: (dir) => {
+        calls.push(`active:${dir}`);
+        return { enabled: true, paused: false, lastEventAt: null };
+      },
+      clipboardConfigure: (config) => {
+        calls.push(`configure:${config.enabled}:${config.paused}`);
+        return { ...config, lastEventAt: null };
+      },
+      sessionEnd: (dir) => void calls.push(`end:${dir}`),
+    });
+    const client = new CoordinatorClient({ userDataPath: root });
+    const dir = 'sessions/host/2026-01-01_00.00_S1_local';
+    expect(await client.request('search.facets')).toEqual({ machines: ['a', 'b'] });
+    expect(await client.request('clipboard.state')).toEqual({ enabled: false, paused: false, lastEventAt: null });
+    expect(await client.request('clipboard.configure', { enabled: true, paused: true })).toMatchObject({ enabled: true, paused: true });
+    expect(await client.request('clipboard.setActive', { sessionDirectory: dir })).toMatchObject({ enabled: true });
+    expect(await client.request('clipboard.setActive', { sessionDirectory: null })).toMatchObject({ enabled: true });
+    expect(await client.request('clipboard.clear')).toMatchObject({ enabled: false });
+    expect(await client.request('session.end', { sessionDirectory: dir })).toEqual({ ok: true });
+    expect(calls).toEqual(['configure:true:true', `active:${dir}`, 'active:null', `end:${dir}`]);
+
+    const invalid = async (method: string, params: Record<string, unknown>) =>
+      expect(JSON.parse(await rawExchange(line({ method, params })))).toMatchObject({ ok: false, error: { code: 'INVALID_PARAMS' } });
+    await invalid('search.facets', { x: 1 });
+    await invalid('clipboard.state', { x: 1 });
+    await invalid('clipboard.configure', { enabled: true });
+    await invalid('clipboard.configure', { enabled: 'true', paused: false });
+    await invalid('clipboard.configure', { enabled: true, paused: false, extra: 1 });
+    await invalid('clipboard.setActive', {});
+    await invalid('clipboard.setActive', { sessionDirectory: '../etc' });
+    await invalid('clipboard.setActive', { sessionDirectory: 'sessions/../x/2026-01-01_00.00_S1_local' });
+    await invalid('clipboard.setActive', { sessionDirectory: '/abs/path' });
+    await invalid('clipboard.setActive', { sessionDirectory: 'sessions/host/zzz' });
+    await invalid('clipboard.setActive', { sessionDirectory: 5 });
+    await invalid('clipboard.clear', { x: 1 });
+    await invalid('session.end', { sessionDirectory: null });
+    await invalid('session.end', { sessionDirectory: 'sessions/host' });
+    expect(calls).toHaveLength(4);
     await server.stop();
   });
 

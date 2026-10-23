@@ -18,6 +18,7 @@ export class SessionsStore {
   private readonly draftsState = signal<ReadonlyMap<string, string>>(new Map());
   private readonly createErrorState = signal<string | null>(null);
   private readonly creatingState = signal(false);
+  private readonly historyRecordedState = signal(0);
 
   /** Output ricevuto prima che il pannello si agganci (la create risponde dopo i primi dati). */
   private readonly buffers = new Map<string, string[]>();
@@ -27,6 +28,8 @@ export class SessionsStore {
   readonly activeId = this.activeIdState.asReadonly();
   readonly createError = this.createErrorState.asReadonly();
   readonly creating = this.creatingState.asReadonly();
+  /** Incrementa a ogni voce history scritta con successo (la sidebar si riallinea). */
+  readonly historyRecorded = this.historyRecordedState.asReadonly();
   readonly activeSession = computed(
     () => this.sessionsState().find((session) => session.id === this.activeIdState()) ?? null,
   );
@@ -122,7 +125,14 @@ export class SessionsStore {
       this.setDraft(session.id, '');
     }
     // Un errore history non annulla l'invio gia' avvenuto al PTY.
-    void this.api.recordHistory({ sessionId: session.id, text }).catch(() => undefined);
+    void this.api
+      .recordHistory({ sessionId: session.id, text })
+      .then((result) => {
+        if (result.recorded) {
+          this.historyRecordedState.update((count) => count + 1);
+        }
+      })
+      .catch(() => undefined);
     return true;
   }
 

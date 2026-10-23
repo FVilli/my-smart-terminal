@@ -33,13 +33,15 @@ const gateway = {
   list: vi.fn(() => []),
 };
 const services: IpcServices = {
-  search: { query: vi.fn(() => ({ entries: [] })) }, history: { record: vi.fn(() => ({ recorded: true })) },
+  search: { query: vi.fn(() => ({ entries: [] })), facets: vi.fn(() => ({ machines: ['host'] })) }, history: { record: vi.fn(() => ({ recorded: true })) },
   clipboard: {
-    state: vi.fn(() => ({ enabled: false, paused: false, lastEventAt: null })),
-    configure: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
-    setActive: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
-    clear: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
+    state: vi.fn(() => Promise.resolve({ enabled: false, paused: false, lastEventAt: null })),
+    configure: vi.fn(() => Promise.resolve({ enabled: true, paused: false, lastEventAt: null })),
+    setActive: vi.fn(() => Promise.resolve({ enabled: true, paused: false, lastEventAt: null })),
+    clear: vi.fn(() => Promise.resolve({ enabled: true, paused: false, lastEventAt: null })),
   },
+  sync: { status: vi.fn(() => Promise.resolve({ state: 'synced' as const, remoteConfigured: false })) },
+  clipboardWriter: { writeText: vi.fn() },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };
@@ -188,5 +190,25 @@ describe('terminal channels', () => {
     await expect(
       dispatchIpc(write, sender, policy, [{ sessionId: 's1', data: 'a'.repeat(64 * 1024 + 1) }]),
     ).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+});
+
+describe('M04-T04 channels', () => {
+  const run = (channel: (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS], ...args: unknown[]) =>
+    dispatchIpc(channels[channel as keyof typeof channels], sender, policy, args);
+
+  it('answers search:facets and sync:get-status without arguments', async () => {
+    await expect(run(IPC_CHANNELS.searchFacets)).resolves.toEqual({ machines: ['host'] });
+    await expect(run(IPC_CHANNELS.syncStatus)).resolves.toEqual({ state: 'synced', remoteConfigured: false });
+    await expect(run(IPC_CHANNELS.searchFacets, {})).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run(IPC_CHANNELS.syncStatus, 1)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it('validates clipboard:write and writes through the writer', async () => {
+    await run(IPC_CHANNELS.clipboardWrite, { text: 'ciao' });
+    expect(services.clipboardWriter.writeText).toHaveBeenCalledWith('ciao');
+    for (const payload of [{}, { text: '' }, { text: 1 }, { text: 'x', extra: 1 }, { text: 'a'.repeat(32 * 1024 + 1) }]) {
+      await expect(run(IPC_CHANNELS.clipboardWrite, payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
   });
 });

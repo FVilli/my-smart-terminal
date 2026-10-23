@@ -1,14 +1,14 @@
-import { app, BrowserWindow, net, protocol } from 'electron';
+import { app, BrowserWindow, clipboard, net, protocol } from 'electron';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { readWindowSize, runCapture } from './capture';
-import { runClipboardSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runTabsSmoke } from './smoke';
+import { runClipboardSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runSyncUiSmoke, runTabsSmoke, seedSyncUiSmokeData } from './smoke';
 import { CoordinatorRuntime } from './coordinator-runtime';
 import { DataRuntime } from './data-runtime';
-import { ClipboardService } from './clipboard-service';
+import { ClipboardGatewayAdapter } from './clipboard-gateway';
 import { electronClipboardSource } from './electron-clipboard';
 import { HistoryService } from './history-service';
 import { TerminalHost } from './terminal-host';
@@ -36,10 +36,10 @@ const editorSmokeTest = process.env['SMART_TERMINAL_EDITOR_SMOKE'] === '1';
 const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
 const clipboardSmokeTest = process.env['SMART_TERMINAL_CLIPBOARD_SMOKE'] === '1';
 const searchSmokeTest = process.env['SMART_TERMINAL_SEARCH_SMOKE'] === '1';
+const syncUiSmokeTest = process.env['SMART_TERMINAL_SYNC_UI_SMOKE'] === '1';
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 let terminalHost: TerminalHost | undefined;
-let clipboardService: ClipboardService | undefined;
 let coordinatorRuntime: CoordinatorRuntime | undefined;
 let coordinatorStopped = false;
 
@@ -127,6 +127,10 @@ function createWindow(): BrowserWindow {
     runClipboardSmoke(window);
   }
 
+  if (syncUiSmokeTest) {
+    runSyncUiSmoke(window);
+  }
+
   if (smokeTest || ptySmokeTest) {
     runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');
   }
@@ -136,7 +140,10 @@ function createWindow(): BrowserWindow {
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath('userData');
-  const runtime = new CoordinatorRuntime({ userDataPath });
+  const runtime = new CoordinatorRuntime({ userDataPath, clipboardSource: electronClipboardSource });
+  if (syncUiSmokeTest) {
+    seedSyncUiSmokeData(runtime.paths.dataRepoPath);
+  }
   coordinatorRuntime = runtime;
   await runtime.start();
   // Le uscite via app.exit() (smoke, crash controllati) non emettono before-quit: rilascia comunque il lock primary.
@@ -152,32 +159,39 @@ app.whenReady().then(async () => {
       window.webContents.send(IPC_EVENTS.syncStatus, status);
     }
   });
+  runtime.onSearchRefreshed((event) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IPC_EVENTS.searchRefreshed, event);
+    }
+  });
 
   const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator });
   const host = new TerminalHost(new NodePtyAdapter(), dataRuntime);
   terminalHost = host;
-  const search = { query: (request: SearchQueryRequest) => runtime.query(request) };
-  dataRuntime.onSessionEnded((sessionDirectory) => runtime.notifyWrite(sessionDirectory));
+  const search = {
+    query: (request: SearchQueryRequest) => runtime.query(request),
+    facets: () => runtime.searchFacets(),
+  };
+  dataRuntime.onSessionEnded((sessionDirectory) => runtime.endSession(sessionDirectory));
   const history = new HistoryService({
     dataRepoPath: dataRuntime.dataRepoPath,
     resolveSession: (senderId, sessionId) => host.resolveSession(senderId, sessionId),
     onRecorded: (sessionDirectory) => runtime.notifyWrite(sessionDirectory),
   });
-  const clipboardCapture = new ClipboardService({
-    dataRepoPath: dataRuntime.dataRepoPath,
-    source: electronClipboardSource,
-    resolveSession: (senderId, sessionId) => host.resolveSession(senderId, sessionId),
-    initiallyEnabled: process.env['SMART_TERMINAL_CLIPBOARD'] === '1',
-    onRecorded: (sessionDirectory) => runtime.notifyWrite(sessionDirectory),
-  });
-  clipboardService = clipboardCapture;
+  const clipboardCapture = new ClipboardGatewayAdapter(runtime, (senderId, sessionId) => host.resolveSession(senderId, sessionId));
   registerAppProtocol();
   registerIpcHandlers(
     () => ipcSenderIds,
     devServerUrl,
     `${APP_SCHEME}://${APP_HOST}/`,
     host,
-    { history, clipboard: clipboardCapture, search },
+    {
+      history,
+      clipboard: clipboardCapture,
+      search,
+      sync: { status: () => runtime.syncStatus() },
+      clipboardWriter: { writeText: (text) => clipboard.writeText(text) },
+    },
     () => runtime.isPrimary,
   );
   createWindow();
@@ -190,7 +204,6 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', (event) => {
-  clipboardService?.dispose();
   terminalHost?.closeAll();
   if (coordinatorRuntime !== undefined && !coordinatorStopped) {
     coordinatorStopped = true;

@@ -26,3 +26,10 @@ Prompt da altra macchina appare dopo pull; errori non bloccano PTY.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: RPC `search.facets`, `clipboard.*`, `session.end`; clipboard posseduta dal primary con inoltro dei secondary; `SearchStore` (debounce 200 ms, filtri, refresh su evento/focus/15 s), sidebar History/Clipboard reale con copia/inserimento, footer dinamico con "Repo non configurato", evento `search:refreshed`, polling stato sync 5 s.
+- Verifica: 256 test (cross-machine idle, clipboard primary/secondary, store), smoke `sync-ui` con prompt locale e remoto, filtri, copy/insert, clipboard sensibile esclusa, footer, nessun overflow; tutti gli altri smoke verdi.
+- Follow-up in review: il fetch periodico ora integra i commit remoti (`integrateRemote`) così una macchina inattiva vede i prompt dell'altra senza scrivere; test idle-machine dedicato.
+- Deviazioni: refresh periodico 15 s su entrambe le tab; senza primary lo stato sync è `offline`; copy/insert non inviano automaticamente.

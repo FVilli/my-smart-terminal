@@ -14,6 +14,10 @@ export class SearchService {
     return { entries: this.index.query(request) };
   }
 
+  facets(): string[] {
+    return this.index.machines();
+  }
+
   /** Dopo una scrittura history/clipboard o a fine sessione. Gli errori non devono interrompere il chiamante. */
   upsertSession(sessionDirectory: string): void {
     try {
@@ -23,8 +27,12 @@ export class SearchService {
     }
   }
 
-  /** Rescan incrementale, da usare dopo un pull Git (M04). */
-  refresh(): void {
-    this.index.refresh();
+  /** Rescan incrementale dopo un pull Git. `true` se l'indice e' cambiato; gli errori non sono bloccanti. */
+  refresh(): boolean {
+    try {
+      return this.index.refresh();
+    } catch {
+      return false;
+    }
   }
 }

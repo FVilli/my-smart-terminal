@@ -73,15 +73,29 @@ export class MarkdownSearchIndex {
     return count;
   }
 
+  /** Macchine con almeno una sessione indicizzata, in ordine alfabetico. */
+  machines(): string[] {
+    const machines = new Set<string>();
+    for (const key of this.files.keys()) {
+      const machine = key.split('/')[1];
+      if (machine !== undefined) {
+        machines.add(machine);
+      }
+    }
+    return [...machines].sort();
+  }
+
   /** Scarta tutto e rilegge da disco. */
   rebuild(): void {
     this.files = new Map();
     this.scan(false);
   }
 
-  /** Rescan incrementale: rilegge solo i file cambiati (mtime/size) e dimentica quelli spariti. */
-  refresh(): void {
+  /** Rescan incrementale: rilegge solo i file cambiati (mtime/size) e dimentica quelli spariti. Restituisce `true` se l'indice e' cambiato. */
+  refresh(): boolean {
+    const before = this.signature();
     this.scan(true);
+    return this.signature() !== before;
   }
 
   /** Rilegge history/clipboard di una sessione (percorso relativo al repo dati). Ignora percorsi non validi. */
@@ -125,6 +139,10 @@ export class MarkdownSearchIndex {
     }
     matches.sort((a, b) => b.time - a.time);
     return matches.slice(0, SEARCH_MAX_RESULTS).map((match) => match.entry);
+  }
+
+  private signature(): string {
+    return [...this.files].map(([key, file]) => `${key}:${file.mtimeMs}:${file.size}`).join('|');
   }
 
   private scan(incremental: boolean): void {

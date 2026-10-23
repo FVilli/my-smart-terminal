@@ -37,7 +37,7 @@ Documento operativo: elenca i confini main/preload/renderer e i comandi di verif
 Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, exitCode, signal? }`). Ogni finestra ha il proprio `SessionManager`; alla chiusura/distruzione i PTY vengono terminati.
 
 ## API preload
-`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `search`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
+`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `clipboardWrite`, `search`, `searchFacets`, `syncStatus`, `onSyncStatus`, `onRoleChanged`, `onSearchRefreshed`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
 
 ## History e clipboard (M03)
 - `history:record` accetta solo `{sessionId, text, agent?}`, source fisso `assisted`, testo ≤16 KiB, `agent` ≤64 char. Testo sensibile: `{recorded:false}`. Il renderer lo chiama solo dopo un invio riuscito dall'editor; nessun keystroke o shell nativa.
@@ -58,13 +58,15 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 ## Coordinatore e Git (M04)
 - Lock `userData/coordinator/primary.lock` (mkdir atomico, owner.json, heartbeat 3 s, stale 10 s, recovery con nonce); un solo primary per macchina.
 - Socket Unix `userData/coordinator/coordinator.sock` (`0700`/`0600`) o named pipe Windows; token `0600`; protocollo JSON line-delimited max 1 MiB.
-- Metodi: `ping`, `session.allocate`, `search.query`, `search.upsert`, `search.refresh`, `sync.status`, `sync.dirty` (T04 aggiunge clipboard).
+- Metodi: `ping`, `session.allocate`, `session.end`, `search.query`, `search.upsert`, `search.refresh`, `search.facets`, `sync.status`, `sync.dirty`, `clipboard.state`, `clipboard.configure`, `clipboard.setActive` (sessionDirectory validata), `clipboard.clear`.
 - `AppRuntimeInfo.isPrimary` ed evento `app:role-changed`; evento `sync:status` con `{state,lastSyncAt?,lastError?,remoteConfigured}`; footer dinamico.
 - Scheduler Git: debounce 10 s, max wait 60 s, fetch 15 s, flush a stop; env `SMART_TERMINAL_SYNC_*`.
 - Git: `GitEngine` seriale, stage solo `sessions/`, commit path-scoped, fetch/rebase/push senza force, conflitti con abort e file preservati, offline con commit locale. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
 
 ## Display virtuale per gli smoke (Linux)
 - Gli smoke Electron non devono usare il desktop dell'utente. `scripts/run-electron.mjs` avvia l'app su un display Xvfb dedicato (`:99` per default) e tutti gli script `test:*-smoke` e `test:layout` passano da lì.
+- Su sessioni Wayland il solo `DISPLAY=:99` non basta: Electron userebbe `WAYLAND_DISPLAY` e apparirebbe sul desktop. Il wrapper rimuove `WAYLAND_DISPLAY` e forza `ELECTRON_OZONE_PLATFORM_HINT=x11`, `GDK_BACKEND=x11` e `--ozone-platform=x11`.
+- `node_modules/.bin/electron` viene sostituito da uno shim (`npm run setup:test-display`, automatico via `postinstall`) che invoca lo stesso wrapper: anche un comando `electron` diretto resta su Xvfb. Per usare il desktop reale: `SMART_TERMINAL_NO_XVFB=1`.
 - Ordine di ricerca di Xvfb: `SMART_TERMINAL_XVFB_BIN`, `/usr/bin/Xvfb`, `/usr/local/bin/Xvfb`, `~/.local/xvfb/usr/bin/Xvfb`. Se non è disponibile, avvisa e usa il display corrente.
 - Override: `SMART_TERMINAL_XVFB_DISPLAY` (es. `:98`), `SMART_TERMINAL_NO_XVFB=1` per tornare al display corrente (sconsigliato in sessione interattiva).
 - Installazione senza root: `apt-get download xvfb xserver-common xauth`, poi `dpkg-deb -x <deb> ~/.local/xvfb`; l'helper la trova in `~/.local/xvfb/usr/bin/Xvfb`.
@@ -96,6 +98,13 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test:sidebar-smoke` | cambio Clipboard/History, placeholder, footer sync/primary |
 | `npm run test:clipboard-smoke` | opt-in, pausa, evento reale, hash, pattern sensibile ignorato |
 | `npm run test:search-smoke` | invio assistito indicizzato, filtri, sensibile escluso, rebuild da disco |
+
+## Sidebar globale e sync (M04-T04)
+- History: ricerca case-insensitive con debounce ~200 ms, filtro macchina dalle facet dell'indice, voci da tutte le macchine sincronizzate, copy e inserimento nella bozza (mai invio automatico).
+- Clipboard: lista delle voci catturate, copy/inserimento, controlli opt-in/pausa/clear; il polling è posseduto dal primary anche per le finestre secondary via RPC.
+- Footer: `GitHub synced/syncing/offline/error`, "Repo non configurato" se manca il remote, indicatore primary dal ruolo reale.
+- Refresh: evento `sync:status`/`search:refreshed`, focus finestra, polling 5 s dello stato e 15 s della lista; errori non bloccano il PTY.
+- Il fetch periodico integra i commit remoti quando il working tree tracked è pulito; i prompt di un'altra macchina diventano visibili senza scritture locali.
 
 ## Editor assistito
 - Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.

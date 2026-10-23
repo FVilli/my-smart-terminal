@@ -8,7 +8,10 @@ import {
   type ClipboardCaptureState,
   type HistoryRecordResult,
   type RoleChangedEvent,
+  type SearchFacetsResult,
   type SearchQueryResult,
+  type SearchRefreshedEvent,
+  type SyncStatusEvent,
   type TerminalDataEvent,
   type TerminalExitEvent,
   type TerminalSessionInfo,
@@ -38,10 +41,15 @@ const api: SmartTerminalApi = {
   clipboardConfigure: (request) => ipcRenderer.invoke(IPC_CHANNELS.clipboardConfigure, request) as Promise<ClipboardCaptureState>,
   clipboardSetActive: (request) => ipcRenderer.invoke(IPC_CHANNELS.clipboardSetActive, request) as Promise<ClipboardCaptureState>,
   clipboardClear: () => ipcRenderer.invoke(IPC_CHANNELS.clipboardClear) as Promise<ClipboardCaptureState>,
+  clipboardWrite: (request) => ipcRenderer.invoke(IPC_CHANNELS.clipboardWrite, request) as Promise<void>,
+  searchFacets: () => ipcRenderer.invoke(IPC_CHANNELS.searchFacets) as Promise<SearchFacetsResult>,
+  syncStatus: () => ipcRenderer.invoke(IPC_CHANNELS.syncStatus) as Promise<SyncStatusEvent>,
   search: (request) => ipcRenderer.invoke(IPC_CHANNELS.searchQuery, request) as Promise<SearchQueryResult>,
   onTerminalData: (listener) => subscribe<TerminalDataEvent>(IPC_EVENTS.terminalData, listener),
   onTerminalExit: (listener) => subscribe<TerminalExitEvent>(IPC_EVENTS.terminalExit, listener),
   onRoleChanged: (listener) => subscribe<RoleChangedEvent>(IPC_EVENTS.roleChanged, listener),
+  onSyncStatus: (listener) => subscribe<SyncStatusEvent>(IPC_EVENTS.syncStatus, listener),
+  onSearchRefreshed: (listener) => subscribe<SearchRefreshedEvent>(IPC_EVENTS.searchRefreshed, listener),
 };
 
 contextBridge.exposeInMainWorld('smartTerminal', api);

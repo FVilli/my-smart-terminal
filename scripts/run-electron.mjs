@@ -67,9 +67,18 @@ if (process.platform === 'linux' && process.env['SMART_TERMINAL_NO_XVFB'] !== '1
   }
 }
 
-const child = spawn(electronBinary, args, {
+const childEnv = { ...process.env, ...(display !== undefined ? { DISPLAY: display } : {}) };
+if (process.platform === 'linux') {
+  // Se WAYLAND_DISPLAY resta impostato, Electron ignora DISPLAY e compare sul desktop Wayland dell'utente.
+  delete childEnv['WAYLAND_DISPLAY'];
+  childEnv['ELECTRON_OZONE_PLATFORM_HINT'] = 'x11';
+  childEnv['GDK_BACKEND'] = 'x11';
+}
+const electronArgs = process.platform === 'linux' ? ['--ozone-platform=x11', ...args] : args;
+
+const child = spawn(electronBinary, electronArgs, {
   stdio: 'inherit',
-  env: { ...process.env, ...(display !== undefined ? { DISPLAY: display } : {}) },
+  env: childEnv,
 });
 
 child.on('error', (error) => {

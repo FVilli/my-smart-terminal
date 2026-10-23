@@ -29,12 +29,15 @@
     "test:sidebar-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SIDEBAR_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:clipboard-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_CLIPBOARD_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:search-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SEARCH_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
+    "test:sync-ui-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SYNC_UI_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:ipc-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:pty-smoke": "npm run rebuild:native && npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_PTY_SMOKE=1 node scripts/run-electron.mjs apps/desktop",
     "test:watch": "vitest",
     "test:ui": "ng test renderer",
     "rebuild:native": "electron-rebuild -f -w node-pty",
-    "package": "npm run build && electron-builder --config electron-builder.yml"
+    "package": "npm run build && electron-builder --config electron-builder.yml",
+    "setup:test-display": "node scripts/setup-electron-wrapper.mjs",
+    "postinstall": "node scripts/setup-electron-wrapper.mjs"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",

@@ -4,6 +4,7 @@
  */
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
+  CLIPBOARD_WRITE_MAX_BYTES,
   HISTORY_MAX_AGENT_LENGTH,
   HISTORY_MAX_TEXT_BYTES,
   IPC_CHANNELS,
@@ -16,11 +17,14 @@ import {
   type ClipboardCaptureState,
   type ClipboardConfigureRequest,
   type ClipboardSetActiveRequest,
+  type ClipboardWriteRequest,
   type HistoryRecordRequest,
   type HistoryRecordResult,
   type IpcChannel,
+  type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchQueryResult,
+  type SyncStatusEvent,
   type TerminalCloseRequest,
   type TerminalCreateRequest,
   type TerminalResizeRequest,
@@ -93,20 +97,32 @@ export interface HistoryGateway {
 }
 
 export interface ClipboardGateway {
-  state(): ClipboardCaptureState;
-  configure(request: ClipboardConfigureRequest): ClipboardCaptureState;
-  setActive(senderId: number, request: ClipboardSetActiveRequest): ClipboardCaptureState;
-  clear(): ClipboardCaptureState;
+  state(): Promise<ClipboardCaptureState>;
+  configure(request: ClipboardConfigureRequest): Promise<ClipboardCaptureState>;
+  setActive(senderId: number, request: ClipboardSetActiveRequest): Promise<ClipboardCaptureState>;
+  clear(): Promise<ClipboardCaptureState>;
 }
 
 export interface SearchGateway {
   query(request: SearchQueryRequest): SearchQueryResult | Promise<SearchQueryResult>;
+  facets(): SearchFacetsResult | Promise<SearchFacetsResult>;
+}
+
+export interface SyncGateway {
+  status(): Promise<SyncStatusEvent>;
+}
+
+/** Scrittura di testo nella clipboard di sistema (pulsante Copia). */
+export interface ClipboardTextWriter {
+  writeText(text: string): void;
 }
 
 export interface IpcServices {
   search: SearchGateway;
   history: HistoryGateway;
   clipboard: ClipboardGateway;
+  sync: SyncGateway;
+  clipboardWriter: ClipboardTextWriter;
 }
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -179,6 +195,14 @@ export const validateClipboardSetActive = singleRequest<ClipboardSetActiveReques
   (v) => hasExactKeys(v, ['sessionId']) && (v['sessionId'] === null || isSessionId(v['sessionId'])),
 );
 
+export const validateClipboardWrite = singleRequest<ClipboardWriteRequest>(
+  (v) =>
+    hasExactKeys(v, ['text']) &&
+    typeof v['text'] === 'string' &&
+    v['text'].length > 0 &&
+    Buffer.byteLength(v['text'], 'utf8') <= CLIPBOARD_WRITE_MAX_BYTES,
+);
+
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
 export const validateSearchQuery = singleRequest<SearchQueryRequest>(
@@ -206,7 +230,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.clipboardSetActive]: ChannelDefinition<[ClipboardSetActiveRequest], ClipboardCaptureState>;
   [IPC_CHANNELS.clipboardClear]: ChannelDefinition<[], ClipboardCaptureState>;
   [IPC_CHANNELS.clipboardState]: ChannelDefinition<[], ClipboardCaptureState>;
+  [IPC_CHANNELS.clipboardWrite]: ChannelDefinition<[ClipboardWriteRequest], void>;
   [IPC_CHANNELS.searchQuery]: ChannelDefinition<[SearchQueryRequest], SearchQueryResult>;
+  [IPC_CHANNELS.searchFacets]: ChannelDefinition<[], SearchFacetsResult>;
+  [IPC_CHANNELS.syncStatus]: ChannelDefinition<[], SyncStatusEvent>;
 }
 
 export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
@@ -259,9 +286,21 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: noArguments,
       handle: () => services.clipboard.state(),
     },
+    [IPC_CHANNELS.clipboardWrite]: {
+      validate: validateClipboardWrite,
+      handle: (_sender, { text }) => services.clipboardWriter.writeText(text),
+    },
     [IPC_CHANNELS.searchQuery]: {
       validate: validateSearchQuery,
       handle: (_sender, request) => services.search.query(request),
+    },
+    [IPC_CHANNELS.searchFacets]: {
+      validate: noArguments,
+      handle: () => services.search.facets(),
+    },
+    [IPC_CHANNELS.syncStatus]: {
+      validate: noArguments,
+      handle: () => services.sync.status(),
     },
   };
 }

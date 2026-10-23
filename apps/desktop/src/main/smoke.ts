@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { app, clipboard, type BrowserWindow } from 'electron';
-import { MarkdownSearchIndex, hashClipboardText, parseClipboardDocument, parseHistoryDocument, parseSessionDocument } from '@smart-terminal/data';
+import {
+  MarkdownSearchIndex,
+  appendHistoryEvent,
+  createSessionDocuments,
+  hashClipboardText,
+  parseClipboardDocument,
+  parseHistoryDocument,
+  parseSessionDocument,
+  writeFileAtomic,
+} from '@smart-terminal/data';
 
 const IPC_SCRIPT = `(async () => {
   const api = window.smartTerminal;
@@ -36,10 +45,13 @@ const EXPECTED_KEYS = [
   'clipboardConfigure',
   'clipboardSetActive',
   'clipboardState',
+  'clipboardWrite',
   'closeTerminal',
   'createTerminal',
   'listTerminals',
   'onRoleChanged',
+  'onSearchRefreshed',
+  'onSyncStatus',
   'onTerminalData',
   'onTerminalExit',
   'ping',
@@ -47,6 +59,8 @@ const EXPECTED_KEYS = [
   'resizeTerminal',
   'runtimeInfo',
   'search',
+  'searchFacets',
+  'syncStatus',
   'writeTerminal',
 ].join(',');
 
@@ -306,6 +320,17 @@ async function pollUntil(predicate: () => boolean, timeoutMs: number): Promise<b
   return predicate();
 }
 
+async function pollUntilAsync(predicate: () => Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (await predicate()) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return predicate();
+}
+
 function sessionDirectories(): string[] {
   const repo = process.env['SMART_TERMINAL_DATA_REPO'];
   if (repo === undefined || repo.length === 0) {
@@ -353,7 +378,8 @@ const SIDEBAR_SCRIPT = `(async () => {
   result.placeholdersDiffer = clipboardPlaceholder.length > 0 && historyPlaceholder.length > 0 &&
     clipboardPlaceholder !== historyPlaceholder && search().placeholder === clipboardPlaceholder;
   result.controlsEnabled = !search().disabled && !q('sidebar-machine-filter').disabled;
-  result.syncLabel = q('sync-badge').textContent.includes('GitHub synced');
+  result.syncLabel = q('sync-badge').textContent.includes('Repo non configurato');
+  for (let attempt = 0; attempt < 40 && !q('primary-indicator'); attempt += 1) await sleep(50);
   result.primaryIndicator = !!q('primary-indicator') && q('primary-indicator').textContent.includes('Primary instance');
   const sidebar = q('sidebar');
   result.noSidebarOverflow = sidebar.scrollWidth <= sidebar.clientWidth;
@@ -509,5 +535,166 @@ export function runSearchSmoke(window: BrowserWindow): void {
       rebuiltIndexFindsEvent: rebuilt.query({ query: 'editor_ok', kind: 'history' }).some((entry) => entry.source === 'assisted'),
       rebuiltIndexSkipsSensitive: rebuilt.query({ query: 'search_secret_value' }).length === 0,
     });
+  });
+}
+
+const SYNC_UI_REMOTE_MACHINE = 'remote-box';
+const SYNC_UI_REMOTE_PROMPT = 'REMOTE_BOX_PROMPT echo from another machine';
+
+/** Prima dell'avvio del coordinator: scrive nel repo dati una sessione di un'altra macchina (come se arrivasse da un pull). */
+export function seedSyncUiSmokeData(dataRepoPath: string): void {
+  const startedAt = '2026-01-01T09:00:00+00:00';
+  const directory = path.join(dataRepoPath, 'sessions', SYNC_UI_REMOTE_MACHINE, '2026-01-01_09.00_S1_local');
+  fs.mkdirSync(directory, { recursive: true });
+  const documents = createSessionDocuments({
+    schema_version: 1,
+    session_id: 'S1',
+    machine: SYNC_UI_REMOTE_MACHINE,
+    created_at: startedAt,
+    window_id: 'seed',
+    kind: 'local',
+    cwd_initial: '/srv',
+    started_at: startedAt,
+  });
+  const history = appendHistoryEvent(documents.history, { id: 'seed-1', timestamp: startedAt, source: 'assisted', cwd: '/srv', text: SYNC_UI_REMOTE_PROMPT });
+  writeFileAtomic(path.join(directory, 'history.md'), history);
+  writeFileAtomic(path.join(directory, 'clipboard.md'), documents.clipboard);
+  writeFileAtomic(path.join(directory, 'session.md'), documents.session);
+}
+
+const SYNC_UI_PRELUDE = `
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const all = (id) => Array.from(document.querySelectorAll('[data-testid="' + id + '"]'));
+  const setValue = (el, value) => {
+    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const entries = () => all('sidebar-entry').map((el) => ({
+    text: el.querySelector('[data-testid="entry-preview"]').textContent,
+    machine: el.querySelector('[data-testid="entry-machine"]').textContent,
+    session: el.querySelector('[data-testid="entry-session"]').textContent,
+    source: el.querySelector('[data-testid="entry-source"]')?.textContent ?? null,
+    kind: el.getAttribute('data-kind'),
+    time: el.querySelector('[data-testid="entry-time"]').textContent,
+    el,
+  }));
+  const hasText = (needle) => entries().some((e) => e.text.includes(needle));
+  const selectMachine = (value) => { const select = q('sidebar-machine-filter'); select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); };
+`;
+
+const SYNC_UI_HISTORY_SCRIPT = `(async () => {
+  ${SYNC_UI_PRELUDE}
+  const result = {};
+  result.initialSession = await waitFor(async () => (await api.listTerminals()).length === 1 && !q('assisted-textarea').disabled, 8000);
+  const [session] = await api.listTerminals();
+  await sleep(500);
+  setValue(q('assisted-textarea'), 'echo SYNC_UI_OK');
+  await sleep(50);
+  q('assisted-send').click();
+  q('sidebar-tab-history').click();
+  result.historyTabShowsLocalPrompt = await waitFor(() => hasText('SYNC_UI_OK'), 8000);
+  result.historyTabShowsOtherMachine = await waitFor(() => hasText('REMOTE_BOX_PROMPT'), 8000);
+  const local = entries().find((e) => e.text.includes('SYNC_UI_OK'));
+  result.entryFields = !!local && local.machine === session.machine && local.session === session.sessionId && local.source === 'assisted' && /^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/.test(local.time) && local.kind === 'history';
+  result.facetsListBothMachines = await waitFor(() => {
+    const options = Array.from(q('sidebar-machine-filter').options).map((o) => o.value);
+    return options.includes(session.machine) && options.includes('${SYNC_UI_REMOTE_MACHINE}');
+  }, 4000);
+  selectMachine('${SYNC_UI_REMOTE_MACHINE}');
+  result.machineFilterOnlyRemote = await waitFor(() => entries().length > 0 && entries().every((e) => e.machine === '${SYNC_UI_REMOTE_MACHINE}') && !hasText('SYNC_UI_OK'), 4000);
+  selectMachine(session.machine);
+  result.machineFilterOnlyLocal = await waitFor(() => entries().length > 0 && entries().every((e) => e.machine === session.machine) && !hasText('REMOTE_BOX_PROMPT'), 4000);
+  selectMachine('');
+  result.machineFilterReset = await waitFor(() => hasText('SYNC_UI_OK') && hasText('REMOTE_BOX_PROMPT'), 4000);
+  setValue(q('sidebar-search'), 'remote_box_prompt');
+  result.searchCaseInsensitive = await waitFor(() => entries().length === 1 && hasText('REMOTE_BOX_PROMPT'), 4000);
+  setValue(q('sidebar-search'), 'zzz-no-such-text');
+  result.emptyMessage = await waitFor(() => entries().length === 0 && !!q('sidebar-empty') && q('sidebar-empty').textContent.includes('Nessun risultato'), 4000);
+  setValue(q('sidebar-search'), 'SYNC_UI_OK');
+  result.searchLocal = await waitFor(() => entries().length === 1 && hasText('SYNC_UI_OK'), 4000);
+  entries()[0].el.querySelector('[data-testid="entry-copy"]').click();
+  result.copyNotice = await waitFor(() => !!q('sidebar-notice') && q('sidebar-notice').textContent.includes('Copiato'), 4000);
+  return result;
+})()`;
+
+const SYNC_UI_INSERT_SCRIPT = `(async () => {
+  ${SYNC_UI_PRELUDE}
+  const result = {};
+  setValue(q('assisted-textarea'), '');
+  await sleep(50);
+  entries()[0].el.querySelector('[data-testid="entry-insert"]').click();
+  result.insertSetsDraft = await waitFor(() => q('assisted-textarea').value === 'echo SYNC_UI_OK', 2000);
+  await sleep(500);
+  result.insertDoesNotSend = (await api.search({ query: 'SYNC_UI_OK', kind: 'history' })).entries.length === 1 && q('assisted-textarea').value === 'echo SYNC_UI_OK';
+  setValue(q('assisted-textarea'), '');
+  setValue(q('sidebar-search'), '');
+  q('sidebar-tab-clipboard').click();
+  result.clipboardTabEmptyOfHistory = await waitFor(() => entries().every((e) => e.kind === 'clipboard'), 4000);
+  result.captureOff = q('clipboard-status').textContent.includes('Cattura disattivata');
+  q('clipboard-enable').click();
+  result.captureOn = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  return result;
+})()`;
+
+const SYNC_UI_CLIPBOARD_SCRIPT = `(async () => {
+  ${SYNC_UI_PRELUDE}
+  const result = {};
+  const refreshUntil = async (predicate) => waitFor(async () => { q('sidebar-refresh').click(); await sleep(250); return predicate(); }, 8000);
+  result.clipboardEntryListed = await refreshUntil(() => hasText('SYNC_UI_CLIP_TEXT'));
+  const clip = entries().find((e) => e.text.includes('SYNC_UI_CLIP_TEXT'));
+  result.clipboardEntryFields = !!clip && clip.kind === 'clipboard' && clip.source === 'system' && clip.session.startsWith('S');
+  result.sensitiveNotListed = !hasText('smoke_secret_');
+  clip.el.querySelector('[data-testid="entry-insert"]').click();
+  result.clipboardInsert = await waitFor(() => q('assisted-textarea').value.includes('SYNC_UI_CLIP_TEXT'), 2000);
+  setValue(q('assisted-textarea'), '');
+  clip.el.querySelector('[data-testid="entry-copy"]').click();
+  await sleep(300);
+  const footer = q('sync-badge');
+  result.footerNoRemote = footer.textContent.includes('Repo non configurato') && footer.getAttribute('data-state') === 'unconfigured';
+  result.footerPrimary = !!q('primary-indicator') && q('primary-indicator').textContent.includes('Primary instance');
+  const status = await api.syncStatus();
+  result.syncStatusApi = status.remoteConfigured === false && typeof status.state === 'string';
+  const sidebar = q('sidebar');
+  const list = q('sidebar-list');
+  result.noSidebarOverflow = sidebar.scrollWidth <= sidebar.clientWidth && list.scrollWidth <= list.clientWidth;
+  return result;
+})()`;
+
+/** Smoke attivo con SMART_TERMINAL_SYNC_UI_SMOKE=1: History/Clipboard globali, filtro macchina, Copia/Inserisci e footer sync. */
+export function runSyncUiSmoke(window: BrowserWindow): void {
+  window.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      void (async () => {
+        const run = (script: string): Promise<Record<string, boolean>> => window.webContents.executeJavaScript(script) as Promise<Record<string, boolean>>;
+        const result: Record<string, boolean> = await run(SYNC_UI_HISTORY_SCRIPT);
+        result['copyWritesElectronClipboard'] = await pollUntilAsync(async () => (await clipboard.readText()) === 'echo SYNC_UI_OK', 3000);
+        Object.assign(result, await run(SYNC_UI_INSERT_SCRIPT));
+        const text = `SYNC_UI_CLIP_TEXT_${Date.now()}`;
+        clipboard.writeText(`export CLIP_API_KEY=smoke_secret_${Date.now()}`);
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        clipboard.writeText(text);
+        result['clipboardEventRecorded'] = await pollUntil(() => readAllClipboardEvents().some((event) => event.text === text), 5000);
+        Object.assign(result, await run(SYNC_UI_CLIPBOARD_SCRIPT));
+        result['clipboardCopyWritesElectronClipboard'] = await pollUntilAsync(async () => (await clipboard.readText()) === text, 3000);
+        result['sensitiveNotRecorded'] = !readAllClipboardEvents().some((event) => event.text.includes('smoke_secret_'));
+        const ok = Object.values(result).every((value) => value === true);
+        console.log('SMART_TERMINAL_SYNC_UI_SMOKE_RESULT', JSON.stringify({ ...result, ok }));
+        app.exit(ok ? 0 : 1);
+      })().catch((error: unknown) => {
+        console.error('SMART_TERMINAL_SMOKE_ERROR', error);
+        app.exit(1);
+      });
+    }, 1200);
   });
 }

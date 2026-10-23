@@ -20,10 +20,12 @@ afterEach(async () => {
 });
 
 const env = (): NodeJS.ProcessEnv => ({ SMART_TERMINAL_DATA_REPO: path.join(root, 'repo'), SMART_TERMINAL_MACHINE: 'host' });
+let clipboardText = '';
+const clipboardSource = { readText: () => clipboardText };
 const timing = { heartbeatMs: 50, staleMs: 400, takeoverPollMs: 50 };
 
 function makeRuntime(): CoordinatorRuntime {
-  const runtime = new CoordinatorRuntime({ userDataPath: path.join(root, 'ud'), env: env(), timing });
+  const runtime = new CoordinatorRuntime({ userDataPath: path.join(root, 'ud'), env: env(), timing, clipboardSource, clipboardIntervalMs: 30 });
   runtimes.push(runtime);
   return runtime;
 }
@@ -136,6 +138,7 @@ describe('CoordinatorRuntime', () => {
       userDataPath: path.join(root, 'ud'),
       env: { ...env(), SMART_TERMINAL_SYNC_DEBOUNCE_MS: '80', SMART_TERMINAL_SYNC_MAX_WAIT_MS: '400' },
       timing,
+      clipboardSource,
     });
     runtimes.push(runtime);
     const states: string[] = [];
@@ -148,7 +151,87 @@ describe('CoordinatorRuntime', () => {
     expect(states).toContain('dirty:false');
     expect(states).not.toContain('syncing:false');
     await waitFor(() => states.includes('synced:false'));
-    expect(runtime.syncStatus()).toMatchObject({ state: 'synced', remoteConfigured: false });
+    expect(await runtime.syncStatus()).toMatchObject({ state: 'synced', remoteConfigured: false });
+  });
+
+  it('secondary reads sync status (incl. remoteConfigured) and facets through the primary', async () => {
+    const primary = makeRuntime();
+    await primary.start();
+    const secondary = makeRuntime();
+    await secondary.start();
+    expect(secondary.isPrimary).toBe(false);
+    expect(await secondary.syncStatus()).toMatchObject({ remoteConfigured: false });
+    const data = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: env(), allocator: secondary.allocator });
+    await data.createSession('w1', { kind: 'local', cwd: '/tmp' });
+    expect((await secondary.searchFacets()).machines).toEqual([]);
+    const { allocation } = await data.createSession('w2', { kind: 'local', cwd: '/tmp' });
+    secondary.notifyWrite(allocation.relativeDir);
+    let machines: string[] = [];
+    for (let attempt = 0; attempt < 100 && machines.length === 0; attempt += 1) {
+      machines = (await secondary.searchFacets()).machines;
+      if (machines.length === 0) await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(machines).toEqual(['host']);
+  });
+
+  it('clipboard is owned by the primary: secondary forwards configure/setActive/clear and writes the right file', async () => {
+    const primary = makeRuntime();
+    await primary.start();
+    const secondary = makeRuntime();
+    await secondary.start();
+    const data = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: env(), allocator: secondary.allocator });
+    const { allocation } = await data.createSession('w1', { kind: 'local', cwd: '/tmp' });
+
+    expect(await secondary.clipboardState()).toEqual({ enabled: false, paused: false, lastEventAt: null });
+    expect(await secondary.clipboardConfigure({ enabled: true, paused: false })).toMatchObject({ enabled: true });
+    expect(await primary.clipboardState()).toMatchObject({ enabled: true });
+    await secondary.clipboardSetActive(allocation.relativeDir);
+    clipboardText = 'from-secondary-window';
+    const clipboardFile = path.join(root, 'repo', allocation.relativeDir, 'clipboard.md');
+    await waitFor(() => fs.readFileSync(clipboardFile, 'utf8').includes('from-secondary-window'));
+    expect((await secondary.clipboardState()).lastEventAt).not.toBeNull();
+    const recorded = await secondary.query({ query: 'from-secondary-window', kind: 'clipboard' });
+    expect(recorded.entries).toHaveLength(1);
+
+    await secondary.clipboardConfigure({ enabled: true, paused: true });
+    clipboardText = 'while-paused';
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(fs.readFileSync(clipboardFile, 'utf8')).not.toContain('while-paused');
+    expect(await secondary.clipboardClear()).toMatchObject({ paused: true });
+    await expect(secondary.coordinator.request('clipboard.setActive', { sessionDirectory: '../../etc' })).rejects.toMatchObject({ remoteCode: 'INVALID_PARAMS' });
+  });
+
+  it('session.end prunes the active clipboard session', async () => {
+    const primary = makeRuntime();
+    await primary.start();
+    const secondary = makeRuntime();
+    await secondary.start();
+    const data = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: env(), allocator: secondary.allocator });
+    const { allocation } = await data.createSession('w1', { kind: 'local', cwd: '/tmp' });
+    await secondary.clipboardConfigure({ enabled: true, paused: false });
+    await secondary.clipboardSetActive(allocation.relativeDir);
+    secondary.endSession(allocation.relativeDir);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    clipboardText = 'after-session-end';
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(fs.readFileSync(path.join(root, 'repo', allocation.relativeDir, 'clipboard.md'), 'utf8')).not.toContain('after-session-end');
+  });
+
+  it('on takeover the new primary reactivates the clipboard from its own intent and the old primary stops polling', async () => {
+    const primary = makeRuntime();
+    await primary.start();
+    const secondary = makeRuntime();
+    await secondary.start();
+    const data = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: env(), allocator: secondary.allocator });
+    const { allocation } = await data.createSession('w1', { kind: 'local', cwd: '/tmp' });
+    await secondary.clipboardConfigure({ enabled: true, paused: false });
+    await secondary.clipboardSetActive(allocation.relativeDir);
+    await primary.stop();
+    await waitFor(() => secondary.isPrimary);
+    expect(await secondary.clipboardState()).toMatchObject({ enabled: true, paused: false });
+    clipboardText = 'after-takeover';
+    const clipboardFile = path.join(root, 'repo', allocation.relativeDir, 'clipboard.md');
+    await waitFor(() => fs.readFileSync(clipboardFile, 'utf8').includes('after-takeover'));
   });
 
   it('parses sync timing env and ignores invalid values', () => {

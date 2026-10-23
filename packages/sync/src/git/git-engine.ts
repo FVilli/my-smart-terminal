@@ -144,6 +144,79 @@ export class GitEngine {
     });
   }
 
+  /**
+   * Fetch + integrazione dei commit remoti (solo rebase fast-forward-like, mai commit/push).
+   * Se ci sono modifiche tracked non committate non integra (lo fara' il prossimo `syncOnce`).
+   * Su conflitto: `rebase --abort`, stato `error`, file preservati. Non lancia.
+   */
+  integrateRemote(): Promise<{ changed: boolean; status: SyncStatus }> {
+    return this.serialize(async () => {
+      if (!this.hasRemote) {
+        return { changed: false, status: this.status };
+      }
+      let changed = false;
+      try {
+        if (!this.initialised) {
+          await this.initLocked();
+        }
+        await this.git(['fetch', 'origin']);
+        changed = await this.integrateLocked();
+        await this.markReachable(changed);
+      } catch (error) {
+        if (error instanceof GitEngineError && error.kind === 'offline') {
+          this.setStatus({ ...this.current, state: 'offline', lastError: error.message });
+        } else {
+          this.setStatus({ ...this.current, state: 'error', lastError: error instanceof GitEngineError ? error.message : 'Unexpected git error' });
+        }
+      }
+      return { changed, status: this.status };
+    });
+  }
+
+  private async integrateLocked(): Promise<boolean> {
+    if (!(await this.remoteBranchExists())) {
+      return false;
+    }
+    const remoteRef = `origin/${this.branch}`;
+    const before = await this.run(['rev-parse', '--verify', '--quiet', 'HEAD']);
+    if (before.code !== 0) {
+      const adopt = await this.run(['checkout', '-B', this.branch, remoteRef]);
+      return adopt.code === 0;
+    }
+    const behind = await this.git(['rev-list', '--count', `HEAD..${remoteRef}`]);
+    if (behind.stdout.trim() === '0') {
+      return false;
+    }
+    const tracked = await this.git(['status', '--porcelain', '--untracked-files=no']);
+    if (tracked.stdout.trim().length > 0) {
+      return false;
+    }
+    const rebase = await this.run(['rebase', '--autostash', remoteRef]);
+    if (rebase.code !== 0) {
+      await this.run(['rebase', '--abort']);
+      throw new GitEngineError('conflict', 'Rebase failed; local session files preserved');
+    }
+    const after = await this.run(['rev-parse', 'HEAD']);
+    return after.stdout.trim() !== before.stdout.trim();
+  }
+
+  /** Remote raggiungibile: esce da offline/error (dirty se restano modifiche locali o commit da pushare) e registra `lastSyncAt` se e' cambiato qualcosa. */
+  private async markReachable(changed: boolean): Promise<void> {
+    const { state } = this.current;
+    if (state === 'offline' || state === 'error') {
+      const { lastError: _cleared, ...rest } = this.current;
+      const local = await this.run(['status', '--porcelain', '--', SYNC_DIRECTORY]);
+      const hasHead = (await this.run(['rev-parse', '--verify', '--quiet', 'HEAD'])).code === 0;
+      const ahead = hasHead && (await this.remoteBranchExists()) ? await this.run(['rev-list', '--count', `origin/${this.branch}..HEAD`]) : undefined;
+      const pending = local.stdout.trim().length > 0 || (ahead !== undefined && ahead.stdout.trim() !== '0');
+      const next: SyncStatus = { ...rest, state: pending ? 'dirty' : 'synced' };
+      if (!pending || changed) next.lastSyncAt = this.clock().toISOString();
+      this.setStatus(next);
+    } else if (changed) {
+      this.setStatus({ ...this.current, state: state === 'dirty' ? 'dirty' : 'synced', lastSyncAt: this.clock().toISOString() });
+    }
+  }
+
   get hasRemote(): boolean {
     return this.options.remote !== undefined && this.options.remote.length > 0;
   }

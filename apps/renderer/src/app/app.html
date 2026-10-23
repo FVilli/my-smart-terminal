@@ -38,9 +38,32 @@
       (draftChange)="setDraft($event)"
       (submitted)="send($event)"
     />
-    <app-status-footer [syncState]="'synced'" [primary]="isPrimary()" />
+    <app-status-footer
+      [syncState]="sync.status().state"
+      [remoteConfigured]="sync.status().remoteConfigured"
+      [primary]="isPrimary()"
+    />
   </section>
   <aside class="sidebar" data-testid="sidebar">
-    <app-sidebar-panel [activeTab]="sidebarTab()" (tabChange)="sidebarTab.set($event)" />
+    <app-sidebar-panel
+      [activeTab]="search.tab()"
+      [query]="search.query()"
+      [machineFilter]="search.machineFilter()"
+      [machines]="search.machines()"
+      [entries]="search.entries()"
+      [loading]="search.loading()"
+      [error]="search.error()"
+      [notice]="search.notice()"
+      [clipboardState]="clipboardCapture.state()"
+      [clipboardError]="clipboardCapture.error()"
+      (tabChange)="search.setTab($event)"
+      (queryChange)="search.setQuery($event)"
+      (machineChange)="search.setMachine($event)"
+      (refresh)="search.refresh()"
+      (copyText)="search.copy($event)"
+      (insertText)="insertText($event)"
+      (configureClipboard)="clipboardCapture.configure($event)"
+      (clearClipboard)="clipboardCapture.clearDedupe()"
+    />
   </aside>
 </main>

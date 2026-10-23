@@ -9,17 +9,17 @@ import { validateClipboardConfigure, validateClipboardSetActive } from './ipc';
 
 let root: string;
 let runtime: DataRuntime;
-let sessions: Map<string, string>;
+let directories: string[];
 let clipboardText: string;
 
 beforeEach(async () => {
   vi.useFakeTimers();
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'st-clipsvc-'));
   runtime = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: { SMART_TERMINAL_DATA_REPO: path.join(root, 'repo'), SMART_TERMINAL_MACHINE: 'host' } });
-  sessions = new Map();
+  directories = [];
   for (const window of ['w1', 'w2']) {
     const { allocation } = await runtime.createSession(window, { kind: 'local', cwd: '/tmp' });
-    sessions.set(`${window === 'w1' ? 1 : 2}:${allocation.sessionId}`, allocation.relativeDir);
+    directories.push(allocation.relativeDir);
   }
   clipboardText = '';
 });
@@ -28,62 +28,73 @@ afterEach(() => {
   fs.rmSync(root, { recursive: true, force: true });
 });
 
-function service(initiallyEnabled = false, onRecorded?: (dir: string) => void): ClipboardService {
+function service(onRecorded?: (dir: string) => void): ClipboardService {
   return new ClipboardService({
     dataRepoPath: runtime.dataRepoPath,
     source: { readText: () => clipboardText },
-    resolveSession: (senderId, sessionId) => {
-      const sessionDirectory = sessions.get(`${senderId}:${sessionId}`);
-      return sessionDirectory === undefined ? undefined : { sessionDirectory };
-    },
-    initiallyEnabled,
     ...(onRecorded !== undefined ? { onRecorded } : {}),
   });
 }
-const eventsOf = (key: string) =>
-  parseClipboardDocument(fs.readFileSync(path.join(runtime.dataRepoPath, sessions.get(key) ?? '', 'clipboard.md'), 'utf8')).events;
+const eventsOf = (index: number) =>
+  parseClipboardDocument(fs.readFileSync(path.join(runtime.dataRepoPath, directories[index] ?? '', 'clipboard.md'), 'utf8')).events;
 
 describe('ClipboardService', () => {
-  it('is disabled by default and enabled by explicit opt-in', () => {
-    expect(service().state()).toEqual({ enabled: false, paused: false, lastEventAt: null });
-    const enabled = service(true);
-    expect(enabled.state().enabled).toBe(true);
-    enabled.dispose();
+  it('is disabled by default and starts polling only when enabled', () => {
+    const svc = service();
+    expect(svc.state()).toEqual({ enabled: false, paused: false, lastEventAt: null });
+    expect(svc.polling).toBe(false);
+    svc.configure({ enabled: true, paused: false });
+    expect(svc.polling).toBe(true);
+    svc.dispose();
+    expect(svc.polling).toBe(false);
   });
 
-  it('records into the active session of the sender on the 800ms poll, then pauses', async () => {
+  it('records into the active session directory on the 800ms poll, then pauses', async () => {
     const onRecorded = vi.fn();
-    const svc = service(false, onRecorded);
-    svc.setActive(1, { sessionId: 'S1' });
+    const svc = service(onRecorded);
+    svc.setActive(directories[0] ?? '');
     svc.configure({ enabled: true, paused: false });
     clipboardText = 'copied text';
     await vi.advanceTimersByTimeAsync(800);
-    expect(eventsOf('1:S1').map((e) => e.text)).toEqual(['copied text']);
-    expect(onRecorded).toHaveBeenCalledWith(sessions.get('1:S1'));
+    expect(eventsOf(0).map((e) => e.text)).toEqual(['copied text']);
+    expect(onRecorded).toHaveBeenCalledWith(directories[0]);
     expect(svc.state().lastEventAt).not.toBeNull();
 
     svc.configure({ enabled: true, paused: true });
     clipboardText = 'while paused';
     await vi.advanceTimersByTimeAsync(2000);
-    expect(eventsOf('1:S1')).toHaveLength(1);
+    expect(eventsOf(0)).toHaveLength(1);
     expect(svc.state()).toMatchObject({ enabled: true, paused: true });
     svc.dispose();
   });
 
-  it('ignores set-active for sessions of another window and stops when disabled', async () => {
+  it('rejects directories outside the data repo and keeps the previous target', async () => {
     const svc = service();
+    for (const bad of ['../etc', '/etc/passwd', 'sessions/host', 'sessions/host/../../x', 'sessions/host/not-a-session']) {
+      expect(() => svc.setActive(bad)).toThrow();
+    }
     svc.configure({ enabled: true, paused: false });
-    svc.setActive(1, { sessionId: 'S2' });
     clipboardText = 'x1';
     await vi.advanceTimersByTimeAsync(800);
-    expect(eventsOf('2:S2')).toEqual([]);
-    svc.setActive(2, { sessionId: 'S2' });
+    expect(eventsOf(0)).toEqual([]);
+    svc.setActive(directories[1] ?? '');
     await vi.advanceTimersByTimeAsync(800);
-    expect(eventsOf('2:S2')).toHaveLength(1);
+    expect(eventsOf(1)).toHaveLength(1);
     svc.configure({ enabled: false, paused: false });
     clipboardText = 'x2';
     await vi.advanceTimersByTimeAsync(2000);
-    expect(eventsOf('2:S2')).toHaveLength(1);
+    expect(eventsOf(1)).toHaveLength(1);
+  });
+
+  it('stops writing to a session that ended', async () => {
+    const svc = service();
+    svc.configure({ enabled: true, paused: false });
+    svc.setActive(directories[0] ?? '');
+    svc.sessionEnded(directories[0] ?? '');
+    clipboardText = 'after end';
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(eventsOf(0)).toEqual([]);
+    svc.dispose();
   });
 });
 

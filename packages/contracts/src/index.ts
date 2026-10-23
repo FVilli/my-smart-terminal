@@ -15,7 +15,10 @@ export const IPC_CHANNELS = {
   clipboardSetActive: 'clipboard:set-active',
   clipboardClear: 'clipboard:clear',
   clipboardState: 'clipboard:state',
+  clipboardWrite: 'clipboard:write',
   searchQuery: 'search:query',
+  searchFacets: 'search:facets',
+  syncStatus: 'sync:get-status',
 } as const;
 
 /** Eventi main -> renderer (non invocabili dal renderer). */
@@ -24,12 +27,14 @@ export const IPC_EVENTS = {
   terminalExit: 'terminal:exit',
   roleChanged: 'app:role-changed',
   syncStatus: 'sync:status',
+  searchRefreshed: 'search:refreshed',
 } as const;
 
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
 export const HISTORY_MAX_TEXT_BYTES = 16 * 1024;
 export const HISTORY_MAX_AGENT_LENGTH = 64;
 export const SEARCH_MAX_QUERY_LENGTH = 256;
+export const CLIPBOARD_WRITE_MAX_BYTES = 32 * 1024;
 export const TERMINAL_MIN_DIMENSION = 1;
 export const TERMINAL_MAX_DIMENSION = 1000;
 
@@ -54,6 +59,11 @@ export interface SyncStatusEvent {
   lastSyncAt?: string;
   lastError?: string;
   remoteConfigured: boolean;
+}
+
+/** Il primary ha riletto l'indice di ricerca dopo un pull Git. */
+export interface SearchRefreshedEvent {
+  refreshedAt: string;
 }
 
 export interface RoleChangedEvent {
@@ -165,6 +175,16 @@ export interface SearchQueryResult {
   entries: SearchResultEntry[];
 }
 
+export interface SearchFacetsResult {
+  /** Macchine presenti nell'indice, in ordine alfabetico. */
+  machines: string[];
+}
+
+/** Testo da copiare nella clipboard di sistema (pulsante Copia). */
+export interface ClipboardWriteRequest {
+  text: string;
+}
+
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {
@@ -181,10 +201,16 @@ export interface SmartTerminalApi {
   clipboardSetActive(request: ClipboardSetActiveRequest): Promise<ClipboardCaptureState>;
   /** Azzera il dedupe in memoria (gli hash gia' scritti in clipboard.md restano dedupati). */
   clipboardClear(): Promise<ClipboardCaptureState>;
+  clipboardWrite(request: ClipboardWriteRequest): Promise<void>;
   search(request: SearchQueryRequest): Promise<SearchQueryResult>;
+  searchFacets(): Promise<SearchFacetsResult>;
+  /** Stato sync corrente: dal primary locale oppure via RPC se questa istanza e' secondary. */
+  syncStatus(): Promise<SyncStatusEvent>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;
+  onSyncStatus(listener: (event: SyncStatusEvent) => void): Unsubscribe;
+  onSearchRefreshed(listener: (event: SearchRefreshedEvent) => void): Unsubscribe;
 }
 
 /** Argomento di avvio che abilita il seam di test `__testInvoke` nel preload. */

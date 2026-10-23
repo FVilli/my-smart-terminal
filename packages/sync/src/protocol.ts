@@ -1,6 +1,7 @@
 import {
   isIsoTimestamp,
   isValidMachine,
+  parseSessionDirectoryName,
   type AllocateSessionRequest,
   type AllocatedSession,
   type SearchEntry,
@@ -20,6 +21,19 @@ export interface SyncStatus {
   lastSyncAt?: string;
 }
 
+/** Stato sync completo pubblicato via RPC `sync.status`. */
+export interface RemoteSyncStatus extends SyncStatus {
+  remoteConfigured: boolean;
+}
+
+/** Stato della cattura clipboard posseduta dal primary. */
+export interface ClipboardRpcState {
+  enabled: boolean;
+  paused: boolean;
+  /** ISO 8601 dell'ultimo evento scritto dal primary. */
+  lastEventAt: string | null;
+}
+
 export interface PingResult {
   pid: number;
   startedAt: string;
@@ -32,7 +46,16 @@ export interface CoordinatorServices {
   searchQuery(query: SearchQuery): SearchEntry[];
   searchUpsert(sessionDirectory: string): void;
   searchRefresh(): void;
-  syncStatus(): SyncStatus;
+  /** Macchine presenti nell'indice, ordinate. */
+  searchFacets(): string[];
+  clipboardState(): ClipboardRpcState;
+  clipboardConfigure(config: { enabled: boolean; paused: boolean }): ClipboardRpcState;
+  /** `sessionDirectory` e' gia' validato come `sessions/<machine>/<dir>`; `null` ferma la cattura attiva. */
+  clipboardSetActive(sessionDirectory: string | null): ClipboardRpcState;
+  clipboardClear(): ClipboardRpcState;
+  /** Sessione terminata: pruning del registry del primary (clipboard attiva), indice e dirty. */
+  sessionEnd(sessionDirectory: string): void;
+  syncStatus(): RemoteSyncStatus;
   /** Marca dirty: il sync parte dallo scheduler (debounce/max wait). */
   syncDirty(): void;
 }
@@ -66,6 +89,12 @@ export const RPC_METHODS = [
   'search.query',
   'search.upsert',
   'search.refresh',
+  'search.facets',
+  'clipboard.state',
+  'clipboard.configure',
+  'clipboard.setActive',
+  'clipboard.clear',
+  'session.end',
   'sync.status',
   'sync.dirty',
 ] as const;
@@ -93,6 +122,21 @@ function checkKeys(params: Record<string, unknown>, required: string[], optional
 
 const isBoundedString = (value: unknown, allowEmpty = false): value is string =>
   typeof value === 'string' && value.length <= MAX_FIELD_LENGTH && (allowEmpty || value.length > 0) && !value.includes('\0');
+
+/** `sessions/<machine>/<directory di sessione>`: forma verificata, nessun accesso al filesystem. */
+function isSessionDirectory(value: unknown): value is string {
+  if (!isBoundedString(value)) return false;
+  const segments = value.split('/');
+  const [root, machine, directory] = segments;
+  return (
+    segments.length === 3 &&
+    root === 'sessions' &&
+    machine !== undefined &&
+    isValidMachine(machine) &&
+    directory !== undefined &&
+    parseSessionDirectoryName(directory) !== null
+  );
+}
 
 function parseAllocateParams(params: Record<string, unknown>): AllocateSessionRequest {
   checkKeys(params, ['windowId', 'kind', 'cwdInitial'], ['sshAlias']);
@@ -189,6 +233,40 @@ export async function dispatchRpc(
       checkKeys(params, []);
       services.searchRefresh();
       return { ok: true };
+    case 'search.facets':
+      checkKeys(params, []);
+      return { machines: services.searchFacets() };
+    case 'clipboard.state':
+      checkKeys(params, []);
+      return services.clipboardState();
+    case 'clipboard.configure': {
+      checkKeys(params, ['enabled', 'paused']);
+      const { enabled, paused } = params;
+      if (typeof enabled !== 'boolean' || typeof paused !== 'boolean') {
+        throw new RpcFailure('INVALID_PARAMS');
+      }
+      return services.clipboardConfigure({ enabled, paused });
+    }
+    case 'clipboard.setActive': {
+      checkKeys(params, ['sessionDirectory']);
+      const directory = params['sessionDirectory'];
+      if (directory !== null && !isSessionDirectory(directory)) {
+        throw new RpcFailure('INVALID_PARAMS');
+      }
+      return services.clipboardSetActive(directory);
+    }
+    case 'clipboard.clear':
+      checkKeys(params, []);
+      return services.clipboardClear();
+    case 'session.end': {
+      checkKeys(params, ['sessionDirectory']);
+      const directory = params['sessionDirectory'];
+      if (!isSessionDirectory(directory)) {
+        throw new RpcFailure('INVALID_PARAMS');
+      }
+      services.sessionEnd(directory);
+      return { ok: true };
+    }
     case 'sync.status':
       checkKeys(params, []);
       return services.syncStatus();
