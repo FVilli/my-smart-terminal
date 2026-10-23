@@ -1,17 +1,13 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { SMOKE_DATA_DIR, resetSmokeData } from './reset-smoke-data.mjs';
 
-const require = createRequire(import.meta.url);
-const electronBinary = require('electron');
 const outDir = path.resolve('dist', 'layout');
 const viewports = [
   { width: 1440, height: 900 },
   { width: 1024, height: 700 },
 ];
-const useXvfb = process.platform === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY;
 
 if (!fs.existsSync('dist/apps/desktop/main.js') || !fs.existsSync('dist/apps/renderer/browser/index.html')) {
   const build = spawnSync('npm', ['run', 'build'], { stdio: 'inherit', shell: true });
@@ -31,9 +27,7 @@ for (const { width, height } of viewports) {
     SMART_TERMINAL_WINDOW_WIDTH: String(width),
     SMART_TERMINAL_WINDOW_HEIGHT: String(height),
   };
-  const args = ['apps/desktop'];
-  const [cmd, cmdArgs] = useXvfb ? ['xvfb-run', ['-a', electronBinary, ...args]] : [electronBinary, args];
-  const run = spawnSync(cmd, cmdArgs, { env, encoding: 'utf8', timeout: 60000 });
+  const run = spawnSync(process.execPath, ['scripts/run-electron.mjs', 'apps/desktop'], { env, encoding: 'utf8', timeout: 60000 });
   const line = (run.stdout ?? '').split('\n').find((l) => l.startsWith('SMART_TERMINAL_LAYOUT_RESULT'));
   const metrics = line ? JSON.parse(line.slice(line.indexOf('{'))) : null;
   const problems = [];

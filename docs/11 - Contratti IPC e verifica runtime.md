@@ -63,6 +63,14 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - Scheduler Git: debounce 10 s, max wait 60 s, fetch 15 s, flush a stop; env `SMART_TERMINAL_SYNC_*`.
 - Git: `GitEngine` seriale, stage solo `sessions/`, commit path-scoped, fetch/rebase/push senza force, conflitti con abort e file preservati, offline con commit locale. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
 
+## Display virtuale per gli smoke (Linux)
+- Gli smoke Electron non devono usare il desktop dell'utente. `scripts/run-electron.mjs` avvia l'app su un display Xvfb dedicato (`:99` per default) e tutti gli script `test:*-smoke` e `test:layout` passano da lì.
+- Ordine di ricerca di Xvfb: `SMART_TERMINAL_XVFB_BIN`, `/usr/bin/Xvfb`, `/usr/local/bin/Xvfb`, `~/.local/xvfb/usr/bin/Xvfb`. Se non è disponibile, avvisa e usa il display corrente.
+- Override: `SMART_TERMINAL_XVFB_DISPLAY` (es. `:98`), `SMART_TERMINAL_NO_XVFB=1` per tornare al display corrente (sconsigliato in sessione interattiva).
+- Installazione senza root: `apt-get download xvfb xserver-common xauth`, poi `dpkg-deb -x <deb> ~/.local/xvfb`; l'helper la trova in `~/.local/xvfb/usr/bin/Xvfb`.
+- `scripts/capture-layout.mjs` usa lo stesso wrapper, quindi gli screenshot finiscono in `dist/layout/` senza aprire finestre sul desktop.
+- In CI Linux usare `xvfb-run` o installare Xvfb; su macOS/Windows il wrapper lascia il display nativo dei runner.
+
 ## PTY
 - `packages/terminal` contiene interfacce e `SessionManager` testabile; l'adapter nativo è nel subpath `@smart-terminal/terminal/node-pty` e va importato solo dal main.
 - File e args sono sempre separati (mai una stringa shell composta da IPC). `cwd` deve essere assoluto ed esistente.
@@ -76,6 +84,7 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test` | unit test Vitest (IPC, SessionManager, data schema/allocatore, runtime) |
 | `npm run test:data` | test mirati del package data e del runtime dati |
 | `npm run test:coordinator` | elezione multi-processo, takeover, protocollo, Git con repo bare |
+| `node scripts/run-electron.mjs apps/desktop` | avvio Electron su Xvfb `:99` (usato dagli smoke) |
 | `npm run build` | bundle main/preload + Angular production |
 | `npm run test:ipc-smoke` | finestra Electron, API valida, rifiuto payload/canale, renderer senza Node |
 | `npm run test:pty-smoke` | rebuild nativo + shell reale: output, input, resize, list, exit |

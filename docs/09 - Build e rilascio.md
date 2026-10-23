@@ -12,7 +12,7 @@ created: 2026-10-22
 Prima release in canale manuale (artefatti scaricabili); niente auto-update in V1. Produrre pacchetti per Linux (AppImage e .deb), Windows (.exe installer) e macOS (.dmg). Usare `electron-builder` nel package desktop; versionamento SemVer e tag `vX.Y.Z`. Il rilascio su GitHub Releases riguarda il **repository del codice**; il repository delle sessioni è distinto.
 
 ## CI
-GitHub Actions, matrice Linux/macOS/Windows: installazione riproducibile da lockfile, lint + typecheck, unit test, build Angular/Electron, test PTY e smoke test packaging. Test integrati multi-istanza/Git in un ambiente isolato, senza token reali. Nessun push/release da pull request non fidate.
+GitHub Actions, matrice Linux/macOS/Windows: installazione riproducibile da lockfile, lint + typecheck, unit test, build Angular/Electron, test PTY e smoke test packaging. Test integrati multi-istanza/Git in un ambiente isolato, senza token reali. Nessun push/release da pull request non fidate. Su Linux gli smoke Electron girano su Xvfb (`scripts/run-electron.mjs`, display `:99`) e non sul desktop del runner; installare `xvfb` nella pipeline o usare il binario locale documentato in `docs/11`.
 
 ## Sicurezza rilascio
 Artefatti con checksum SHA-256 pubblicati insieme alla release. Signing macOS/Windows solo quando sono disponibili i certificati; in assenza, indicare chiaramente la natura non firmata (mai dichiarare firmato un pacchetto non firmato). Secret CI protetti. Dipendenze native `node-pty` ricompilate per Electron e OS/architettura target.
