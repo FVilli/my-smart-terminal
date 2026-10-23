@@ -6,7 +6,7 @@ created: 2026-10-23
 ---
 <!-- gsynchro:v1 id=e7e31832-14ad-4df3-bf01-16b6e5b9d439 registered=2026-10-23T09:58:42.366Z -->
 
-# My Smart Terminal v1.1.0 — User manual
+# My Smart Terminal v1.1.1 — User manual
 
 ## Next step: post-install onboarding
 
@@ -104,7 +104,7 @@ The repository can be a Git clone with configurable remote and branch. The coord
 - **Stale lock**: after a crash, the new primary recovers the lock when the previous process is no longer alive; wait for takeover and do not manually delete files while the app is active.
 - **Missing keyring**: on Linux, the token is not persisted and can be used only in memory for the session; configure a secure keyring for persistent cloud use.
 - **Logs**: look for Electron process output and app logs in the user data directory; logs must not contain tokens, audio, or AI text. Interface errors are sanitized.
-- **AppImage and FUSE**: if the AppImage does not start, run `"Smart.Terminal-1.1.0-linux-x86_64.AppImage" --appimage-extract-and-run`.
+- **AppImage and FUSE**: if the AppImage does not start, run `"$HOME/.local/bin/smart-terminal"` (for the script-installed AppImage; see the [Linux installation guide](21%20-%20Linux%20installation%20guide.md))..
 
 ## 8. V1 limits and compatibility
 

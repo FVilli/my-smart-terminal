@@ -46,6 +46,9 @@ try {
   if (app.status !== 0) fail(`AppImage install failed (${app.status}): ${app.stderr}${app.stdout}`);
   const desktop = fs.readFileSync(path.join(env.XDG_DATA_HOME, 'applications/smart-terminal.desktop'), 'utf8');
   if (!desktop.includes(`Exec="${env.XDG_BIN_HOME}/smart-terminal"`) || !desktop.includes('Categories=Development;') || !desktop.includes('StartupWMClass=smart-terminal') || fs.readFileSync(path.join(env.XDG_BIN_HOME, 'smart-terminal'), 'utf8') !== 'app fixture') fail('AppImage contents or menu entry incorrect.');
+  const desktopFile = path.join(env.XDG_DATA_HOME, 'applications/smart-terminal.desktop');
+  const validate = spawnSync('desktop-file-validate', [desktopFile], { encoding: 'utf8' });
+  if (validate.error?.code !== 'ENOENT' && validate.status !== 0) fail(`desktop-file-validate failed: ${validate.stderr || validate.stdout}`);
   const data = path.join(home, '.config/my-smart-terminal'); fs.mkdirSync(data, { recursive: true }); fs.writeFileSync(path.join(data, 'sentinel'), 'keep');
   const uninstall = spawnSync('sh', [path.join(root, 'uninstall.sh')], { cwd: root, env: { ...env, FAKE_DPKG_INSTALLED: '1' }, encoding: 'utf8' });
   if (uninstall.status !== 0 || !fs.existsSync(path.join(data, 'sentinel'))) fail(`Uninstall failed or removed user data: ${uninstall.stderr}`);

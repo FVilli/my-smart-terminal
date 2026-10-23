@@ -1,6 +1,18 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.1.1
+
+### Added
+- One-command Linux install and uninstall scripts, supporting `.deb` and per-user AppImage installation.
+- Ubuntu menu integration and refreshed icon/README logo.
+
+### Changed
+- Installation verifies SHA-256 checksums and applies safety checks.
+
+### Fixed
+- Uninstall preserves configuration, sessions, and external repositories.
+
 ## 1.1.0
 
 ### Added

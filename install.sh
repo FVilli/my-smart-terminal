@@ -56,7 +56,7 @@ cp "$TMP/$APP" "$BIN_HOME/smart-terminal"
 chmod 755 "$BIN_HOME/smart-terminal"
 fetch "https://raw.githubusercontent.com/FVilli/my-smart-terminal/v${VERSION}/docs/assets/icon.png" "$DATA_HOME/icons/hicolor/512x512/apps/smart-terminal.png"
 DESKTOP="$DATA_HOME/applications/smart-terminal.desktop"
-printf '[Desktop Entry]\nName=Smart Terminal\nExec="%s"\nIcon=smart-terminal\nTerminal=false\nType=Application\nCategories=Development;\nStartupWMClass=smart-terminal\n' "$BIN_HOME/smart-terminal" > "$DESKTOP"
+printf '[Desktop Entry]\nVersion=1.0\nName=Smart Terminal\nComment=Multi-session terminal with Markdown history and Git sync\nExec="%s"\nIcon=smart-terminal\nTerminal=false\nType=Application\nCategories=Development;\nStartupWMClass=smart-terminal\n' "$BIN_HOME/smart-terminal" > "$DESKTOP"
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$DATA_HOME/applications" </dev/null || :
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -f "$DATA_HOME/icons/hicolor" </dev/null || :
 printf '%s\n' 'Smart Terminal installed. Find it in your applications menu.'

@@ -1,6 +1,23 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.1.1
+
+Linux installation and branding release.
+
+### Added
+
+- One-command Linux install and uninstall scripts, with Debian/Ubuntu `.deb` and per-user AppImage support.
+- Ubuntu applications-menu entry and icon, plus refreshed application icon and README logo.
+
+### Changed
+
+- Install scripts verify published SHA-256 checksums and use safety checks before installation or removal.
+
+### Fixed
+
+- Uninstall preserves configuration, sessions, and external data repositories.
+
 ## v1.1.0
 
 Layout, settings and verified setup release.
