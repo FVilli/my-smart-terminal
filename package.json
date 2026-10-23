@@ -49,7 +49,8 @@
     "package:dir": "npm run build && electron-builder --dir --config electron-builder.yml --publish never",
     "checksums": "node scripts/checksums.mjs",
     "setup:electron": "node node_modules/electron/install.js",
-    "test:screenshots": "npm run build && node scripts/capture-screenshots.mjs"
+    "test:screenshots": "npm run build && node scripts/capture-screenshots.mjs",
+    "test:package-linux": "node scripts/verify-linux-package.mjs"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",

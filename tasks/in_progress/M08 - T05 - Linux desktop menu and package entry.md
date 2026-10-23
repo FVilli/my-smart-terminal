@@ -26,3 +26,9 @@ electron-builder.yml; docs/09; docs/12; docs/14; release artifacts.
 
 ## Do not
 Do not require root at runtime or add a `/usr/bin` wrapper without documenting it.
+
+## Outcome
+- Added `scripts/verify-linux-package.mjs` and `npm run test:package-linux`; CI runs it on Linux.
+- Verified `.deb` desktop entry, icon, Exec path, executable bit, package name/version and desktop-file-validate.
+- Extracted the `.deb` and launched its binary with the IPC smoke test on Xvfb: success.
+- Menu entry: `smart-terminal.desktop`, `Name=Smart Terminal`, `Categories=Development;`, `StartupWMClass=smart-terminal`; launched via `/opt/Smart Terminal/smart-terminal`.

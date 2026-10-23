@@ -57,6 +57,9 @@ jobs:
           npm run test:e2e
       - name: Package
         run: npm run package:${{ runner.os == 'Linux' && 'linux' || runner.os == 'macOS' && 'mac' || 'win' }}
+      - name: Verify Linux package entry
+        if: runner.os == 'Linux'
+        run: npm run test:package-linux
       - name: Checksums
         run: npm run checksums
       - name: Upload artifacts
