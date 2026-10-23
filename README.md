@@ -107,7 +107,7 @@ Requirements: **Node.js 24**, Git, OpenSSH. Linux smoke tests require Xvfb (the 
 npm ci
 npm run dev          # Angular + Electron in development
 npm run build
-npm run test         # unit + integration (385 tests)
+npm run test         # unit + integration (395 tests)
 npm run test:e2e     # two Electron instances, failover, and cross-machine
 npm run lint
 npx tsc -p tsconfig.json --noEmit
