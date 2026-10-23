@@ -144,6 +144,8 @@ packages/ai/        AI and STT providers
 
 - [Post-install onboarding](docs/14%20-%20Post-install%20onboarding.md)
 - [User manual](docs/12%20-%20User%20manual.md)
+- [Input interaction matrix](docs/24%20-%20Input%20interaction%20matrix.md)
+- [ADR: assisted input and terminal keyboard behavior](docs/23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md)
 - [Windows installation guide](docs/20%20-%20Windows%20installation%20guide.md)
 - [Linux installation guide](docs/21%20-%20Linux%20installation%20guide.md)
 - [macOS installation guide](docs/22%20-%20macOS%20installation%20guide.md)
