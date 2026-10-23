@@ -1,0 +1,21 @@
+{
+  "name": "my-smart-terminal",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/FVilli/my-smart-terminal#readme",
+  "bugs": {
+    "url": "https://github.com/FVilli/my-smart-terminal/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FVilli/my-smart-terminal.git"
+  },
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "gsynchro": "^0.3.7"
+  }
+}

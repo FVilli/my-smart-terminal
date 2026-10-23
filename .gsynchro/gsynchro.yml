@@ -1,0 +1,29 @@
+# Shared project configuration for gsynchro.
+# Commit this file so every machine uses the same synchronization rules.
+# Set the local destination separately in .gsynchro/gsynchro.local.yml;
+# destination values here are legacy and will be migrated or ignored.
+
+# Seconds of inactivity before reconciling filesystem changes.
+debounce: 5
+
+# Maximum size of a synchronized file, in MiB.
+maxFileSizeMiB: 10
+
+# File extensions eligible for synchronization (case-insensitive).
+extensions:
+  - ".md"
+  - ".txt"
+  - ".png"
+  - ".jpg"
+  - ".jpeg"
+  - ".svg"
+  - ".pdf"
+
+# Glob patterns relative to the project root. Combine with "extensions"
+# above, e.g. "docs/**/*.*" to pick up every eligible extension under docs/.
+items:
+  - "*.*"
+  - "tasks/**/*.*"
+  - "milestones/**/*.*"
+  - "docs/**/*.*"
+  - "mockups/**/*.*"

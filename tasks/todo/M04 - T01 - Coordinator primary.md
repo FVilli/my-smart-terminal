@@ -1,0 +1,28 @@
+---
+title: "M04 - T01 - Coordinator primary"
+type: task
+project: smart-terminal
+created: 2026-10-22
+id: "M04-T01"
+milestone: "M04"
+depends_on: ""
+deliverables: "Coordinator primary"
+---
+<!-- gsynchro:v1 id=1f499c0e-15a9-47ca-8089-00cb4e1aa1bb registered=2026-10-23T07:58:05.254Z -->
+
+# M04 - T01 - Coordinator primary
+
+## Obiettivo
+Coordinator primary.
+
+## Implementazione vincolata
+Lock/leader locale, IPC client-secondary, heartbeat e takeover su crash.
+
+## Criteri di accettazione
+Una sola primary per macchina e UI indicator corretto.
+
+## Riferimenti
+`docs/01 - Architettura.md`; `docs/02 - UI e sessioni.md`; `docs/03 - Markdown schema.md`; `docs/04 - Sync Git.md`; `docs/05 - AI Voice Sicurezza.md`.
+
+## Non fare
+Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
