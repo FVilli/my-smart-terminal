@@ -1,5 +1,5 @@
 import { FileSessionIdAllocator, type AllocateSessionRequest, type AllocatedSession, type SessionIdAllocator } from '@smart-terminal/data';
-import type { SearchQueryRequest, SearchQueryResult } from '@smart-terminal/contracts';
+import type { SearchQueryRequest, SearchQueryResult, SyncStatusEvent } from '@smart-terminal/contracts';
 import {
   Coordinator,
   CoordinatorClientError,
@@ -19,6 +19,23 @@ export interface CoordinatorRuntimeOptions {
   hostname?: () => string;
   /** Solo test: tempi di heartbeat/stale/takeover. */
   timing?: Pick<CoordinatorOptions, 'heartbeatMs' | 'staleMs' | 'takeoverPollMs'>;
+}
+
+const positiveInt = (value: string | undefined): number | undefined => {
+  const parsed = Number(value);
+  return value !== undefined && Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+};
+
+/** Tempi dello scheduler Git da env (`SMART_TERMINAL_SYNC_*`); valori non validi => default. */
+export function resolveSyncTiming(env: NodeJS.ProcessEnv): { debounceMs?: number; maxWaitMs?: number; fetchIntervalMs?: number } {
+  const debounceMs = positiveInt(env['SMART_TERMINAL_SYNC_DEBOUNCE_MS']);
+  const maxWaitMs = positiveInt(env['SMART_TERMINAL_SYNC_MAX_WAIT_MS']);
+  const fetchIntervalMs = positiveInt(env['SMART_TERMINAL_SYNC_FETCH_INTERVAL_MS']);
+  return {
+    ...(debounceMs !== undefined && { debounceMs }),
+    ...(maxWaitMs !== undefined && { maxWaitMs }),
+    ...(fetchIntervalMs !== undefined && { fetchIntervalMs }),
+  };
 }
 
 interface PrimaryResources {
@@ -58,6 +75,7 @@ export class CoordinatorRuntime {
   readonly coordinator: Coordinator;
   readonly allocator: SessionIdAllocator;
   private resources: PrimaryResources | undefined;
+  private readonly syncListeners = new Set<(status: SyncStatusEvent) => void>();
   private readonly fileAllocator: FileSessionIdAllocator;
 
   constructor(private readonly options: CoordinatorRuntimeOptions) {
@@ -97,6 +115,17 @@ export class CoordinatorRuntime {
     return this.coordinator.onRoleChange(listener);
   }
 
+  /** Stato sync locale (solo primary); i secondary lo leggono via RPC `sync.status`. */
+  syncStatus(): SyncStatusEvent | undefined {
+    const git = this.resources?.git;
+    return git === undefined ? undefined : { ...git.status, remoteConfigured: git.remoteConfigured };
+  }
+
+  onSyncStatus(listener: (status: SyncStatusEvent) => void): () => void {
+    this.syncListeners.add(listener);
+    return () => this.syncListeners.delete(listener);
+  }
+
   /** Ricerca: indice locale se primary, altrimenti inoltrata al primary via RPC. */
   async query(request: SearchQueryRequest): Promise<SearchQueryResult> {
     const resources = this.resources;
@@ -131,6 +160,11 @@ export class CoordinatorRuntime {
       machine: this.paths.machine,
       remote: env['SMART_TERMINAL_GIT_REMOTE'],
       branch: env['SMART_TERMINAL_GIT_BRANCH'] || undefined,
+      ...resolveSyncTiming(env),
+      onStatusChange: (status) => {
+        const event: SyncStatusEvent = { ...status, remoteConfigured: git.remoteConfigured };
+        for (const listener of this.syncListeners) listener(event);
+      },
     });
     await git.start();
     const search = new SearchService(this.paths.dataRepoPath);

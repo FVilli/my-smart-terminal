@@ -33,7 +33,7 @@ export interface CoordinatorServices {
   searchUpsert(sessionDirectory: string): void;
   searchRefresh(): void;
   syncStatus(): SyncStatus;
-  /** Marca dirty ed esegue un sync esplicito (debounce/polling arriveranno con M04-T03). */
+  /** Marca dirty: il sync parte dallo scheduler (debounce/max wait). */
   syncDirty(): void;
 }
 

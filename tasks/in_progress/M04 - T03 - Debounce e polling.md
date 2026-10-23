@@ -26,3 +26,9 @@ Test fake timers sui trigger, nessun commit a vuoto.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `SyncScheduler` (debounce 10 s, max wait 60 s, fetch 15 s, coalescing, flush/stop), `GitEngine.fetchOnly()` serializzato, `GitSyncManager` con start/stop/flush e `remoteConfigured`, wiring main con env, evento `sync:status`.
+- Verifica: 225 test (13 fake timers + Git fetchOnly/manager) e `test:coordinator`; tsc/lint/build/smoke verdi.
+- Deviazione: il flush a chiusura della singola sessione non è esplicito; a fine sessione si notifica dirty e il flush avviene a stop runtime o chiusura app (timeout 5 s).

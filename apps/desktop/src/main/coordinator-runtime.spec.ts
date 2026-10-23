@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoordinatorClientError, RemoteSessionIdAllocator, type CoordinatorRequester } from '@smart-terminal/sync';
 import type { AllocatedSession, SessionIdAllocator } from '@smart-terminal/data';
-import { CoordinatorRuntime, SwitchingSessionIdAllocator } from './coordinator-runtime';
+import { CoordinatorRuntime, SwitchingSessionIdAllocator, resolveSyncTiming } from './coordinator-runtime';
 import { DataRuntime } from './data-runtime';
 import { HistoryService } from './history-service';
 
@@ -129,5 +129,30 @@ describe('CoordinatorRuntime', () => {
     runtime.notifyWrite('sessions/host/none');
     await runtime.stop();
     expect(fs.readdirSync(path.join(root, 'repo', '.git')).includes('HEAD')).toBe(true);
+  });
+
+  it('publishes sync status and commits only after the debounce', async () => {
+    const runtime = new CoordinatorRuntime({
+      userDataPath: path.join(root, 'ud'),
+      env: { ...env(), SMART_TERMINAL_SYNC_DEBOUNCE_MS: '80', SMART_TERMINAL_SYNC_MAX_WAIT_MS: '400' },
+      timing,
+    });
+    runtimes.push(runtime);
+    const states: string[] = [];
+    runtime.onSyncStatus((s) => states.push(`${s.state}:${s.remoteConfigured}`));
+    await runtime.start();
+    const dir = path.join(root, 'repo', 'sessions', 'host', 'd1');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'history.md'), 'x');
+    runtime.notifyWrite(dir);
+    expect(states).toContain('dirty:false');
+    expect(states).not.toContain('syncing:false');
+    await waitFor(() => states.includes('synced:false'));
+    expect(runtime.syncStatus()).toMatchObject({ state: 'synced', remoteConfigured: false });
+  });
+
+  it('parses sync timing env and ignores invalid values', () => {
+    expect(resolveSyncTiming({ SMART_TERMINAL_SYNC_DEBOUNCE_MS: '5', SMART_TERMINAL_SYNC_MAX_WAIT_MS: 'x', SMART_TERMINAL_SYNC_FETCH_INTERVAL_MS: '-1' })).toEqual({ debounceMs: 5 });
+    expect(resolveSyncTiming({})).toEqual({});
   });
 });

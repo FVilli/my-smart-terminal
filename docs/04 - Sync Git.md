@@ -26,3 +26,4 @@ Near-real-time, non realtime garantito. Nessun force push. Offline: file locali 
 - Stage/commit solo `sessions/`: `git add -- sessions`, `git commit -- sessions`, nessun commit a vuoto.
 - Fetch → rebase su `origin/<branch>`; conflitto: `rebase --abort`, file preservati, stato `error`. Push `HEAD:<branch>` con retry/backoff limitato su non-fast-forward.
 - Senza remote configurato: commit locali, nessun push; la UI deve mostrare "repo non configurato" e non bloccare il terminale.
+- Scheduler: debounce 10 s dall'ultimo dirty, max wait 60 s dall'attività continua, fetch ogni 15 s; un solo sync/fetch alla volta con coalescing. Parametri: `SMART_TERMINAL_SYNC_DEBOUNCE_MS`, `SMART_TERMINAL_SYNC_MAX_WAIT_MS`, `SMART_TERMINAL_SYNC_FETCH_INTERVAL_MS`. A stop/chiusura il manager tenta un flush con timeout di 5 s.

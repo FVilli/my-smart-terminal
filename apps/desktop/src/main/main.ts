@@ -147,6 +147,12 @@ app.whenReady().then(async () => {
     }
   });
 
+  runtime.onSyncStatus((status) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IPC_EVENTS.syncStatus, status);
+    }
+  });
+
   const dataRuntime = new DataRuntime({ userDataPath, allocator: runtime.allocator });
   const host = new TerminalHost(new NodePtyAdapter(), dataRuntime);
   terminalHost = host;

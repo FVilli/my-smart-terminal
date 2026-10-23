@@ -6,3 +6,4 @@ export * from './client';
 export * from './coordinator';
 export * from './git/git-engine';
 export * from './git/git-sync-manager';
+export * from './sync-scheduler';

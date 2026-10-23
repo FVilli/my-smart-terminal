@@ -118,6 +118,36 @@ export class GitEngine {
     });
   }
 
+  /** Solo `git fetch origin`: nessun commit/rebase/push. Aggiorna offline/errore; se il remote torna raggiungibile segna `dirty` per ritentare il push. */
+  fetchOnly(): Promise<SyncStatus> {
+    return this.serialize(async () => {
+      if (!this.hasRemote) {
+        return this.status;
+      }
+      try {
+        if (!this.initialised) {
+          await this.initLocked();
+        }
+        await this.git(['fetch', 'origin']);
+        if (this.current.state === 'offline') {
+          const { lastError: _cleared, ...rest } = this.current;
+          this.setStatus({ ...rest, state: 'dirty' });
+        }
+      } catch (error) {
+        if (error instanceof GitEngineError && error.kind === 'offline') {
+          this.setStatus({ ...this.current, state: 'offline', lastError: error.message });
+        } else {
+          this.setStatus({ ...this.current, state: 'error', lastError: error instanceof GitEngineError ? error.message : 'Unexpected git error' });
+        }
+      }
+      return this.status;
+    });
+  }
+
+  get hasRemote(): boolean {
+    return this.options.remote !== undefined && this.options.remote.length > 0;
+  }
+
   private finish(state: SyncState, error?: string): void {
     const lastSyncAt = state === 'synced' ? this.clock().toISOString() : this.current.lastSyncAt;
     const next: SyncStatus = { state: state === 'synced' && this.dirtyDuringSync ? 'dirty' : state };

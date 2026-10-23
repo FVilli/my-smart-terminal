@@ -225,17 +225,117 @@ describe('GitEngine', () => {
   });
 });
 
+describe('GitEngine.fetchOnly', () => {
+  it('fetches without committing, staging or pushing local files', async () => {
+    const a = machineRepo('a');
+    const b = machineRepo('b');
+    writeSession(a.repo, 'a', 's1', 'from-a');
+    await a.engine.syncOnce();
+    writeSession(b.repo, 'b', 's2', 'local-b');
+    await b.engine.initIfNeeded();
+    commands.length = 0;
+    const status = await b.engine.fetchOnly();
+    expect(status.state).not.toBe('error');
+    expect(commands.map((c) => c[0])).toEqual(['fetch']);
+    expect(git(b.repo, 'rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main')).toHaveLength(40);
+    expect(git(b.repo, 'status', '--porcelain')).toContain('sessions/');
+    expect(git(remote, 'ls-tree', '-r', '--name-only', 'main')).toBe('sessions/a/s1/history.md');
+  });
+
+  it('is a no-op without a remote', async () => {
+    const a = machineRepo('a', { remote: undefined });
+    await a.engine.initIfNeeded();
+    commands.length = 0;
+    expect(await a.engine.fetchOnly()).toMatchObject({ state: 'synced' });
+    expect(commands).toEqual([]);
+  });
+
+  it('sets offline without losing local files, and recovers to dirty when reachable again', async () => {
+    const a = machineRepo('a');
+    const file = writeSession(a.repo, 'a', 's1', 'precious');
+    await a.engine.syncOnce();
+    const moved = `${remote}.moved`;
+    fs.renameSync(remote, moved);
+    expect(await a.engine.fetchOnly()).toMatchObject({ state: 'offline' });
+    expect(fs.readFileSync(file, 'utf8')).toBe('precious');
+    fs.renameSync(moved, remote);
+    const recovered = await a.engine.fetchOnly();
+    expect(recovered.state).toBe('dirty');
+    expect(recovered.lastError).toBeUndefined();
+  });
+
+  it('serialises with syncOnce', async () => {
+    const a = machineRepo('a');
+    writeSession(a.repo, 'a', 's1');
+    const [, fetched] = await Promise.all([a.engine.syncOnce(), a.engine.fetchOnly()]);
+    expect(fetched.state).toBe('synced');
+    expect(git(a.repo, 'rev-list', '--count', 'HEAD')).toBe('1');
+  });
+});
+
 describe('GitSyncManager', () => {
-  it('syncs on markDirty and exposes status through services', async () => {
+  it('debounces markDirty through the scheduler and exposes status through services', async () => {
     const repo = path.join(root, 'a');
-    const manager = new GitSyncManager({ repoPath: repo, machine: 'a', remote });
+    const manager = new GitSyncManager({ repoPath: repo, machine: 'a', remote, debounceMs: 60, maxWaitMs: 500, fetchIntervalMs: 10_000, onCommand: (args) => commands.push([...args]) });
     await manager.start();
     writeSession(repo, 'a', 's1');
     const services = manager.asServices();
     services.syncDirty();
     services.syncDirty();
-    await manager.stop();
-    expect(services.syncStatus()).toMatchObject({ state: 'synced' });
+    expect(services.syncStatus().state).toBe('dirty');
+    expect(commands.some((c) => c[0] === 'commit')).toBe(false);
+    await waitUntil(() => services.syncStatus().state === 'synced');
     expect(git(remote, 'ls-tree', '-r', '--name-only', 'main')).toBe('sessions/a/s1/history.md');
+    expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('1');
+    await manager.stop();
+  });
+
+  it('stop flushes a pending dirty immediately and creates no empty commit', async () => {
+    const repo = path.join(root, 'a');
+    const manager = new GitSyncManager({ repoPath: repo, machine: 'a', remote });
+    await manager.start();
+    writeSession(repo, 'a', 's1');
+    manager.markDirty();
+    await manager.stop();
+    expect(manager.status.state).toBe('synced');
+    expect(git(remote, 'ls-tree', '-r', '--name-only', 'main')).toBe('sessions/a/s1/history.md');
+    manager.markDirty();
+    await manager.flush();
+    expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('1');
+  });
+
+  it('periodic fetch picks up remote changes without committing local files', async () => {
+    const a = machineRepo('a');
+    writeSession(a.repo, 'a', 's1');
+    await a.engine.syncOnce();
+    commands.length = 0;
+    const repoB = path.join(root, 'b');
+    const manager = new GitSyncManager({ repoPath: repoB, machine: 'b', remote, fetchIntervalMs: 40, onCommand: (args) => commands.push([...args]) });
+    await manager.start();
+    writeSession(repoB, 'b', 's2');
+    await waitUntil(() => commands.some((c) => c[0] === 'fetch'));
+    await manager.stop();
+    expect(commands.some((c) => c[0] === 'commit' || c[0] === 'push')).toBe(false);
+    expect(git(repoB, 'status', '--porcelain')).toContain('sessions/');
+  });
+
+  it('flush at close commits local files even when the remote is offline', async () => {
+    const repo = path.join(root, 'a');
+    const manager = new GitSyncManager({ repoPath: repo, machine: 'a', remote: path.join(root, 'missing.git'), backoffMs: 1 });
+    await manager.start();
+    const file = writeSession(repo, 'a', 's1', 'keep');
+    manager.markDirty();
+    await manager.stop();
+    expect(manager.status.state).toBe('offline');
+    expect(fs.readFileSync(file, 'utf8')).toBe('keep');
+    expect(git(repo, 'rev-list', '--count', 'HEAD')).toBe('1');
   });
 });
+
+async function waitUntil(predicate: () => boolean, timeoutMs = 10_000): Promise<void> {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error('waitUntil timeout');
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}

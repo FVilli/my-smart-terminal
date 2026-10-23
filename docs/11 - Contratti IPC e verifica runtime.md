@@ -59,7 +59,8 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 - Lock `userData/coordinator/primary.lock` (mkdir atomico, owner.json, heartbeat 3 s, stale 10 s, recovery con nonce); un solo primary per macchina.
 - Socket Unix `userData/coordinator/coordinator.sock` (`0700`/`0600`) o named pipe Windows; token `0600`; protocollo JSON line-delimited max 1 MiB.
 - Metodi: `ping`, `session.allocate`, `search.query`, `search.upsert`, `search.refresh`, `sync.status`, `sync.dirty` (T04 aggiunge clipboard).
-- `AppRuntimeInfo.isPrimary` ed evento `app:role-changed`; footer dinamico.
+- `AppRuntimeInfo.isPrimary` ed evento `app:role-changed`; evento `sync:status` con `{state,lastSyncAt?,lastError?,remoteConfigured}`; footer dinamico.
+- Scheduler Git: debounce 10 s, max wait 60 s, fetch 15 s, flush a stop; env `SMART_TERMINAL_SYNC_*`.
 - Git: `GitEngine` seriale, stage solo `sessions/`, commit path-scoped, fetch/rebase/push senza force, conflitti con abort e file preservati, offline con commit locale. Env: `SMART_TERMINAL_GIT_REMOTE`, `SMART_TERMINAL_GIT_BRANCH`.
 
 ## PTY

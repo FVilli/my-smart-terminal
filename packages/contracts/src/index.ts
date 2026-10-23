@@ -23,6 +23,7 @@ export const IPC_EVENTS = {
   terminalData: 'terminal:data',
   terminalExit: 'terminal:exit',
   roleChanged: 'app:role-changed',
+  syncStatus: 'sync:status',
 } as const;
 
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
@@ -45,6 +46,14 @@ export interface AppRuntimeInfo {
   isPackaged: boolean;
   /** Questa istanza e' il coordinator primary della macchina. */
   isPrimary: boolean;
+}
+
+/** Stato sync pubblicato dal primary alle finestre (evento `sync:status`). */
+export interface SyncStatusEvent {
+  state: 'synced' | 'dirty' | 'syncing' | 'offline' | 'error';
+  lastSyncAt?: string;
+  lastError?: string;
+  remoteConfigured: boolean;
 }
 
 export interface RoleChangedEvent {
