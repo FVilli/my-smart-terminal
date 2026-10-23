@@ -16,13 +16,17 @@ AI per la correzione dei refusi e riconoscimento vocale (STT) sono opzionali. Sh
 
 ## 2. Installazione e requisiti
 
-Scaricare l’artefatto per il proprio sistema:
+La release pubblica sarà su **GitHub Releases**:
 
-- Linux: `.AppImage` oppure `.deb`;
-- macOS: `.dmg`;
-- Windows: installer `.exe` (NSIS).
+**https://github.com/FVilli/my-smart-terminal/releases/latest**
 
-Gli artefatti della V1 sono **non firmati** finché non saranno disponibili i certificati: il sistema operativo può quindi mostrare un avviso. Verificare sempre il checksum SHA-256 pubblicato insieme all’artefatto. La V1 non include auto-update: gli aggiornamenti sono manuali.
+Stato v1.0.0:
+
+- Linux: `.AppImage` e `.deb` **pronti** (build locale in `release/`), pubblicazione GitHub in preparazione;
+- macOS: `.dmg` prodotto dalla pipeline CI macOS;
+- Windows: installer `.exe` (NSIS) prodotto dalla pipeline CI Windows.
+
+Se la release non è ancora visibile, gli artefatti Linux si trovano nella cartella `release/` del repository. Gli artefatti della V1 sono **non firmati** finché non saranno disponibili i certificati: il sistema operativo può quindi mostrare un avviso. Verificare sempre il checksum SHA-256 pubblicato insieme all’artefatto (`release/SHA256SUMS`). La V1 non include auto-update: gli aggiornamenti sono manuali.
 
 Per usare le funzioni di sviluppo servono Node.js 24, Git e OpenSSH. SSH usa il client di sistema e `~/.ssh/config`.
 
