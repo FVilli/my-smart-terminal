@@ -1,7 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
-import os from 'node:os';
 import path from 'node:path';
 import {
   MAX_LINE_BYTES,
@@ -28,9 +27,10 @@ export function coordinatorSocketDirectory(userDataPath: string, platform: NodeJ
   if (Buffer.byteLength(path.join(coordinatorDir, SOCKET_FILE_NAME)) < UNIX_SOCKET_MAX_PATH) {
     return coordinatorDir;
   }
-  const hash = createHash('sha256').update(path.resolve(userDataPath)).digest('hex').slice(0, 16);
+  const hash = createHash('sha256').update(path.resolve(userDataPath)).digest('hex').slice(0, 12);
   const uid = typeof process.getuid === 'function' ? process.getuid() : 'user';
-  return path.join(os.tmpdir(), `smart-terminal-${uid}-${hash}`);
+  // Keep the fallback short on every Unix: macOS temp dirs can be long enough to exceed sockaddr.
+  return path.join('/tmp', `st-${uid}-${hash}`);
 }
 
 export function coordinatorEndpoint(userDataPath: string, platform: NodeJS.Platform = process.platform): string {

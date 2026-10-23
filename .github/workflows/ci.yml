@@ -25,6 +25,11 @@ jobs:
         run: npm ci
       - name: Electron binary
         run: node node_modules/electron/install.js
+      - name: Electron sandbox permissions (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
       - name: Lint
         run: npm run lint
       - name: Typecheck
