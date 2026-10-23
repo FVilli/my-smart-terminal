@@ -21,11 +21,12 @@ This release completes modules M01–M06:
 
 ### Installation and platforms
 
-The following electron-builder artifacts are planned:
+The following v1.0.0 artifacts are published on GitHub Releases:
 
-- Linux: AppImage and `.deb`;
-- macOS: `.dmg`;
-- Windows: `.exe` installer.
+- Linux x86_64: `Smart.Terminal-1.0.0-linux-x86_64.AppImage` and `Smart.Terminal-1.0.0-linux-amd64.deb`;
+- macOS Apple Silicon: `Smart.Terminal-1.0.0-mac-arm64.dmg`;
+- Windows x64: `Smart.Terminal-1.0.0-win-x64.exe`;
+- `SHA256SUMS` for all artifacts.
 
 After installing on Linux, launch **Smart Terminal** from the applications menu or run `"/opt/Smart Terminal/smart-terminal"`; the AppImage runs directly. On macOS open the app from Applications, on Windows from the Start menu.
 

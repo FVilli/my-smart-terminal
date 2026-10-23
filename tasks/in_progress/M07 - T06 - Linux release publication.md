@@ -26,3 +26,9 @@ docs/09; electron-builder.yml; release workflow.
 
 ## Do not
 Do not claim the artifacts are signed.
+
+## Outcome
+- v1.0.0 published on GitHub Releases: AppImage and .deb.
+- CI Linux job green (lint, typecheck, tests, Electron smokes, package, checksums).
+- Downloaded AppImage verified against SHA256SUMS and launched with smoke test on Xvfb; English UI confirmed.
+- Launch instructions documented for AppImage, .deb (`/opt/Smart Terminal/smart-terminal`) and applications menu.

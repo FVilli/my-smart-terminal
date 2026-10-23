@@ -20,22 +20,23 @@ AI typo correction and speech recognition (STT) are optional. Shell and PTY cont
 
 ## 2. Installation and requirements
 
-The public release will be on **GitHub Releases**:
+The public release is **v1.0.0** on GitHub Releases:
 
 **https://github.com/FVilli/my-smart-terminal/releases/latest**
 
-v1.0.0 status:
+Published artifacts:
 
-- Linux: `.AppImage` and `.deb` **ready** (local build in `release/`), GitHub publication pending;
-- macOS: `.dmg` produced by the macOS CI pipeline;
-- Windows: `.exe` installer (NSIS) produced by the Windows CI pipeline.
+- Linux x86_64: `Smart.Terminal-1.0.0-linux-x86_64.AppImage` and `Smart.Terminal-1.0.0-linux-amd64.deb`;
+- macOS Apple Silicon: `Smart.Terminal-1.0.0-mac-arm64.dmg`;
+- Windows x64: `Smart.Terminal-1.0.0-win-x64.exe`;
+- all platforms: `SHA256SUMS`.
 
-If the release is not yet visible, Linux artifacts are in the repository's `release/` directory. V1 artifacts are **unsigned** until certificates are available, so the operating system may show a warning. Always verify the SHA-256 checksum published with the artifact (`release/SHA256SUMS`). V1 has no auto-update: updates are manual.
+V1 artifacts are **unsigned** until certificates are available, so the operating system may show a warning. Always verify the SHA-256 checksum from the release (`SHA256SUMS`) before installing. V1 has no auto-update: updates are manual.
 
 ### Launching after installation
 
 - **AppImage**: run the file directly (after `chmod +x`). No installation step is required.
-- **.deb**: after `sudo dpkg -i "Smart Terminal-1.0.0-linux-amd64.deb"`, open **Smart Terminal** from the applications menu, or run:
+- **.deb**: after `sudo dpkg -i "Smart.Terminal-1.0.0-linux-amd64.deb"`, open **Smart Terminal** from the applications menu, or run:
 
   ```bash
   "/opt/Smart Terminal/smart-terminal"
@@ -123,7 +124,7 @@ The repository can be a Git clone with configurable remote and branch. The coord
 - **Stale lock**: after a crash, the new primary recovers the lock when the previous process is no longer alive; wait for takeover and do not manually delete files while the app is active.
 - **Missing keyring**: on Linux, the token is not persisted and can be used only in memory for the session; configure a secure keyring for persistent cloud use.
 - **Logs**: look for Electron process output and app logs in the user data directory; logs must not contain tokens, audio, or AI text. Interface errors are sanitized.
-- **AppImage and FUSE**: if the AppImage does not start, run `"Smart Terminal-1.0.0-linux-x86_64.AppImage" --appimage-extract-and-run`.
+- **AppImage and FUSE**: if the AppImage does not start, run `"Smart.Terminal-1.0.0-linux-x86_64.AppImage" --appimage-extract-and-run`.
 
 ## 8. V1 limits and compatibility
 

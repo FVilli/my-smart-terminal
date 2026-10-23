@@ -26,3 +26,9 @@ docs/09; release workflow; electron-builder.yml.
 
 ## Do not
 Do not claim Windows code signing.
+
+## Outcome
+- Windows build job green on GitHub Actions; `Smart.Terminal-1.0.0-win-x64.exe` published.
+- SHA-256 verified against the published SHA256SUMS.
+- Artifact is unsigned; SmartScreen warning documented.
+- CI package step fixed to avoid implicit publishing (`--publish never`).

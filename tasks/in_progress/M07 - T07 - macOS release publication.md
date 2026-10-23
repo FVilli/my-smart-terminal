@@ -26,3 +26,9 @@ docs/09; release workflow; electron-builder.yml.
 
 ## Do not
 Do not claim Apple signing/notarization.
+
+## Outcome
+- macOS build job green on GitHub Actions; `Smart.Terminal-1.0.0-mac-arm64.dmg` published (Apple Silicon).
+- SHA-256 verified against the published SHA256SUMS.
+- Artifact is unsigned; installation/Gatekeeper instructions documented.
+- Limitation: the current release has an arm64 DMG only; Intel macOS is not yet published.
