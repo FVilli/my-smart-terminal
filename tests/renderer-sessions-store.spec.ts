@@ -19,7 +19,16 @@ describe('SessionsStore', () => {
     writeTerminal.mockResolvedValue(undefined);
     createTerminal.mockImplementation(() => {
       nextId += 1;
-      return Promise.resolve({ sessionId: `id-${nextId}`, kind: 'local', pid: 100 + nextId, cwd: '/' });
+      return Promise.resolve({
+        sessionId: `id-${nextId}`,
+        label: `S${nextId}`,
+        kind: 'local',
+        pid: 100 + nextId,
+        cwd: '/',
+        machine: 'host',
+        sessionDirectory: `sessions/host/2026-01-01_00.00_S${nextId}_local`,
+        startedAt: '2026-01-01T00:00:00+00:00',
+      });
     });
     vi.stubGlobal('smartTerminal', {
         createTerminal,

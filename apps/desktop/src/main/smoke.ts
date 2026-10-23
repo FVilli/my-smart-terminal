@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { app, type BrowserWindow } from 'electron';
+import { parseSessionDocument } from '@smart-terminal/data';
 
 const IPC_SCRIPT = `(async () => {
   const api = window.smartTerminal;
@@ -59,7 +62,7 @@ const PTY_SCRIPT = `(async () => {
   try {
     const info = await api.createTerminal({ kind: 'local', cols: 80, rows: 24 });
     sessionId = info.sessionId;
-    result.created = typeof sessionId === 'string' && Number.isInteger(info.pid);
+    result.created = /^S[1-9][0-9]*$/.test(sessionId) && info.label === sessionId && Number.isInteger(info.pid) && typeof info.machine === 'string' && info.sessionDirectory.startsWith('sessions/' + info.machine + '/') && typeof info.startedAt === 'string';
     result.promptOutput = await waitFor(() => output.length > 0, 8000);
     await sleep(300);
     const command = isWindows ? "Write-Output ('SMART_PTY_' + 'OK')\\r" : "printf 'SMART_PTY_%s\\\\n' OK\\r";
@@ -151,13 +154,41 @@ const TABS_SCRIPT = `(async () => {
   return result;
 })()`;
 
+/** Verifica nel repo dati temporaneo: counter.md, due directory sessione con i tre file, S1 chiusa con ended_at. */
+function verifyTabsDataRepo(): boolean {
+  const repo = process.env['SMART_TERMINAL_DATA_REPO'];
+  if (repo === undefined || repo.length === 0) {
+    return false;
+  }
+  try {
+    const sessionsRoot = path.resolve(repo, 'sessions');
+    const [machine] = fs.readdirSync(sessionsRoot);
+    if (machine === undefined) {
+      return false;
+    }
+    const machineDir = path.join(sessionsRoot, machine);
+    const dirs = fs.readdirSync(machineDir).filter((name) => name !== 'counter.md').sort();
+    const complete = dirs.every((dir) =>
+      ['session.md', 'history.md', 'clipboard.md'].every((file) => fs.existsSync(path.join(machineDir, dir, file))),
+    );
+    const first = dirs.find((dir) => dir.includes('_S1_'));
+    const closed =
+      first !== undefined &&
+      parseSessionDocument(fs.readFileSync(path.join(machineDir, first, 'session.md'), 'utf8')).meta.ended_at !== undefined;
+    return fs.existsSync(path.join(machineDir, 'counter.md')) && dirs.length === 2 && complete && closed;
+  } catch {
+    return false;
+  }
+}
+
 /** Smoke UI attivo con SMART_TERMINAL_TABS_SMOKE=1: crea/seleziona/chiude tab via DOM e verifica terminal:list. */
 export function runTabsSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {
       void window.webContents
         .executeJavaScript(TABS_SCRIPT)
-        .then((result: Record<string, boolean>) => {
+        .then((uiResult: Record<string, boolean>) => {
+          const result = { ...uiResult, markdownFilesCreated: verifyTabsDataRepo() };
           const ok = Object.values(result).every((value) => value === true);
           console.log('SMART_TERMINAL_TABS_SMOKE_RESULT', JSON.stringify({ ...result, ok }));
           app.exit(ok ? 0 : 1);

@@ -15,7 +15,8 @@ export type TerminalErrorCode =
   | 'TERMINAL_INVALID_DIMENSIONS'
   | 'TERMINAL_DATA_TOO_LARGE'
   | 'TERMINAL_UNKNOWN_SESSION'
-  | 'TERMINAL_SPAWN_FAILED';
+  | 'TERMINAL_SPAWN_FAILED'
+  | 'TERMINAL_SESSION_ALLOCATION_FAILED';
 
 /** Errore con solo un codice: nessun path o dettaglio di sistema nel messaggio. */
 export class TerminalError extends Error {
@@ -91,12 +92,22 @@ export class SessionManager {
     return () => set.delete(listener);
   }
 
-  create(request: CreateSessionRequest): SessionInfo {
+  /** Valida la richiesta e risolve i default senza avviare nulla. */
+  prepare(request: CreateSessionRequest): { cwd: string; cols: number; rows: number } {
     const cwd = this.resolveCwd(request.cwd);
     const cols = request.cols ?? DEFAULT_COLS;
     const rows = request.rows ?? DEFAULT_ROWS;
     if (!isValidDimension(cols) || !isValidDimension(rows)) {
       throw new TerminalError('TERMINAL_INVALID_DIMENSIONS');
+    }
+    return { cwd, cols, rows };
+  }
+
+  /** `sessionId` esplicito opzionale (es. `S<n>` assegnato dal data runtime); default: UUID generato. */
+  create(request: CreateSessionRequest, sessionId?: string): SessionInfo {
+    const { cwd, cols, rows } = this.prepare(request);
+    if (sessionId !== undefined && this.sessions.has(sessionId)) {
+      throw new TerminalError('TERMINAL_SPAWN_FAILED');
     }
 
     const command = buildLocalShellCommand(this.env, this.platform);
@@ -107,17 +118,17 @@ export class SessionManager {
       throw new TerminalError('TERMINAL_SPAWN_FAILED');
     }
 
-    const sessionId = this.generateId();
+    const id = sessionId ?? this.generateId();
     const session: Session = {
-      info: { sessionId, kind: 'local', pid: process.pid, cwd },
+      info: { sessionId: id, kind: 'local', pid: process.pid, cwd },
       process,
       createdAt: this.clock(),
     };
-    this.sessions.set(sessionId, session);
+    this.sessions.set(id, session);
 
     process.onData((data) => {
-      if (this.sessions.get(sessionId) === session) {
-        this.emit('data', { sessionId, data });
+      if (this.sessions.get(id) === session) {
+        this.emit('data', { sessionId: id, data });
       }
     });
     process.onExit((exit) => this.handleExit(session, exit));

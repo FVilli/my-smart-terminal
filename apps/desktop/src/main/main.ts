@@ -6,6 +6,7 @@ import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { readWindowSize, runCapture } from './capture';
 import { runEditorSmoke, runSidebarSmoke, runSmoke, runTabsSmoke } from './smoke';
+import { DataRuntime } from './data-runtime';
 import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
@@ -31,7 +32,7 @@ const editorSmokeTest = process.env['SMART_TERMINAL_EDITOR_SMOKE'] === '1';
 const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
-const terminalHost = new TerminalHost(new NodePtyAdapter());
+let terminalHost: TerminalHost | undefined;
 
 function registerAppProtocol(): void {
   const rendererRoot = path.join(__dirname, '..', 'renderer', 'browser');
@@ -88,6 +89,9 @@ function createWindow(): BrowserWindow {
     void window.loadURL(`${APP_SCHEME}://${APP_HOST}/index.html`);
   }
 
+  if (terminalHost === undefined) {
+    throw new Error('Terminal host not initialised');
+  }
   trackIpcWindow(window, ipcSenderIds, terminalHost);
 
   if (capturePath) {
@@ -114,8 +118,10 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  const host = new TerminalHost(new NodePtyAdapter(), new DataRuntime({ userDataPath: app.getPath('userData') }));
+  terminalHost = host;
   registerAppProtocol();
-  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`, terminalHost);
+  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`, host);
   createWindow();
 
   app.on('activate', () => {
@@ -125,7 +131,7 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('before-quit', () => terminalHost.closeAll());
+app.on('before-quit', () => terminalHost?.closeAll());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -79,6 +79,13 @@ describe('buildLocalShellCommand', () => {
 });
 
 describe('SessionManager', () => {
+  it('uses an explicit session id and rejects duplicates', () => {
+    const { manager } = setup();
+    expect(manager.create({ kind: 'local' }, 'S7').sessionId).toBe('S7');
+    expect(() => manager.create({ kind: 'local' }, 'S7')).toThrow('TERMINAL_SPAWN_FAILED');
+    expect(manager.create({ kind: 'local' }).sessionId).toBe('s1');
+  });
+
   it('creates a session and forwards output', () => {
     const { adapter, manager } = setup();
     const onData = vi.fn();

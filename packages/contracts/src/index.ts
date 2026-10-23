@@ -43,10 +43,17 @@ export interface TerminalCreateRequest {
 }
 
 export interface TerminalSessionInfo {
+  /** Coincide con `label` (`S<n>`, progressivo per macchina). */
   sessionId: string;
+  label: string;
   kind: 'local';
   pid: number;
   cwd: string;
+  machine: string;
+  /** Directory sessione relativa al repo dati: `sessions/<machine>/<dir>`. */
+  sessionDirectory: string;
+  /** ISO 8601 con offset. */
+  startedAt: string;
 }
 
 export interface TerminalWriteRequest {

@@ -69,7 +69,7 @@ export const noArguments = (args: unknown[]): args is [] => args.length === 0;
 
 /** Operazioni terminale legate alla finestra (senderId) che le richiede. */
 export interface TerminalGateway {
-  create(senderId: number, request: TerminalCreateRequest): TerminalSessionInfo;
+  create(senderId: number, request: TerminalCreateRequest): Promise<TerminalSessionInfo>;
   write(senderId: number, sessionId: string, data: string): void;
   resize(senderId: number, sessionId: string, cols: number, rows: number): void;
   close(senderId: number, sessionId: string): void;

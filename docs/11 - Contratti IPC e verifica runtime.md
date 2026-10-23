@@ -28,11 +28,27 @@ Documento operativo: elenca i confini main/preload/renderer e i comandi di verif
 | `terminal:resize` | `{ sessionId, cols, rows }` | `void` |
 | `terminal:close` | `{ sessionId }` | `void` |
 | `terminal:list` | nessuno | `TerminalSessionInfo[]` |
+| `history:record` (T03) | `{ sessionId, text, agent? }` | `{ recorded: boolean }` |
+| `clipboard:configure` (T04) | `{ enabled?, paused? }` | stato clipboard |
+| `clipboard:set-active` (T04) | `{ sessionId }` | `void` |
+| `clipboard:clear` (T04) | nessuno | `void` |
+| `search:query` (T05) | `{ query, machine?, sessionId?, from?, to? }` | risultati (cap 100) |
 
 Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, exitCode, signal? }`). Ogni finestra ha il proprio `SessionManager`; alla chiusura/distruzione i PTY vengono terminati.
 
 ## API preload
 `ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
+
+## Persistenza runtime (M03)
+- Repo dati: `SMART_TERMINAL_DATA_REPO` oppure `userData/data`; `sessions/<machine>/` creato localmente. Machine: `SMART_TERMINAL_MACHINE` oppure hostname normalizzato.
+- `counter.md` in `sessions/<machine>/` con `schema_version`, `machine`, `last_session`, `updated_at`; prenotazione atomica sotto lock in `userData/coordinator/locks`, recovery stale, nessun riuso.
+- Directory sessione `YYYY-MM-DD_HH.mm_S<n>_<local|alias>` con `session.md`, `history.md`, `clipboard.md`.
+- Frontmatter comune: `schema_version: 1`, `session_id`, `machine`, `created_at`; `session.md` aggiunge `window_id`, `kind`, `ssh_alias?`, `cwd_initial`, `started_at`, `ended_at?`.
+- Eventi history: `## <ISO8601> · <id>`, campi `source`, `agent?`, `cwd?`, blocco fenced `text`; clipboard: `type`, `source?`, `hash`, blocco `text`. Fence dinamica, dedupe per id/hash.
+- `TerminalSessionInfo` espone `sessionId`/`label` (`S<n>`), `machine`, `sessionDirectory`, `startedAt`.
+- History M03: solo invii espliciti dall'editor assistito (`source: assisted`); nessun keystroke o prompt TUI. Deviazione documentata in `docs/03`.
+- Clipboard: opt-in, polling ~800 ms, hash SHA-256, limite 32 KiB, filtro segreti best-effort, pausa/cancellazione, associazione alla sessione attiva.
+- Indice ricerca: rebuild all'avvio, aggiornamento sulle scritture dell'app, refresh dopo Git; solo Markdown sotto `sessions/`, niente symlink, limiti di dimensione.
 
 ## PTY
 - `packages/terminal` contiene interfacce e `SessionManager` testabile; l'adapter nativo è nel subpath `@smart-terminal/terminal/node-pty` e va importato solo dal main.
@@ -44,7 +60,8 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | --- | --- |
 | `npm run lint` | ESLint su TS/HTML |
 | `npx tsc -p tsconfig.json --noEmit` | typecheck main/packages |
-| `npm run test` | unit test Vitest (IPC, SessionManager) |
+| `npm run test` | unit test Vitest (IPC, SessionManager, data schema/allocatore, runtime) |
+| `npm run test:data` | test mirati del package data e del runtime dati |
 | `npm run build` | bundle main/preload + Angular production |
 | `npm run test:ipc-smoke` | finestra Electron, API valida, rifiuto payload/canale, renderer senza Node |
 | `npm run test:pty-smoke` | rebuild nativo + shell reale: output, input, resize, list, exit |
@@ -63,4 +80,4 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 
 ## Debito noto
 - Il protocollo `smart-terminal://` e `will-navigate` saranno oggetto di hardening in M06 (origin esatta, path traversal, null byte).
-- La persistenza Markdown, gli ID atomici, il coordinatore e la sync Git non sono ancora attivi (M03/M04).
+- Il coordinatore, la sync Git e la ricerca globale in UI non sono ancora attivi (M04).

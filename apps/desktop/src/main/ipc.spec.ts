@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { IPC_CHANNELS } from '@smart-terminal/contracts';
+import { TerminalError } from '@smart-terminal/terminal';
 import {
   MAX_PAYLOAD_BYTES,
   createChannelMap,
@@ -12,14 +13,25 @@ import {
 } from './ipc';
 
 const env = { appVersion: '1.2.3', platform: 'linux', isPackaged: false };
-const gateway: TerminalGateway = {
-  create: vi.fn((_id, request) => ({ sessionId: 's1', kind: request.kind, pid: 1, cwd: '/tmp' })),
+const gateway = {
+  create: vi.fn((_id, request) =>
+    Promise.resolve({
+      sessionId: 'S1',
+      label: 'S1',
+      kind: request.kind,
+      pid: 1,
+      cwd: '/tmp',
+      machine: 'host',
+      sessionDirectory: 'sessions/host/2026-01-01_00.00_S1_local',
+      startedAt: '2026-01-01T00:00:00+00:00',
+    }),
+  ),
   write: vi.fn(),
   resize: vi.fn(),
   close: vi.fn(),
   list: vi.fn(() => []),
 };
-const channels = createChannelMap(env, gateway);
+const channels = createChannelMap(env, gateway as TerminalGateway);
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };
 const sender: SenderInfo = { senderId: 7, isMainFrame: true, frameUrl: 'smart-terminal://bundle/index.html' };
 
@@ -97,9 +109,18 @@ describe('terminal channels', () => {
   const resize = channels[IPC_CHANNELS.terminalResize];
   const close = channels[IPC_CHANNELS.terminalClose];
 
+  it('maps async allocation failures to a sanitized error code', async () => {
+    gateway.create.mockRejectedValueOnce(new TerminalError('TERMINAL_SESSION_ALLOCATION_FAILED'));
+    await expect(dispatchIpc(create, sender, policy, [{ kind: 'local' }])).rejects.toThrow('TERMINAL_SESSION_ALLOCATION_FAILED');
+    gateway.create.mockRejectedValueOnce(new Error('/secret/path EACCES'));
+    await expect(dispatchIpc(create, sender, policy, [{ kind: 'local' }])).rejects.toThrow('IPC_INTERNAL');
+  });
+
   it('dispatches valid requests with the sender id', async () => {
     await expect(dispatchIpc(create, sender, policy, [{ kind: 'local', cwd: '/tmp' }])).resolves.toMatchObject({
-      sessionId: 's1',
+      sessionId: 'S1',
+      label: 'S1',
+      machine: 'host',
     });
     expect(gateway.create).toHaveBeenCalledWith(7, { kind: 'local', cwd: '/tmp' });
     await dispatchIpc(write, sender, policy, [{ sessionId: 's1', data: 'ls\n' }]);

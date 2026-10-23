@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { SMOKE_DATA_DIR, resetSmokeData } from './reset-smoke-data.mjs';
 
 const require = createRequire(import.meta.url);
 const electronBinary = require('electron');
@@ -22,8 +23,10 @@ let failed = false;
 for (const { width, height } of viewports) {
   const screenshot = path.join(outDir, `layout-${width}x${height}.png`);
   fs.rmSync(screenshot, { force: true });
+  resetSmokeData();
   const env = {
     ...process.env,
+    SMART_TERMINAL_DATA_REPO: SMOKE_DATA_DIR,
     SMART_TERMINAL_CAPTURE: screenshot,
     SMART_TERMINAL_WINDOW_WIDTH: String(width),
     SMART_TERMINAL_WINDOW_HEIGHT: String(height),

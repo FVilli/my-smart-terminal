@@ -26,3 +26,9 @@ Roundtrip parse/write test e file leggibili.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: frontmatter flat con campi extra conservati/rifiutabili, path builder/parser con normalizzazione e anti-traversal, schema `session.md`/`history.md`/`clipboard.md`, eventi con fence dinamica e dedupe, scritture atomiche.
+- Verifica: test roundtrip con unicode/newline/backtick, campi invalidi, path traversal, dedupe; inclusi in `npm run test` (101 test totali).
+- Correzione in review: aggiunto `created_at` a `session.md` come richiesto dal frontmatter comune di `docs/03`.

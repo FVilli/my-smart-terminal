@@ -9,3 +9,4 @@ coverage/
 release/
 apps/desktop/build/
 *.log
+.smoke-data/

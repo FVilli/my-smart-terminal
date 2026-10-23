@@ -18,7 +18,6 @@ export class SessionsStore {
   private readonly draftsState = signal<ReadonlyMap<string, string>>(new Map());
   private readonly createErrorState = signal<string | null>(null);
   private readonly creatingState = signal(false);
-  private labelCounter = 0;
 
   /** Output ricevuto prima che il pannello si agganci (la create risponde dopo i primi dati). */
   private readonly buffers = new Map<string, string[]>();
@@ -46,11 +45,13 @@ export class SessionsStore {
     this.createErrorState.set(null);
     try {
       const info = await this.api.createTerminal({ kind: 'local', cols: 80, rows: 24 });
-      this.labelCounter += 1;
       const session: TerminalSessionView = {
         id: info.sessionId,
-        label: `S${this.labelCounter}`,
-        target: 'local',
+        label: info.label,
+        target: `${info.machine}/local`,
+        machine: info.machine,
+        sessionDirectory: info.sessionDirectory,
+        startedAt: info.startedAt,
         kind: 'local',
         status: 'running',
         pid: info.pid,
