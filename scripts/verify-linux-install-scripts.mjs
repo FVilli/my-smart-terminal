@@ -4,6 +4,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
+if (process.platform !== 'linux') {
+  console.log('Linux install scripts verification skipped: Linux-only harness.');
+  process.exit(0);
+}
+
 const root = process.cwd();
 const scripts = ['install.sh', 'uninstall.sh'];
 function fail(message) { console.error(`Linux install scripts verification failed: ${message}`); process.exit(1); }
