@@ -69,6 +69,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     .editor:focus { outline: 1px solid var(--accent); }
     .icon { background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; width: 44px; cursor: pointer; }
     .icon:disabled { color: var(--text-muted); cursor: default; }
+    .icon:not(:disabled):hover { border-color: var(--accent); }
     .ai { color: var(--accent); font-weight: 700; }
     .voice { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px; max-width: 96px; }
     .voice .icon { flex: 1; min-height: 32px; }

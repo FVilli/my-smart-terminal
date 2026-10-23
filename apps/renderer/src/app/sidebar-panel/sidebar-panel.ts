@@ -146,7 +146,8 @@ export function shortTimestamp(timestamp: string): string {
     .notice { margin: 0; padding: 0 12px 8px; color: var(--accent); font-size: 12px; flex: none; }
     .list { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 12px 12px; }
     .empty { color: var(--text-muted); text-align: center; margin-top: 24px; }
-    .entry { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; min-width: 0; }
+    .entry { background: var(--card-bg); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; min-width: 0; }
+    .entry:hover { border-left-color: var(--accent); }
     .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--text-muted); overflow-wrap: anywhere; }
     .machine { color: var(--accent); }
     .source { text-transform: uppercase; letter-spacing: 0.04em; }

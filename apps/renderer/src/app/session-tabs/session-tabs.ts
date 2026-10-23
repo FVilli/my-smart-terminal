@@ -83,6 +83,8 @@ import type { TerminalSessionView } from '../session.model';
       border-right: 1px solid var(--border); color: var(--text-muted); cursor: pointer; white-space: nowrap;
     }
     .tab--active { background: var(--tab-active); color: var(--text); }
+    .tab:hover:not(.tab--active) { background: var(--border); color: var(--text); }
+    .tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
     .tab--exited .tab-label { text-decoration: line-through; }
     .tab-label { font-weight: 600; }
     .tab-target { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }

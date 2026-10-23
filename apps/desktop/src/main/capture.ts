@@ -16,8 +16,19 @@ const METRICS_SCRIPT = `(() => {
     (!!panel && (panel.scrollWidth > panel.clientWidth || panel.scrollHeight > panel.clientHeight)));
   const overflow = sidebarOverflow || scrollWidth > clientWidth || document.body.scrollWidth > document.body.clientWidth ||
     root.scrollHeight > root.clientHeight || !rect;
+  const box = (selector) => { const el = document.querySelector(selector); return el ? el.getBoundingClientRect() : null; };
+  const bg = (selector) => { const el = document.querySelector(selector); return el ? getComputedStyle(el).backgroundColor : null; };
+  const activeTab = document.querySelector('[data-testid="session-tab"][aria-selected="true"]');
   return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth, sidebarOverflow,
-    ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow };
+    ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow,
+    headerHeight: box('app-header')?.height ?? 0,
+    tabBarHeight: box('app-session-tabs')?.height ?? 0,
+    inputHeight: box('app-assisted-input')?.height ?? 0,
+    footerHeight: box('app-status-footer')?.height ?? 0,
+    activeTabBg: activeTab ? getComputedStyle(activeTab).backgroundColor : null,
+    sidebarBg: bg('app-sidebar-panel'),
+    terminalBg: bg('app-terminal-workarea'),
+    inputBg: bg('app-assisted-input') };
 })()`;
 
 /** Window dimensions from SMART_TERMINAL_WINDOW_WIDTH/HEIGHT (default 1440x900). */

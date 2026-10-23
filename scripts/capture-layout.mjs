@@ -36,6 +36,14 @@ for (const { width, height } of viewports) {
   else {
     if (Math.abs(metrics.ratio - 0.75) > 0.02) problems.push(`ratio ${metrics.ratio}`);
     if (metrics.overflow !== false) problems.push('overflow');
+    if (Math.abs(metrics.headerHeight - 48) > 2) problems.push(`header ${metrics.headerHeight}`);
+    if (Math.abs(metrics.tabBarHeight - 54) > 2) problems.push(`tabs ${metrics.tabBarHeight}`);
+    if (metrics.inputHeight < 96 || metrics.inputHeight > 130) problems.push(`input ${metrics.inputHeight}`);
+    if (Math.abs(metrics.footerHeight - 28) > 2) problems.push(`footer ${metrics.footerHeight}`);
+    if (metrics.activeTabBg !== 'rgb(56, 74, 93)') problems.push(`active tab ${metrics.activeTabBg}`);
+    if (metrics.sidebarBg !== 'rgb(0, 0, 0)' && metrics.sidebarBg !== 'rgba(0, 0, 0, 0)') problems.push(`sidebar ${metrics.sidebarBg}`);
+    if (metrics.terminalBg !== 'rgb(23, 30, 37)') problems.push(`terminal ${metrics.terminalBg}`);
+    if (metrics.inputBg !== 'rgb(33, 43, 56)' && metrics.inputBg !== 'rgb(34, 46, 60)') problems.push(`input bg ${metrics.inputBg}`);
   }
   if (!fs.existsSync(screenshot) || fs.statSync(screenshot).size === 0) problems.push('screenshot missing');
   console.log(`${width}x${height}`, JSON.stringify(metrics), problems.length ? `FAIL: ${problems.join(', ')}` : 'OK', screenshot);
