@@ -78,6 +78,12 @@ export class TerminalHost implements TerminalGateway {
     });
   }
 
+  /** Risolve una sessione viva della finestra `senderId`; `undefined` se sconosciuta, di un'altra finestra o terminata. */
+  resolveSession(senderId: number, sessionId: string): Pick<TerminalSessionInfo, 'machine' | 'sessionDirectory'> | undefined {
+    const extras = this.windows.get(senderId)?.extras.get(sessionId);
+    return extras === undefined ? undefined : { machine: extras.machine, sessionDirectory: extras.sessionDirectory };
+  }
+
   closeAllForWindow(senderId: number): void {
     const state = this.windows.get(senderId);
     if (state !== undefined) {

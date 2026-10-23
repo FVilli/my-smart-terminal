@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { app, type BrowserWindow } from 'electron';
-import { parseSessionDocument } from '@smart-terminal/data';
+import { app, clipboard, type BrowserWindow } from 'electron';
+import { MarkdownSearchIndex, hashClipboardText, parseClipboardDocument, parseHistoryDocument, parseSessionDocument } from '@smart-terminal/data';
 
 const IPC_SCRIPT = `(async () => {
   const api = window.smartTerminal;
@@ -29,14 +29,20 @@ const IPC_SCRIPT = `(async () => {
 })()`;
 
 const EXPECTED_KEYS = [
+  'clipboardClear',
+  'clipboardConfigure',
+  'clipboardSetActive',
+  'clipboardState',
   'closeTerminal',
   'createTerminal',
   'listTerminals',
   'onTerminalData',
   'onTerminalExit',
   'ping',
+  'recordHistory',
   'resizeTerminal',
   'runtimeInfo',
+  'search',
   'writeTerminal',
 ].join(',');
 
@@ -227,7 +233,7 @@ const EDITOR_SCRIPT = `(async () => {
     await sleep(500);
     result.placeholderHint = textarea().placeholder === 'Invio invia · Shift+Invio va a capo';
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
-    setText("printf 'EDITOR_%s\\n' OK");
+    setText("printf 'EDITOR_%s\\\\n' OK");
     await sleep(100);
     result.sendEnabledWithDraft = q('assisted-send')[0].disabled === false;
     q('assisted-send')[0].click();
@@ -245,6 +251,11 @@ const EDITOR_SCRIPT = `(async () => {
     textarea().dispatchEvent(enterEvent);
     result.enterSubmits = enterEvent.defaultPrevented && (await waitFor(() => output.includes('ENTER_KEY_OK\\r\\n') || /\\nENTER_KEY_OK/.test(output), 8000));
     await waitFor(() => textarea().value === '', 2000);
+    setText('export SMOKE_API_KEY=smoke_secret_value');
+    await sleep(50);
+    q('assisted-send')[0].click();
+    result.sensitiveSent = await waitFor(() => textarea().value === '', 2000);
+    await sleep(300);
     setText('bozza-uno');
     await sleep(50);
     q('session-plus')[0].click();
@@ -265,7 +276,58 @@ const EDITOR_SCRIPT = `(async () => {
 
 /** Smoke UI attivo con SMART_TERMINAL_EDITOR_SMOKE=1: scrive nella textarea assistita, invia e verifica output e bozze per tab. */
 export function runEditorSmoke(window: BrowserWindow): void {
-  runUiSmoke(window, EDITOR_SCRIPT, 'SMART_TERMINAL_EDITOR_SMOKE_RESULT');
+  runUiSmoke(window, EDITOR_SCRIPT, 'SMART_TERMINAL_EDITOR_SMOKE_RESULT', async () => {
+    const found = await pollUntil(() => {
+      const events = readAllHistoryEvents();
+      return events.some((event) => event.text.includes('EDITOR_%s'));
+    }, 4000);
+    const events = readAllHistoryEvents();
+    return {
+      historyAssistedRecorded: found && events.some((event) => event.source === 'assisted' && event.text.includes('EDITOR_%s')),
+      historyEnterRecorded: events.some((event) => event.source === 'assisted' && event.text === 'echo ENTER_KEY_OK'),
+      historySensitiveNotRecorded: !events.some((event) => event.text.includes('smoke_secret_value')),
+      historyCwdPresent: events.every((event) => typeof event.cwd === 'string' && event.cwd.length > 0),
+    };
+  });
+}
+
+async function pollUntil(predicate: () => boolean, timeoutMs: number): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (predicate()) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return predicate();
+}
+
+function sessionDirectories(): string[] {
+  const repo = process.env['SMART_TERMINAL_DATA_REPO'];
+  if (repo === undefined || repo.length === 0) {
+    return [];
+  }
+  const sessionsRoot = path.resolve(repo, 'sessions');
+  try {
+    return fs.readdirSync(sessionsRoot).flatMap((machine) => {
+      const machineDir = path.join(sessionsRoot, machine);
+      return fs.statSync(machineDir).isDirectory()
+        ? fs.readdirSync(machineDir).filter((name) => name !== 'counter.md').map((name) => path.join(machineDir, name))
+        : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function readAllHistoryEvents(): ReturnType<typeof parseHistoryDocument>['events'] {
+  return sessionDirectories().flatMap((dir) => {
+    try {
+      return parseHistoryDocument(fs.readFileSync(path.join(dir, 'history.md'), 'utf8')).events;
+    } catch {
+      return [];
+    }
+  });
 }
 
 const SIDEBAR_SCRIPT = `(async () => {
@@ -299,12 +361,18 @@ export function runSidebarSmoke(window: BrowserWindow): void {
   runUiSmoke(window, SIDEBAR_SCRIPT, 'SMART_TERMINAL_SIDEBAR_SMOKE_RESULT');
 }
 
-function runUiSmoke(window: BrowserWindow, script: string, label: string): void {
+function runUiSmoke(
+  window: BrowserWindow,
+  script: string,
+  label: string,
+  extraChecks?: () => Promise<Record<string, boolean>>,
+): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(() => {
       void window.webContents
         .executeJavaScript(script)
-        .then((result: Record<string, boolean>) => {
+        .then(async (uiResult: Record<string, boolean>) => {
+          const result = { ...uiResult, ...(extraChecks !== undefined ? await extraChecks() : {}) };
           const ok = Object.values(result).every((value) => value === true);
           console.log(label, JSON.stringify({ ...result, ok }));
           app.exit(ok ? 0 : 1);
@@ -314,5 +382,128 @@ function runUiSmoke(window: BrowserWindow, script: string, label: string): void 
           app.exit(1);
         });
     }, 1200);
+  });
+}
+
+const CLIPBOARD_UI_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const result = {};
+  result.initialSession = await waitFor(async () => (await api.listTerminals()).length === 1, 8000);
+  await sleep(300);
+  result.disabledByDefault = !q('clipboard-enable').checked && q('clipboard-status').textContent.includes('Cattura disattivata') && q('clipboard-pause').disabled;
+  q('clipboard-enable').click();
+  result.enabledViaUi = await waitFor(async () => (await api.clipboardState()).enabled === true && q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  q('clipboard-pause').click();
+  result.pausedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Cattura in pausa'), 4000);
+  q('clipboard-pause').click();
+  result.resumedViaUi = await waitFor(() => q('clipboard-status').textContent.includes('Cattura attiva'), 4000);
+  return result;
+})()`;
+
+const CLIPBOARD_STATE_SCRIPT = `window.smartTerminal.clipboardState().then((s) => s.lastEventAt !== null && s.enabled && !s.paused)`;
+
+function readAllClipboardEvents(): ReturnType<typeof parseClipboardDocument>['events'] {
+  return sessionDirectories().flatMap((dir) => {
+    try {
+      return parseClipboardDocument(fs.readFileSync(path.join(dir, 'clipboard.md'), 'utf8')).events;
+    } catch {
+      return [];
+    }
+  });
+}
+
+/** Smoke attivo con SMART_TERMINAL_CLIPBOARD_SMOKE=1: abilita la cattura via UI, scrive nella clipboard Electron e verifica clipboard.md. */
+export function runClipboardSmoke(window: BrowserWindow): void {
+  window.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      void (async () => {
+        const result: Record<string, boolean> = (await window.webContents.executeJavaScript(CLIPBOARD_UI_SCRIPT)) as Record<string, boolean>;
+        const marker = `CLIP_SMOKE_OK_${Date.now()}`;
+        await clipboard.writeText(marker);
+        result['eventRecorded'] = await pollUntil(() => readAllClipboardEvents().some((event) => event.text === marker), 5000);
+        const recorded = readAllClipboardEvents().find((event) => event.text === marker);
+        result['hashMatches'] = recorded !== undefined && recorded.hash === hashClipboardText(marker);
+        result['stateHasLastEvent'] = (await window.webContents.executeJavaScript(CLIPBOARD_STATE_SCRIPT)) === true;
+        const secret = `export CLIP_API_KEY=smoke_secret_${Date.now()}`;
+        await clipboard.writeText(secret);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        result['sensitiveNotRecorded'] = !readAllClipboardEvents().some((event) => event.text.includes('smoke_secret_'));
+        const after = `CLIP_SMOKE_AFTER_${Date.now()}`;
+        await clipboard.writeText(after);
+        result['pollingContinuesAfterSensitive'] = await pollUntil(() => readAllClipboardEvents().some((event) => event.text === after), 5000);
+        const ok = Object.values(result).every((value) => value === true);
+        console.log('SMART_TERMINAL_CLIPBOARD_SMOKE_RESULT', JSON.stringify({ ...result, ok }));
+        app.exit(ok ? 0 : 1);
+      })().catch((error: unknown) => {
+        console.error('SMART_TERMINAL_SMOKE_ERROR', error);
+        app.exit(1);
+      });
+    }, 1200);
+  });
+}
+
+const SEARCH_SCRIPT = `(async () => {
+  const api = window.smartTerminal;
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const waitFor = async (predicate, timeoutMs) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await predicate()) return true;
+      await sleep(50);
+    }
+    return predicate();
+  };
+  const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+  const setText = (value) => {
+    const el = q('assisted-textarea');
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const rejects = async (fn) => { try { await fn(); return false; } catch { return true; } };
+  const result = {};
+  result.initialSession = await waitFor(async () => (await api.listTerminals()).length === 1 && !q('assisted-textarea').disabled, 8000);
+  const [session] = await api.listTerminals();
+  await sleep(500);
+  setText('echo EDITOR_OK');
+  await sleep(50);
+  q('assisted-send').click();
+  result.found = await waitFor(async () => (await api.search({ query: 'EDITOR_OK' })).entries.some((e) => e.kind === 'history'), 8000);
+  const entries = (await api.search({ query: 'editor_ok' })).entries;
+  const hit = entries.find((e) => e.kind === 'history');
+  result.entryShape = !!hit && hit.source === 'assisted' && hit.machine === session.machine && hit.sessionId === session.sessionId &&
+    hit.sessionDirectory === session.sessionDirectory && typeof hit.timestamp === 'string' && typeof hit.cwd === 'string';
+  result.filtersWork =
+    (await api.search({ query: 'EDITOR_OK', machine: session.machine, sessionId: session.sessionId, kind: 'history' })).entries.length > 0 &&
+    (await api.search({ query: 'EDITOR_OK', kind: 'clipboard' })).entries.length === 0 &&
+    (await api.search({ query: 'EDITOR_OK', machine: 'no-such-machine' })).entries.length === 0;
+  setText('export SEARCH_API_KEY=search_secret_value');
+  await sleep(50);
+  q('assisted-send').click();
+  await sleep(800);
+  result.sensitiveNotIndexed = (await api.search({ query: 'search_secret_value' })).entries.length === 0;
+  result.invalidRejected = await rejects(() => api.search({ query: 'x', kind: 'shell' }));
+  return result;
+})()`;
+
+/** Smoke attivo con SMART_TERMINAL_SEARCH_SMOKE=1: invio assistito, ricerca via API e ricostruzione indice in una nuova istanza. */
+export function runSearchSmoke(window: BrowserWindow): void {
+  runUiSmoke(window, SEARCH_SCRIPT, 'SMART_TERMINAL_SEARCH_SMOKE_RESULT', () => {
+    const repo = process.env['SMART_TERMINAL_DATA_REPO'];
+    const rebuilt = new MarkdownSearchIndex({ dataRepoPath: path.resolve(repo ?? '') });
+    rebuilt.rebuild();
+    return Promise.resolve({
+      rebuiltIndexFindsEvent: rebuilt.query({ query: 'editor_ok', kind: 'history' }).some((entry) => entry.source === 'assisted'),
+      rebuiltIndexSkipsSensitive: rebuilt.query({ query: 'search_secret_value' }).length === 0,
+    });
   });
 }

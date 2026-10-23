@@ -37,7 +37,12 @@ Documento operativo: elenca i confini main/preload/renderer e i comandi di verif
 Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, exitCode, signal? }`). Ogni finestra ha il proprio `SessionManager`; alla chiusura/distruzione i PTY vengono terminati.
 
 ## API preload
-`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
+`ping`, `runtimeInfo`, `createTerminal`, `writeTerminal`, `resizeTerminal`, `closeTerminal`, `listTerminals`, `onTerminalData`, `onTerminalExit`, `recordHistory`, `clipboardState`, `clipboardConfigure`, `clipboardSetActive`, `clipboardClear`, `search`. Il seam `__testInvoke` esiste solo con l'argomento di avvio `--smart-terminal-test-ipc`, abilitato dagli smoke test.
+
+## History e clipboard (M03)
+- `history:record` accetta solo `{sessionId, text, agent?}`, source fisso `assisted`, testo ≤16 KiB, `agent` ≤64 char. Testo sensibile: `{recorded:false}`. Il renderer lo chiama solo dopo un invio riuscito dall'editor; nessun keystroke o shell nativa.
+- Clipboard: opt-in (default off; `SMART_TERMINAL_CLIPBOARD=1` per abilitarla all'avvio), polling 800 ms, max 32 KiB UTF-8, hash SHA-256, dedupe in memoria e contro il file, filtro segreti best-effort, pausa/clear. Associazione alla sessione attiva su tab/focus.
+- `search:query` è case-insensitive, filtra macchina/sessione/data/kind, cap 100, e restituisce entry history/clipboard; l'indice è in memoria e si ricostruisce all'avvio.
 
 ## Persistenza runtime (M03)
 - Repo dati: `SMART_TERMINAL_DATA_REPO` oppure `userData/data`; `sessions/<machine>/` creato localmente. Machine: `SMART_TERMINAL_MACHINE` oppure hostname normalizzato.
@@ -71,6 +76,8 @@ Eventi: `terminal:data` (`{ sessionId, data }`), `terminal:exit` (`{ sessionId, 
 | `npm run test:tabs-smoke` | due tab, switch senza kill, chiusura |
 | `npm run test:editor-smoke` | Invio/Shift+Invio, marker eseguito, bozza svuotata, bozze per tab |
 | `npm run test:sidebar-smoke` | cambio Clipboard/History, placeholder, footer sync/primary |
+| `npm run test:clipboard-smoke` | opt-in, pausa, evento reale, hash, pattern sensibile ignorato |
+| `npm run test:search-smoke` | invio assistito indicizzato, filtri, sensibile escluso, rebuild da disco |
 
 ## Editor assistito
 - Invio invia al PTY attivo; Shift+Invio inserisce newline; IME non invia. Pulsante invio abilitato solo con bozza non vuota e sessione running.

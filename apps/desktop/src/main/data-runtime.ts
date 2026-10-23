@@ -43,6 +43,7 @@ export class DataRuntime {
   private readonly clock: () => Date;
   private readonly allocator: SessionIdAllocator;
   private readonly sessions = new Map<string, AllocatedSession>();
+  private sessionEndedListener: ((sessionDirectory: string) => void) | undefined;
 
   constructor(options: DataRuntimeOptions) {
     const env = options.env ?? process.env;
@@ -65,6 +66,11 @@ export class DataRuntime {
         lockDir: this.lockDir,
         clock: this.clock,
       });
+  }
+
+  /** Notificata (con la directory relativa) dopo che `ended_at` e' stato scritto. */
+  onSessionEnded(listener: (sessionDirectory: string) => void): void {
+    this.sessionEndedListener = listener;
   }
 
   async createSession(windowId: string, destination: SessionDestination): Promise<CreatedSession> {
@@ -90,6 +96,7 @@ export class DataRuntime {
         const meta = { ...document.meta, ended_at: formatIsoWithOffset(this.clock()) };
         writeFileAtomic(allocation.sessionFile, serializeSessionDocument(meta, document.extraFields, document.body));
       }
+      this.sessionEndedListener?.(allocation.relativeDir);
       return true;
     } catch {
       return false;

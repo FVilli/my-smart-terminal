@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import { AssistedInput } from './assisted-input/assisted-input';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
@@ -23,8 +24,12 @@ export class App {
 
   protected readonly sidebarTab = signal<SidebarTab>('clipboard');
 
+  private readonly clipboardCapture = inject(ClipboardCaptureStore);
+
   constructor() {
     void this.store.createLocal();
+    effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
+    window.addEventListener('focus', () => this.clipboardCapture.refresh());
   }
 
   protected requestClose(id: string): void {

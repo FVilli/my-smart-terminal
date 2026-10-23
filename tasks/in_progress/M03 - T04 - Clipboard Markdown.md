@@ -26,3 +26,9 @@ clipboard.md aggiornato senza duplicati e senza campioni sensibili.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: `ClipboardRecorder` testabile (opt-in, pausa, polling 800 ms, limite 32 KiB, hash, dedupe file+memoria, filtro segreti), servizio main con una sola istanza/timer, associazione sessione attiva su tab/focus, controlli sidebar (abilita, pausa, clear, stato), smoke con clipboard reale.
+- Verifica: clipboard smoke con disabledByDefault, enabledViaUi, paused/resumedViaUi, eventRecorded, hashMatches, sensitiveNotRecorded, pollingContinuesAfterSensitive.
+- Nota: "Cancella dedupe" azzera solo la memoria; gli hash già su file restano deduplicati.

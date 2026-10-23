@@ -10,6 +10,12 @@ export const IPC_CHANNELS = {
   terminalResize: 'terminal:resize',
   terminalClose: 'terminal:close',
   terminalList: 'terminal:list',
+  historyRecord: 'history:record',
+  clipboardConfigure: 'clipboard:configure',
+  clipboardSetActive: 'clipboard:set-active',
+  clipboardClear: 'clipboard:clear',
+  clipboardState: 'clipboard:state',
+  searchQuery: 'search:query',
 } as const;
 
 /** Eventi main -> renderer (non invocabili dal renderer). */
@@ -19,6 +25,9 @@ export const IPC_EVENTS = {
 } as const;
 
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
+export const HISTORY_MAX_TEXT_BYTES = 16 * 1024;
+export const HISTORY_MAX_AGENT_LENGTH = 64;
+export const SEARCH_MAX_QUERY_LENGTH = 256;
 export const TERMINAL_MIN_DIMENSION = 1;
 export const TERMINAL_MAX_DIMENSION = 1000;
 
@@ -82,6 +91,64 @@ export interface TerminalExitEvent {
   signal?: number;
 }
 
+/** Invio esplicito dall'editor assistito; la source è sempre `assisted` e viene fissata dal main. */
+export interface HistoryRecordRequest {
+  sessionId: string;
+  text: string;
+  agent?: string;
+}
+
+export interface HistoryRecordResult {
+  recorded: boolean;
+}
+
+export interface ClipboardConfigureRequest {
+  enabled: boolean;
+  paused: boolean;
+}
+
+/** `null` quando non esiste una sessione attiva. */
+export interface ClipboardSetActiveRequest {
+  sessionId: string | null;
+}
+
+export interface ClipboardCaptureState {
+  enabled: boolean;
+  paused: boolean;
+  /** ISO 8601 dell'ultimo evento clipboard scritto in questo processo. */
+  lastEventAt: string | null;
+}
+
+export type SearchEntryKind = 'history' | 'clipboard';
+
+export interface SearchQueryRequest {
+  /** Sottostringa case-insensitive (anche vuota, per filtrare solo). */
+  query: string;
+  machine?: string;
+  sessionId?: string;
+  /** ISO 8601 con offset, inclusivo. */
+  from?: string;
+  /** ISO 8601 con offset, inclusivo. */
+  to?: string;
+  kind?: SearchEntryKind;
+}
+
+export interface SearchResultEntry {
+  machine: string;
+  sessionId: string;
+  sessionDirectory: string;
+  kind: SearchEntryKind;
+  timestamp: string;
+  text: string;
+  source?: string;
+  cwd?: string;
+}
+
+/** Al massimo 100 voci, ordinate per timestamp decrescente. */
+export interface SearchQueryResult {
+  entries: SearchResultEntry[];
+}
+
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {
@@ -92,6 +159,13 @@ export interface SmartTerminalApi {
   resizeTerminal(request: TerminalResizeRequest): Promise<void>;
   closeTerminal(request: TerminalCloseRequest): Promise<void>;
   listTerminals(): Promise<TerminalSessionInfo[]>;
+  recordHistory(request: HistoryRecordRequest): Promise<HistoryRecordResult>;
+  clipboardState(): Promise<ClipboardCaptureState>;
+  clipboardConfigure(request: ClipboardConfigureRequest): Promise<ClipboardCaptureState>;
+  clipboardSetActive(request: ClipboardSetActiveRequest): Promise<ClipboardCaptureState>;
+  /** Azzera il dedupe in memoria (gli hash gia' scritti in clipboard.md restano dedupati). */
+  clipboardClear(): Promise<ClipboardCaptureState>;
+  search(request: SearchQueryRequest): Promise<SearchQueryResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
 }

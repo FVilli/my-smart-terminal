@@ -1,5 +1,5 @@
 import { app, ipcMain, type BrowserWindow } from 'electron';
-import { createChannelMap, dispatchIpc } from './ipc';
+import { createChannelMap, dispatchIpc, type IpcServices } from './ipc';
 import type { TerminalHost } from './terminal-host';
 
 /**
@@ -12,6 +12,7 @@ export function registerIpcHandlers(
   devServerUrl: string | undefined,
   appOrigin: string,
   terminals: TerminalHost,
+  services: IpcServices,
 ): void {
   const channels = createChannelMap(
     {
@@ -20,6 +21,7 @@ export function registerIpcHandlers(
       isPackaged: app.isPackaged,
     },
     terminals,
+    services,
   );
 
   for (const [channel, definition] of Object.entries(channels)) {

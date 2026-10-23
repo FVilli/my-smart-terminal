@@ -26,3 +26,9 @@ history.md aggiornato; password non salvate; nessun logging raw keystroke.
 
 ## Non fare
 Non introdurre database, servizi remoti aggiuntivi o scelte architetturali non specificate.
+
+## Esito
+- 2026-10-23: completato.
+- Implementato: filtro segreti condiviso, `history:record` con source fisso `assisted`, UUID/timestamp/cwd, idempotenza e atomicità, chiamata renderer solo dopo invio riuscito, smoke editor esteso.
+- Verifica: test filtro/append/limiti; editor smoke con historyAssistedRecorded, historyEnterRecorded, historySensitiveNotRecorded, historyCwdPresent.
+- **Deviazione esplicita**: la shell nativa non è registrata in M03. Nessuna iniezione in `.bashrc`/`.zshrc`, nessun keystroke, nessuna intercettazione TUI; solo invii espliciti dall'editor assistito (`docs/03`).

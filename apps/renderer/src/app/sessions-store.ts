@@ -121,6 +121,8 @@ export class SessionsStore {
     if (this.sessionsState().some((s) => s.id === session.id)) {
       this.setDraft(session.id, '');
     }
+    // Un errore history non annulla l'invio gia' avvenuto al PTY.
+    void this.api.recordHistory({ sessionId: session.id, text }).catch(() => undefined);
     return true;
   }
 

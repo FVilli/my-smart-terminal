@@ -5,8 +5,12 @@ import { TEST_IPC_ARGUMENT } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { readWindowSize, runCapture } from './capture';
-import { runEditorSmoke, runSidebarSmoke, runSmoke, runTabsSmoke } from './smoke';
+import { runClipboardSmoke, runEditorSmoke, runSearchSmoke, runSidebarSmoke, runSmoke, runTabsSmoke } from './smoke';
 import { DataRuntime } from './data-runtime';
+import { ClipboardService } from './clipboard-service';
+import { electronClipboardSource } from './electron-clipboard';
+import { HistoryService } from './history-service';
+import { SearchService } from './search-service';
 import { TerminalHost } from './terminal-host';
 
 const APP_SCHEME = 'smart-terminal';
@@ -30,9 +34,12 @@ const ptySmokeTest = process.env['SMART_TERMINAL_PTY_SMOKE'] === '1';
 const tabsSmokeTest = process.env['SMART_TERMINAL_TABS_SMOKE'] === '1';
 const editorSmokeTest = process.env['SMART_TERMINAL_EDITOR_SMOKE'] === '1';
 const sidebarSmokeTest = process.env['SMART_TERMINAL_SIDEBAR_SMOKE'] === '1';
+const clipboardSmokeTest = process.env['SMART_TERMINAL_CLIPBOARD_SMOKE'] === '1';
+const searchSmokeTest = process.env['SMART_TERMINAL_SEARCH_SMOKE'] === '1';
 const capturePath = process.env['SMART_TERMINAL_CAPTURE'];
 const ipcSenderIds = new Set<number>();
 let terminalHost: TerminalHost | undefined;
+let clipboardService: ClipboardService | undefined;
 
 function registerAppProtocol(): void {
   const rendererRoot = path.join(__dirname, '..', 'renderer', 'browser');
@@ -110,6 +117,14 @@ function createWindow(): BrowserWindow {
     runSidebarSmoke(window);
   }
 
+  if (searchSmokeTest) {
+    runSearchSmoke(window);
+  }
+
+  if (clipboardSmokeTest) {
+    runClipboardSmoke(window);
+  }
+
   if (smokeTest || ptySmokeTest) {
     runSmoke(window, ptySmokeTest ? 'pty' : 'ipc');
   }
@@ -118,10 +133,26 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  const host = new TerminalHost(new NodePtyAdapter(), new DataRuntime({ userDataPath: app.getPath('userData') }));
+  const dataRuntime = new DataRuntime({ userDataPath: app.getPath('userData') });
+  const host = new TerminalHost(new NodePtyAdapter(), dataRuntime);
   terminalHost = host;
+  const search = new SearchService(dataRuntime.dataRepoPath);
+  dataRuntime.onSessionEnded((sessionDirectory) => search.upsertSession(sessionDirectory));
+  const history = new HistoryService({
+    dataRepoPath: dataRuntime.dataRepoPath,
+    resolveSession: (senderId, sessionId) => host.resolveSession(senderId, sessionId),
+    onRecorded: (sessionDirectory) => search.upsertSession(sessionDirectory),
+  });
+  const clipboardCapture = new ClipboardService({
+    dataRepoPath: dataRuntime.dataRepoPath,
+    source: electronClipboardSource,
+    resolveSession: (senderId, sessionId) => host.resolveSession(senderId, sessionId),
+    initiallyEnabled: process.env['SMART_TERMINAL_CLIPBOARD'] === '1',
+    onRecorded: (sessionDirectory) => search.upsertSession(sessionDirectory),
+  });
+  clipboardService = clipboardCapture;
   registerAppProtocol();
-  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`, host);
+  registerIpcHandlers(() => ipcSenderIds, devServerUrl, `${APP_SCHEME}://${APP_HOST}/`, host, { history, clipboard: clipboardCapture, search });
   createWindow();
 
   app.on('activate', () => {
@@ -131,7 +162,10 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('before-quit', () => terminalHost?.closeAll());
+app.on('before-quit', () => {
+  clipboardService?.dispose();
+  terminalHost?.closeAll();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

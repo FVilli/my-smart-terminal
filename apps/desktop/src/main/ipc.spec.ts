@@ -7,6 +7,7 @@ import {
   dispatchIpc,
   isApprovedChannel,
   isSenderAllowed,
+  type IpcServices,
   type SenderInfo,
   type SenderPolicy,
   type TerminalGateway,
@@ -31,9 +32,39 @@ const gateway = {
   close: vi.fn(),
   list: vi.fn(() => []),
 };
-const channels = createChannelMap(env, gateway as TerminalGateway);
+const services: IpcServices = {
+  search: { query: vi.fn(() => ({ entries: [] })) }, history: { record: vi.fn(() => ({ recorded: true })) },
+  clipboard: {
+    state: vi.fn(() => ({ enabled: false, paused: false, lastEventAt: null })),
+    configure: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
+    setActive: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
+    clear: vi.fn(() => ({ enabled: true, paused: false, lastEventAt: null })),
+  },
+};
+const channels = createChannelMap(env, gateway as TerminalGateway, services);
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };
 const sender: SenderInfo = { senderId: 7, isMainFrame: true, frameUrl: 'smart-terminal://bundle/index.html' };
+
+describe('search:query validation', () => {
+  const run = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.searchQuery], sender, policy, args);
+
+  it('accepts a valid query and returns entries', async () => {
+    await expect(run({ query: 'ls', machine: 'host', sessionId: 'S1', from: '2026-01-01T00:00:00+00:00', kind: 'history' })).resolves.toEqual({ entries: [] });
+    await expect(run({ query: '' })).resolves.toEqual({ entries: [] });
+  });
+
+  it.each([
+    [{}],
+    [{ query: 1 }],
+    [{ query: 'a'.repeat(257) }],
+    [{ query: 'a', machine: '../x' }],
+    [{ query: 'a', from: 'yesterday' }],
+    [{ query: 'a', kind: 'shell' }],
+    [{ query: 'a', limit: 5 }],
+  ])('rejects %j', async (payload) => {
+    await expect(run(payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+});
 
 describe('ipc dispatch', () => {
   it('answers valid ping and runtime-info', async () => {

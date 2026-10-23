@@ -26,6 +26,8 @@
     "test:tabs-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_TABS_SMOKE=1 electron apps/desktop",
     "test:editor-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_EDITOR_SMOKE=1 electron apps/desktop",
     "test:sidebar-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SIDEBAR_SMOKE=1 electron apps/desktop",
+    "test:clipboard-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_CLIPBOARD_SMOKE=1 electron apps/desktop",
+    "test:search-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SEARCH_SMOKE=1 electron apps/desktop",
     "test:ipc-smoke": "npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_SMOKE=1 electron apps/desktop",
     "test:pty-smoke": "npm run rebuild:native && npm run build && node scripts/reset-smoke-data.mjs && cross-env SMART_TERMINAL_DATA_REPO=.smoke-data SMART_TERMINAL_PTY_SMOKE=1 electron apps/desktop",
     "test:watch": "vitest",

@@ -2,14 +2,25 @@
  * Framework puro (senza dipendenze da Electron) per handler IPC validati.
  * Il binding con ipcMain vive in ipc-electron.ts.
  */
+import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
+  HISTORY_MAX_AGENT_LENGTH,
+  HISTORY_MAX_TEXT_BYTES,
   IPC_CHANNELS,
+  SEARCH_MAX_QUERY_LENGTH,
   TERMINAL_MAX_DIMENSION,
   TERMINAL_MAX_WRITE_BYTES,
   TERMINAL_MIN_DIMENSION,
   type AppPingResult,
   type AppRuntimeInfo,
+  type ClipboardCaptureState,
+  type ClipboardConfigureRequest,
+  type ClipboardSetActiveRequest,
+  type HistoryRecordRequest,
+  type HistoryRecordResult,
   type IpcChannel,
+  type SearchQueryRequest,
+  type SearchQueryResult,
   type TerminalCloseRequest,
   type TerminalCreateRequest,
   type TerminalResizeRequest,
@@ -76,6 +87,27 @@ export interface TerminalGateway {
   list(senderId: number): TerminalSessionInfo[];
 }
 
+export interface HistoryGateway {
+  record(senderId: number, request: HistoryRecordRequest): HistoryRecordResult;
+}
+
+export interface ClipboardGateway {
+  state(): ClipboardCaptureState;
+  configure(request: ClipboardConfigureRequest): ClipboardCaptureState;
+  setActive(senderId: number, request: ClipboardSetActiveRequest): ClipboardCaptureState;
+  clear(): ClipboardCaptureState;
+}
+
+export interface SearchGateway {
+  query(request: SearchQueryRequest): SearchQueryResult;
+}
+
+export interface IpcServices {
+  search: SearchGateway;
+  history: HistoryGateway;
+  clipboard: ClipboardGateway;
+}
+
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
@@ -127,6 +159,39 @@ export const validateTerminalClose = singleRequest<TerminalCloseRequest>(
   (v) => hasExactKeys(v, ['sessionId']) && isSessionId(v['sessionId']),
 );
 
+export const validateHistoryRecord = singleRequest<HistoryRecordRequest>(
+  (v) =>
+    hasExactKeys(v, ['sessionId', 'text'], ['agent']) &&
+    isSessionId(v['sessionId']) &&
+    typeof v['text'] === 'string' &&
+    v['text'].trim().length > 0 &&
+    Buffer.byteLength(v['text'], 'utf8') <= HISTORY_MAX_TEXT_BYTES &&
+    (v['agent'] === undefined ||
+      (typeof v['agent'] === 'string' && v['agent'].length > 0 && v['agent'].length <= HISTORY_MAX_AGENT_LENGTH && !/[\r\n]/.test(v['agent']))),
+);
+
+export const validateClipboardConfigure = singleRequest<ClipboardConfigureRequest>(
+  (v) => hasExactKeys(v, ['enabled', 'paused']) && typeof v['enabled'] === 'boolean' && typeof v['paused'] === 'boolean',
+);
+
+export const validateClipboardSetActive = singleRequest<ClipboardSetActiveRequest>(
+  (v) => hasExactKeys(v, ['sessionId']) && (v['sessionId'] === null || isSessionId(v['sessionId'])),
+);
+
+const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
+
+export const validateSearchQuery = singleRequest<SearchQueryRequest>(
+  (v) =>
+    hasExactKeys(v, ['query'], ['machine', 'sessionId', 'from', 'to', 'kind']) &&
+    typeof v['query'] === 'string' &&
+    v['query'].length <= SEARCH_MAX_QUERY_LENGTH &&
+    (v['machine'] === undefined || (typeof v['machine'] === 'string' && isValidMachine(v['machine']))) &&
+    (v['sessionId'] === undefined || isSessionId(v['sessionId'])) &&
+    isOptionalIso(v['from']) &&
+    isOptionalIso(v['to']) &&
+    (v['kind'] === undefined || v['kind'] === 'history' || v['kind'] === 'clipboard'),
+);
+
 export interface IpcChannelMap {
   [IPC_CHANNELS.appPing]: ChannelDefinition<[], AppPingResult>;
   [IPC_CHANNELS.appRuntimeInfo]: ChannelDefinition<[], AppRuntimeInfo>;
@@ -135,9 +200,15 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.terminalResize]: ChannelDefinition<[TerminalResizeRequest], void>;
   [IPC_CHANNELS.terminalClose]: ChannelDefinition<[TerminalCloseRequest], void>;
   [IPC_CHANNELS.terminalList]: ChannelDefinition<[], TerminalSessionInfo[]>;
+  [IPC_CHANNELS.historyRecord]: ChannelDefinition<[HistoryRecordRequest], HistoryRecordResult>;
+  [IPC_CHANNELS.clipboardConfigure]: ChannelDefinition<[ClipboardConfigureRequest], ClipboardCaptureState>;
+  [IPC_CHANNELS.clipboardSetActive]: ChannelDefinition<[ClipboardSetActiveRequest], ClipboardCaptureState>;
+  [IPC_CHANNELS.clipboardClear]: ChannelDefinition<[], ClipboardCaptureState>;
+  [IPC_CHANNELS.clipboardState]: ChannelDefinition<[], ClipboardCaptureState>;
+  [IPC_CHANNELS.searchQuery]: ChannelDefinition<[SearchQueryRequest], SearchQueryResult>;
 }
 
-export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway): IpcChannelMap {
+export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
   return {
     [IPC_CHANNELS.appPing]: {
       validate: noArguments,
@@ -166,6 +237,30 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.terminalList]: {
       validate: noArguments,
       handle: (sender) => terminals.list(sender.senderId),
+    },
+    [IPC_CHANNELS.historyRecord]: {
+      validate: validateHistoryRecord,
+      handle: (sender, request) => services.history.record(sender.senderId, request),
+    },
+    [IPC_CHANNELS.clipboardConfigure]: {
+      validate: validateClipboardConfigure,
+      handle: (_sender, request) => services.clipboard.configure(request),
+    },
+    [IPC_CHANNELS.clipboardSetActive]: {
+      validate: validateClipboardSetActive,
+      handle: (sender, request) => services.clipboard.setActive(sender.senderId, request),
+    },
+    [IPC_CHANNELS.clipboardClear]: {
+      validate: noArguments,
+      handle: () => services.clipboard.clear(),
+    },
+    [IPC_CHANNELS.clipboardState]: {
+      validate: noArguments,
+      handle: () => services.clipboard.state(),
+    },
+    [IPC_CHANNELS.searchQuery]: {
+      validate: validateSearchQuery,
+      handle: (_sender, request) => services.search.query(request),
     },
   };
 }

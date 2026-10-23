@@ -10,12 +10,15 @@ describe('SessionsStore', () => {
   const closeTerminal = vi.fn().mockResolvedValue(undefined);
   const createTerminal = vi.fn();
   const writeTerminal = vi.fn();
+  const recordHistory = vi.fn();
 
   beforeEach(() => {
     nextId = 0;
     closeTerminal.mockClear();
     createTerminal.mockReset();
     writeTerminal.mockReset();
+    recordHistory.mockReset();
+    recordHistory.mockResolvedValue({ recorded: true });
     writeTerminal.mockResolvedValue(undefined);
     createTerminal.mockImplementation(() => {
       nextId += 1;
@@ -34,6 +37,7 @@ describe('SessionsStore', () => {
         createTerminal,
         closeTerminal,
         writeTerminal,
+        recordHistory,
         onTerminalData: (listener: typeof emitData) => {
           emitData = listener;
           return () => undefined;
@@ -124,6 +128,26 @@ describe('SessionsStore', () => {
       emitExit({ sessionId: 'id-1', exitCode: 0 });
       expect(await store.sendActive('ls')).toBe(false);
       expect(writeTerminal).not.toHaveBeenCalled();
+    });
+
+    it('registra la history assistita solo dopo un invio riuscito', async () => {
+      const store = new SessionsStore();
+      await store.createLocal();
+      expect(await store.sendActive('ls -la')).toBe(true);
+      expect(recordHistory).toHaveBeenCalledWith({ sessionId: 'id-1', text: 'ls -la' });
+      recordHistory.mockClear();
+      writeTerminal.mockRejectedValueOnce(new Error('boom'));
+      expect(await store.sendActive('pwd')).toBe(false);
+      expect(recordHistory).not.toHaveBeenCalled();
+    });
+
+    it('un errore history non annulla l’invio', async () => {
+      recordHistory.mockRejectedValueOnce(new Error('history down'));
+      const store = new SessionsStore();
+      await store.createLocal();
+      store.setDraft('id-1', 'ls');
+      expect(await store.sendActive('ls')).toBe(true);
+      expect(store.activeDraft()).toBe('');
     });
 
     it('conserva la bozza se la scrittura fallisce', async () => {
