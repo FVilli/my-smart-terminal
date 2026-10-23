@@ -89,10 +89,10 @@ There is no automatic updater. For a newer `.deb`, repeat the download, checksum
 To remove the `.deb` package, run:
 
 ```bash
-sudo apt remove -y smart-terminal
+sudo apt remove -y my-smart-terminal
 ```
 
-This removes the installed application. `apt remove` and `apt purge` do not remove Smart Terminal's user data. Do not use purge expecting it to erase local settings or sessions.
+This removes the installed `my-smart-terminal` package. `apt remove` and `apt purge` do not remove Smart Terminal's user data. Do not use purge expecting it to erase local settings or sessions.
 
 For an AppImage, close Smart Terminal, then delete the AppImage file and any `.desktop` shortcut you created yourself.
 

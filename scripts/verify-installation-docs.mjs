@@ -45,6 +45,11 @@ for (const file of guides) {
     if (!new RegExp(concept, 'i').test(text)) fail(`${file} is missing the concept "${concept}".`);
   }
 }
+const linuxGuide = read('docs/21 - Linux installation guide.md');
+if (!/sudo apt remove -y my-smart-terminal/.test(linuxGuide)) {
+  fail('docs/21 must use the actual .deb package name my-smart-terminal for removal.');
+}
+
 const requiredPaths = [
   ['Windows', /%APPDATA%\\my-smart-terminal/i],
   ['Linux', /~\/\.config\/my-smart-terminal/i],

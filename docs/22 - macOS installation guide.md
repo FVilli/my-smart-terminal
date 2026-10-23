@@ -49,10 +49,10 @@ For a newer release, replace `VERSION` with its release version and confirm the 
 
 Try opening the app normally first. Because this release is unsigned and not notarized, Gatekeeper may block it. If macOS blocks the first launch:
 
-- In Finder, locate **Smart Terminal.app** in Applications, right-click (or Control-click) it, choose **Open**, then choose **Open** again when asked.
-- Alternatively, open **System Settings > Privacy & Security**. In the **Security** section, choose **Open Anyway** for Smart Terminal and authenticate when prompted.
+- Open **System Settings > Privacy & Security**. Scroll to the **Security** section, choose **Open Anyway** for Smart Terminal, authenticate, then confirm **Open** when the warning appears. This saves the app as an exception so you can open it normally later.
+- On older macOS versions, Finder's right-click (or Control-click) **Open** may also offer this choice.
 
-Do not disable Gatekeeper or remove quarantine attributes. If macOS says the app is damaged, verify the checksum and download it again from the official release page; do not bypass the warning.
+Do not disable Gatekeeper or remove quarantine attributes. If macOS says the app is damaged, stop and do not bypass the warning: verify the checksum, delete the download, and download it once more from the official release page. If the message persists after a verified re-download, report it on the project issue tracker instead of weakening macOS security.
 
 ## Update
 
@@ -89,12 +89,12 @@ An external repository is separate. Find and back it up or remove it separately;
 
 ## Troubleshooting
 
-- **“Unidentified developer” or macOS cannot open the app:** Try normal open first, then use Finder right-click **Open** or the **Open Anyway** option in Privacy & Security above. Authenticate if requested; do not disable Gatekeeper.
-- **macOS says the app is damaged:** Do not bypass the warning. Check that the checksum matches, then redownload the DMG from the official release page and verify again.
+- **“Unidentified developer” or macOS cannot open the app:** Open System Settings > Privacy & Security, scroll to Security, click **Open Anyway**, authenticate, then confirm Open. On older macOS versions, Finder right-click **Open** may also work. Do not disable Gatekeeper.
+- **macOS says the app is damaged:** Do not bypass the warning. Check that the checksum matches, delete the download, and download it once more from the official release page. If it persists after a verified re-download, report the issue; do not remove quarantine attributes.
 - **No permission to copy into Applications:** Use your personal Applications folder if available, or ask the Mac administrator for permission. Do not use `sudo` to install the app.
 - **Wrong architecture:** This release is arm64 for Apple Silicon only. Intel Macs are unsupported; obtain a compatible future release rather than trying Rosetta.
 - **Data seems missing:** Check the repository location selected during setup. The default is `~/Library/Application Support/my-smart-terminal/data`; a selected external repository is stored elsewhere. Do not remove or rename data until you have checked both locations.
-- **Gatekeeper warns again:** Use the approved Finder **Open** or **Open Anyway** path. Do not turn off Gatekeeper or strip quarantine attributes.
+- **Gatekeeper warns again:** Use the approved Privacy & Security **Open Anyway** path (or Finder **Open** on older macOS versions). Do not turn off Gatekeeper or strip quarantine attributes.
 
 For first-run steps, see the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md). For sessions and application features, see the [user manual](12%20-%20User%20manual.md). To understand or change your data repository, see the [repository setup guide](18%20-%20Repository%20setup%20guide.md).
 

@@ -33,3 +33,13 @@ All three new guides; README; docs/12; docs/14; docs/17-19; docs/WORKFLOW.md.
 
 ## Do not
 Do not publish a release or change app behavior for a docs-only milestone.
+
+## Outcome
+- README installation section has exactly the three OS guide links; all guides added to the documentation index. `docs/12` and `docs/14` now delegate installation to the guides and the stale `My-Smart-Terminal.AppImage` reference is gone.
+- Added Windows/Linux/macOS cross-links and `scripts/verify-installation-docs.mjs` + `test:install-docs` (README link count, stale-path/artifact checks, required concepts, unsafe-command ban, bash syntax). CI runs it after the Markdown link check.
+- Verification: `test:docs-links` and `test:install-docs` pass; unit tests and lint pass.
+- Independent reviewer approved the first cut; evidence audit found the real `.deb` package name is `my-smart-terminal`, not `smart-terminal`. Corrected the uninstall command and added a regression check.
+- Evidence audit also flagged outdated macOS right-click-first guidance; changed the primary path to System Settings > Privacy & Security > Open Anyway (Apple support 102445), keeping right-click as an older-macOS fallback and avoiding a damaged-app re-download loop.
+- Final independent delegate review APPROVED; the configured gemma reviewer returned empty/truncated output twice (model failure, not repo failure).
+- Residual risks: Windows NSIS folder/uninstaller wording and macOS first launch were not manually executed on those OSes; checks validate documentation/links, not real installs.
+- Incident: `gsynchro` restarted during the milestone and overwrote `package.json`; it was stopped, the file restored from `HEAD~1`, and the daemon was left stopped.
