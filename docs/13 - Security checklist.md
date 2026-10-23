@@ -5,6 +5,7 @@ project: smart-terminal
 version: 1
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=7e113487-ddbb-4a25-80fb-dc9a7e4d2964 registered=2026-10-23T09:58:42.367Z -->
 
 # Security checklist
 

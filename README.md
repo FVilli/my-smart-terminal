@@ -1,3 +1,4 @@
+<!-- gsynchro:v1 id=8e92d508-e4e4-44bb-a3f4-16682ab1d0b2 registered=2026-10-23T09:58:42.363Z -->
 # My Smart Terminal
 
 Terminale desktop multi-istanza per sessioni locali e SSH, con tab indipendenti, input assistito, sessioni Markdown e sincronizzazione Git.

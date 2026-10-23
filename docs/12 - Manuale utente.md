@@ -4,6 +4,7 @@ type: manual
 project: smart-terminal
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=e7e31832-14ad-4df3-bf01-16b6e5b9d439 registered=2026-10-23T09:58:42.366Z -->
 
 # My Smart Terminal v1.0.0 — Manuale utente
 
