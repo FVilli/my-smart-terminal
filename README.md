@@ -1,6 +1,6 @@
 <!-- gsynchro:v1 id=8e92d508-e4e4-44bb-a3f4-16682ab1d0b2 registered=2026-10-23T09:58:42.363Z -->
 <p align="center">
-  <img src="apps/desktop/build/icon.png" width="96" alt="Smart Terminal" />
+  <img src="docs/assets/logo.png" width="420" alt="Smart Terminal logo" />
 </p>
 
 <h1 align="center">Smart Terminal</h1>

@@ -33,3 +33,10 @@ docs/20-22; README; electron-builder.yml; docs/assets.
 
 ## Do not
 Do not modify install scripts or release artifacts in this task; do not touch macOS/Windows icon settings.
+
+## Outcome
+- Generated `docs/assets/icon.png` (512x512) from `icon-brain-more-stylized.png` and `apps/desktop/build/icon-linux.png`.
+- Cropped the left lockup panel from the concept sheet, resized to 600x542, saved as `docs/assets/logo.png` with transparency.
+- `electron-builder.yml` Linux icon now uses `icon-linux.png`; macOS/Windows icon settings unchanged.
+- README header uses the new logo with responsive width/alt text; installation section unchanged.
+- Verified dimensions, non-empty pixels, transparency on the logo, and Markdown links.

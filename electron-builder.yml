@@ -17,7 +17,7 @@ asarUnpack:
 npmRebuild: true
 artifactName: 'Smart.Terminal-${version}-${os}-${arch}.${ext}'
 linux:
-  icon: icon.png
+  icon: icon-linux.png
   target:
     - AppImage
     - deb
