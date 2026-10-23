@@ -5,7 +5,8 @@
   --terminal-bg: #171e25;
   --tab-bg: #212b38;
   --input-bg: #222e3c;
-  --sidebar-bg: #0a0d10;
+  --sidebar-bg: #000000;
+  --tab-active: #384a5d;
   --card-bg: #333333;
   --surface: #212b38;
   --surface-raised: #222e3c;

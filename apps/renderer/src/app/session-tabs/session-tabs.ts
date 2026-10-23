@@ -77,12 +77,12 @@ import type { TerminalSessionView } from '../session.model';
   `,
   styles: `
     :host { display: block; background: var(--tab-bg); border-bottom: 1px solid var(--border); }
-    .tabs { display: flex; align-items: stretch; height: 40px; min-width: 0; }
+    .tabs { display: flex; align-items: stretch; height: 54px; min-width: 0; }
     .tab {
-      display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; padding: 0 8px 0 14px;
+      display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; padding: 0 8px 0 16px;
       border-right: 1px solid var(--border); color: var(--text-muted); cursor: pointer; white-space: nowrap;
     }
-    .tab--active { background: var(--terminal-bg); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+    .tab--active { background: var(--tab-active); color: var(--text); }
     .tab--exited .tab-label { text-decoration: line-through; }
     .tab-label { font-weight: 600; }
     .tab-target { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
@@ -90,7 +90,7 @@ import type { TerminalSessionView } from '../session.model';
     .tab-close { color: var(--text-muted); border-radius: 4px; width: 20px; height: 20px; line-height: 1; }
     .tab-close:hover { background: var(--border); color: var(--text); }
     .plus-wrap { position: relative; display: flex; }
-    .plus { width: 40px; font-size: 20px; color: var(--text-muted); }
+    .plus { width: 54px; font-size: 20px; color: var(--text-muted); }
     .plus:hover { color: var(--accent); }
     .menu {
       position: absolute; top: 100%; left: 0; z-index: 10; min-width: 220px; display: flex; flex-direction: column;

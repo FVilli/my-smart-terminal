@@ -14,7 +14,7 @@ import { syncBadge } from '../session.model';
   `,
   styles: `
     :host { display: flex; flex: none; align-items: center; justify-content: space-between; height: 28px; padding: 0 12px;
-      background: var(--tab-bg); border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+      background: var(--terminal-bg); border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
     .badge { display: inline-flex; align-items: center; gap: 6px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
     [data-state='syncing'] .dot { background: #e3b341; }

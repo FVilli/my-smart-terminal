@@ -60,11 +60,11 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     }
   `,
   styles: `
-    :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 10px 12px; }
+    :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 12px 16px; }
     .row { display: flex; align-items: stretch; gap: 10px; min-width: 0; }
     .editor {
-      flex: 1 1 0; min-width: 0; resize: none; background: var(--input-bg); border: 1px solid var(--border);
-      border-radius: 6px; padding: 8px 10px; font-family: var(--font-mono); font-size: 14px; overflow: auto;
+      flex: 1 1 0; min-width: 0; min-height: 76px; resize: none; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px; overflow: auto;
     }
     .editor:focus { outline: 1px solid var(--accent); }
     .icon { background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; width: 44px; cursor: pointer; }

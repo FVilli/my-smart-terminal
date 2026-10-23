@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   `,
   styles: `
     :host { display: block; flex: none; }
-    .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 44px; padding: 0 16px;
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 48px; padding: 0 16px;
       background: var(--sidebar-bg); border-bottom: 1px solid var(--border); }
     .brand { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.02em; }
     .mark { color: var(--accent); }
