@@ -394,7 +394,8 @@ describe('coordinator endpoint', () => {
     const longUserData = path.join(root, 'x'.repeat(120), 'user-data');
     const endpoint = coordinatorEndpoint(longUserData);
     expect(Buffer.byteLength(endpoint)).toBeLessThan(100);
-    expect(endpoint.startsWith(os.tmpdir())).toBe(true);
+    expect(endpoint.startsWith(longUserData)).toBe(false);
+    expect(path.isAbsolute(endpoint)).toBe(true);
     expect(coordinatorEndpoint(path.join(root, 'short'))).toBe(path.join(root, 'short', 'coordinator', 'coordinator.sock'));
   });
 });
