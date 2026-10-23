@@ -31,3 +31,9 @@ README.md; docs/12; docs/14; electron-builder.yml; docs/18; docs/19.
 
 ## Do not
 Do not modify app code, packaging, release artifacts or the data repository; do not claim code signing or auto-update.
+
+## Outcome
+- Added `docs/20 - Windows installation guide.md` with x64/unsigned expectations, optional PowerShell checksum verification, per-user NSIS install, SmartScreen guidance, first launch, update, uninstall, app-vs-data separation, optional cleanup and recovery.
+- README Download section replaced with exactly the Windows/Linux/macOS installation-guide links; all other README content retained.
+- Linux/macOS links intentionally resolve only after T02/T03; T04 owns the final link gate.
+- Note: `gsynchro` restarted unexpectedly and overwrote `package.json`; stopped it and restored the file before continuing.
