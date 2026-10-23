@@ -31,3 +31,9 @@ docs/23; docs/24; implementation evidence.
 
 ## Do not
 Do not implement the decision or publish a release.
+
+## Review record
+- Independent review approved Option B and found no reason to intercept terminal Enter: the app cannot observe shell line buffer, raw/TUI mode or SSH application state; keystroke reconstruction fails with readline/cursor editing/paste/TUI.
+- Applied corrections: defined focus transition (`Ctrl/Cmd+Shift+E` to composer, Escape back to terminal with draft preserved, explicit click, visible focus, no key stealing); clarified that the app adds no rewriting to xterm `onData` (browser/xterm translation and paste happen before); changed history wording to “eligible for asynchronous app history” and documented filtering/failure; added concrete accessibility/focus assertions.
+- Updated `docs/08` from an undefined newline shortcut to the existing Enter/Shift+Enter behavior and terminal key ownership.
+- ADR remains **Proposed** pending explicit user approval; M12 must not close before approval and no implementation is authorized by this review.

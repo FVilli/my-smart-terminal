@@ -27,8 +27,8 @@ Choose **Option B: keep the assisted input and preserve the terminal as a real P
 
 When the terminal surface is active:
 
-- ArrowUp/ArrowDown, Tab, Enter, paste, Escape, and Ctrl keys go to the PTY unchanged.
-- The shell, readline, TUI, or remote application owns the meaning of those bytes.
+- The app adds no application-level key interception, interpretation, or rewriting; xterm emits data through `onData` to the session as it does today.
+- The shell, readline, TUI, or remote application owns the meaning of those bytes. Browser/xterm translation and paste handling still occur before `onData`; the contract is “no app-level rewriting”, not physical-key or byte-for-byte identity.
 - Local and SSH sessions use the same pass-through ownership model.
 
 When the assisted input is active:
@@ -41,14 +41,22 @@ When the assisted input is active:
 - Escape does not clear the draft.
 - Paste remains normal textarea paste.
 
-The exact focus-transition shortcut or other UX affordance is deferred to implementation. The transition must be explicit, and it must never steal keys from the focused PTY.
+### Focus transition contract
+
+- Clicking a surface focuses that surface. Activating a session tab focuses the terminal, as today.
+- `Ctrl+Shift+E` on Linux/Windows (or `Cmd+Shift+E` on macOS) focuses the assisted input without clearing its draft.
+- When the assisted input is focused and IME/menu handling is not active, `Escape` returns focus to the terminal and preserves the draft.
+- The shortcut must be discoverable in the UI/help, keyboard-accessible, and must not fire while the terminal is focused; terminal keys remain owned by the PTY.
+- After a successful send from the input, focus remains on the input so the next command can be composed; moving to the terminal is explicit.
+- Focus is always visible. Tab from the input follows the normal control order (including the AI, microphone and send controls); it never inserts a tab character or traps focus.
+- `docs/08` must be updated to state the then-current newline and focus behavior when implementation lands; it must not document a shortcut before it exists.
 
 ### AI, STT, drafts, and history
 
 - AI correction is explicit and reviewable. It is never invoked automatically by terminal Enter or assisted-input Enter, and a correction is never sent without user review.
 - STT appends its transcription to the draft without sending it.
 - Drafts remain in memory per tab.
-- App history records only successful assisted submissions (subject to existing validation/privacy filtering).
+- A successful assisted send is eligible for app history. Recording is asynchronous; existing validation/privacy filtering can reject text and a history failure can mean no entry, while the PTY write remains successful.
 - Native shell history stays native to the shell/PTY.
 - There is no third history assembled by intercepting or mirroring terminal keystrokes.
 
@@ -96,13 +104,13 @@ Reconsideration requires new evidence and explicit approval, such as a supported
 
 This is a test plan, not an implementation request.
 
-- **Terminal passthrough:** verify unchanged ArrowUp/Down, Tab, Enter, Escape, Ctrl keys, and bracketed paste for local shells, SSH sessions, and interactive `vim`/`htop`-style TUIs.
+- **Terminal passthrough:** verify that the app adds no rewriting to xterm `onData` for ArrowUp/Down, Tab, Enter, Escape, Ctrl keys, and bracketed paste, with expected PTY data for representative inputs in local shells, SSH sessions, and interactive `vim`/`htop`-style TUIs.
 - **Input editing:** verify caret movement in single-line and multiline drafts, normal Tab focus traversal, normal paste, and Escape preserving the draft.
 - **Submission:** verify Enter sends, Shift+Enter inserts a newline, successful-send draft clearing, failed-send retention, and IME composition Enter not sending.
 - **AI review:** verify only explicit activation invokes AI, changed text replaces the editable draft, review is required, shell-like text can be skipped, and no Enter path invokes AI automatically.
 - **STT:** verify transcription appends without sending, including repeated dictation and error/permission paths.
-- **Drafts and history:** verify drafts remain isolated per tab, successful assisted submissions are recorded, failed sends are not recorded, native shell history remains native, and no third history appears.
-- **Focus and accessibility:** verify explicit transitions, visible focus, keyboard traversal, screen-reader labels, and that focus changes do not steal the first PTY key.
+- **Drafts and history:** verify drafts remain isolated per tab, a successful send is eligible for asynchronous history (and may be filtered), failed sends are not recorded, native shell history remains native, and no third history appears.
+- **Focus and accessibility:** assert that the documented shortcut focuses the input without clearing the draft; Escape returns to the terminal with the draft intact; clicking either surface matches focus; the first key after a transition reaches the intended surface; focus rings are visible; input Tab order is textarea → AI → mic → send (or the documented order); screen readers announce the focused control; no focus trap exists; and focus changes never steal a PTY key.
 - **Compatibility and failure:** verify terminal usability when AI/STT are unavailable and preserve terminal behavior through resize, tab switching, reconnect/error, and process exit paths.
 
 ## References
