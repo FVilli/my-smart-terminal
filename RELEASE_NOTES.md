@@ -1,6 +1,15 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.10
+
+STT playback hotfix.
+
+### Fixed
+
+- Allow `blob:` audio in the renderer CSP (`media-src`), which previously blocked playback.
+- Added a native `<audio controls>` player for the recorded sample; PLAY reports media error codes and playback state.
+
 ## v1.3.9
 
 STT diagnostics and recording repair release.

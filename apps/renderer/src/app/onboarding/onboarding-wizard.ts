@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
@@ -182,6 +182,9 @@ const STT_MODEL_OPTIONS = [
                     <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()">PLAY</button>
                     <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
                   </div>
+                  @if (testAudioUrl() !== null) {
+                    <audio #audioPlayer controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
+                  }
                   <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()">
                     {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}
                   </button>
@@ -296,6 +299,7 @@ const STT_MODEL_OPTIONS = [
 export class OnboardingWizard {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
   private readonly stt = inject(SttStore);
+  private readonly audioPlayer = viewChild<ElementRef<HTMLAudioElement>>('audioPlayer');
   private readonly settings = inject(SettingsStore);
   private readonly appearance = inject(AppearanceStore);
   private readonly messages = inject(MessageStore);
@@ -599,12 +603,28 @@ export class OnboardingWizard {
 
   protected playSttAudio(): void {
     const url = this.testAudioUrl();
+    const player = this.audioPlayer()?.nativeElement;
     if (url === null) return;
-    const audio = new Audio(url);
+    if (player === undefined) { this.sttTestResult.set('Audio player is not ready yet. Try PLAY again.'); return; }
+    player.src = url;
+    player.load();
     this.testPlayback.set(true);
     this.testRecState.set('playing');
-    audio.onended = () => { this.testPlayback.set(false); this.testRecState.set('ready'); };
-    void audio.play().catch(() => { this.testPlayback.set(false); this.testRecState.set('error'); this.sttTestResult.set('Audio playback is unavailable.'); });
+    void player.play().catch((error: unknown) => {
+      this.testPlayback.set(false);
+      this.testRecState.set('error');
+      const name = (error as { name?: unknown }).name;
+      this.sttTestResult.set(name === 'NotAllowedError' ? 'Playback was blocked by the browser. Use the audio controls or click PLAY again.' : 'Audio playback is unavailable: ' + (typeof name === 'string' ? name : 'unknown error') + '.');
+    });
+  }
+
+  protected onPlaybackEnded(): void { this.testPlayback.set(false); this.testRecState.set('ready'); }
+
+  protected onPlaybackError(): void {
+    this.testPlayback.set(false);
+    this.testRecState.set('error');
+    const code = this.audioPlayer()?.nativeElement.error?.code;
+    this.sttTestResult.set('Audio playback failed' + (code !== undefined ? ' (media error ' + code + ')' : '') + '. Check the system audio output.');
   }
 
   protected async transcribeSttAudio(): Promise<void> {
@@ -659,6 +679,8 @@ export class OnboardingWizard {
     this.testStream = null;
     this.testChunks = [];
     this.testBlob = null;
+    const player = this.audioPlayer()?.nativeElement;
+    if (player !== undefined) { player.pause(); player.removeAttribute('src'); player.load(); }
     const url = this.testAudioUrl();
     if (url !== null) URL.revokeObjectURL(url);
     this.testAudioUrl.set(null);
