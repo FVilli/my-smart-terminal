@@ -11,7 +11,7 @@ depends_on: "M16A"
 # M16B - Header redesign implementation
 
 ## Delivered
-- Full-window 35px title bar with transparent icon, dynamic version, Settings and History/Clipboard toggles.
+- Full-window 35px title bar with transparent icon, dynamic version, Settings and single History/Clipboard panel toggle.
 - Custom `_ □ ×` controls and validated IPC on Linux/Windows; native traffic lights on macOS.
 - 38px session tabs and synchronized right-panel visibility.
 - Transparent RGBA application icon.

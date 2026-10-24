@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import type { SidebarTab } from '../session.model';
 import { LayoutStore } from '../layout-store';
 import { SearchStore } from '../search/search-store';
 import { SettingsStore } from '../settings/settings-store';
@@ -12,8 +11,9 @@ import { SettingsStore } from '../settings/settings-store';
       <img class="icon" src="/icon.png" alt="" />
       <div class="title" data-testid="header-version">Smart Terminal - Version {{ version() }}</div>
       <div class="actions">
-        <button type="button" class="toggle" [class.active]="layout.panel() === 'history'" [attr.aria-pressed]="layout.panel() === 'history'" data-testid="header-history" title="History" (click)="toggle('history')">History</button>
-        <button type="button" class="toggle" [class.active]="layout.panel() === 'clipboard'" [attr.aria-pressed]="layout.panel() === 'clipboard'" data-testid="header-clipboard" title="Clipboard" (click)="toggle('clipboard')">Clipboard</button>
+        <button type="button" class="toggle" [class.active]="layout.panel() !== null" [attr.aria-pressed]="layout.panel() !== null" data-testid="header-panel-toggle" [attr.title]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" [attr.aria-label]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" (click)="toggle()">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="1.5" fill="none" stroke="currentColor"/><path d="M12.5 3v14" [attr.fill]="layout.panel() !== null ? 'currentColor' : 'none'" [attr.stroke]="layout.panel() !== null ? 'currentColor' : 'none'"/></svg>
+        </button>
         <button type="button" class="settings" data-testid="settings-open" aria-label="Settings" title="Settings" (click)="settings.openSettings()">⚙</button>
         @if (showControls()) {
           <div class="window-controls">
@@ -31,7 +31,8 @@ import { SettingsStore } from '../settings/settings-store';
     .icon { width: 18px; height: 18px; object-fit: contain; }
     .title { position: absolute; left: 50%; transform: translateX(-50%); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
     .actions, .window-controls { display: inline-flex; align-items: center; gap: 4px; min-width: 0; -webkit-app-region: no-drag; }
-    .toggle { height: 22px; padding: 0 6px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 11px; }
+    .toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px; padding: 4px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
+    .toggle svg { width: 18px; height: 18px; }
     .toggle.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
     .toggle:focus-visible, .settings:focus-visible, .window-controls button:focus-visible { outline: 2px solid var(--accent); }
     .settings { width: 30px; height: 30px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; }
@@ -56,9 +57,9 @@ export class AppHeader {
     window.smartTerminal.onWindowMaximized(({ maximized }) => this.maximized.set(maximized));
   }
 
-  protected toggle(tab: SidebarTab): void {
-    const next = this.layout.panel() === tab ? null : tab;
-    this.layout.set(next);
+  protected toggle(): void {
+    this.layout.toggle();
+    const next = this.layout.panel();
     if (next !== null) this.search.setTab(next);
   }
 

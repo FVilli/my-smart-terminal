@@ -624,10 +624,12 @@ const SETTINGS_SCRIPT = `(async () => {
   const result = {};
   result.settingsButton = await waitFor(() => !!q('settings-open'));
   result.headerVersion = (q('header-version')?.textContent ?? '').includes('Smart Terminal - Version');
-  click('header-history'); result.historyPanelOpens = await waitFor(() => !!q('sidebar'));
-  click('header-history'); result.historyPanelHides = await waitFor(() => !q('sidebar'));
-  click('header-clipboard'); result.clipboardPanelOpens = await waitFor(() => !!q('sidebar'));
-  click('sidebar-tab-history'); result.internalTabSyncsHeader = await waitFor(() => q('header-history')?.getAttribute('aria-pressed') === 'true');
+  result.panelInitiallyVisible = await waitFor(() => !!q('sidebar') && q('header-panel-toggle')?.getAttribute('aria-pressed') === 'true');
+  click('header-panel-toggle'); result.panelHides = await waitFor(() => !q('sidebar'));
+  click('header-panel-toggle'); result.panelReopens = await waitFor(() => !!q('sidebar'));
+  click('sidebar-tab-history'); result.internalTabSyncsHeader = await waitFor(() => q('header-panel-toggle')?.getAttribute('aria-pressed') === 'true');
+  click('header-panel-toggle'); result.historyPanelHides = await waitFor(() => !q('sidebar'));
+  click('header-panel-toggle'); result.clipboardPanelOpens = await waitFor(() => !!q('sidebar') && !!q('sidebar-tab-history'));
   result.windowControlsPresent = !!q('window-minimize') && !!q('window-maximize') && !!q('window-close');
   click('settings-open'); result.opened = await waitFor(() => !!q('onboarding-overlay'));
   result.noProgress = !q('onboarding-progress');

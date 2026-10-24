@@ -14,7 +14,7 @@ deliverables: "Approved header mockup implemented with panel toggle state, windo
 Blocked until user approval. Implement docs/26 exactly; add tests for panel toggles, title/version, minimize/maximize/close behavior, drag/no-drag, tab height and 1024px resilience.
 
 ## Outcome
-- Full-window 35px title bar with transparent icon, runtime version, Settings, History/Clipboard toggles and Linux/Windows `_ □ ×` controls; macOS keeps native traffic lights.
+- Full-window 35px title bar with transparent icon, runtime version, Settings, single panel toggle and Linux/Windows `_ □ ×` controls; macOS keeps native traffic lights.
 - Added validated window-control IPC and maximized event; custom frame on Linux/Windows, native frame on macOS.
 - History/Clipboard buttons select/open/hide the right panel and sync with the sidebar tabs; 38px session tabs; layout gate updated.
 - Settings/editor/layout/IPC smokes, unit tests, lint, typecheck and build pass.

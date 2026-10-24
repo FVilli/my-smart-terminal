@@ -49,18 +49,17 @@ At 1024 px width the centre title gets priority; right controls remain reachable
 - Right: History/Clipboard panel toggles, Settings gear, then Linux/Windows window controls.
 - On macOS: native traffic lights remain at the left; the centre/right controls stay, and the custom `_ □ ×` trio is not duplicated.
 
-## Panel toggles
+## Panel toggle (post-approval refinement)
 
-History and Clipboard are two independent surface choices, not separate implementations of the same toggle:
+The final header uses one right-panel toggle icon, not two History/Clipboard buttons:
 
-- Click **History**: select and show the right panel on History; History button is active.
-- Click **Clipboard**: switch the panel to Clipboard; Clipboard button is active.
-- Click the already-active button: hide the right panel; both buttons become inactive.
-- Clicking a hidden panel's button opens it again.
+- Clicking the toggle shows the panel on the last selected section (History or Clipboard).
+- Clicking it again hides the panel.
+- The icon has distinct active and inactive SVG variants, with `aria-pressed` and an updated Hide/Show label.
+- The internal History/Clipboard tabs select content and keep the header state synchronized.
 - When visible, the panel keeps the existing 75/25 layout. When hidden, the main terminal expands to the full width.
-- The existing sidebar tabs remain as an alternate selector inside the panel; header buttons and internal tabs must stay in sync.
 
-Buttons are accessible toggles with `aria-pressed`, visible focus rings and tooltips. The active state uses the existing accent tint, not a new color.
+This refinement was requested after the initial mockup approval; the mockup source/PNG were updated to the single-toggle version.
 
 ## Window controls and custom frame
 
@@ -92,9 +91,8 @@ Use existing app palette: `#171e25` titlebar/terminal, `#212b38` tabs, `#384a5d`
 
 | State | Expected |
 | --- | --- |
-| History active | History control tinted; Clipboard neutral; panel visible on History |
-| Clipboard active | Clipboard control tinted; History neutral; panel visible on Clipboard |
-| Panel hidden | Both controls neutral; terminal expands; no empty sidebar gap |
+| Panel active | Toggle shows the filled active icon; panel visible on History or Clipboard |
+| Panel hidden | Toggle shows the outline inactive icon; terminal expands; no empty sidebar gap |
 | Hover/focus | Subtle surface/focus ring; no layout shift |
 | Maximized | Restore icon/label replaces maximize |
 | Narrow window | Centre title truncates safely; controls never overlap |

@@ -33,7 +33,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         [attr.title]="ai.status().warning ?? 'Fix typos with AI'"
         (click)="correctWithAi()"
       >
-        {{ ai.busy() ? '…' : '✦ AI' }}
+        @if (ai.busy()) { … } @else { <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg><span>AI</span> }
       </button>
       <div class="voice">
         <button
@@ -43,6 +43,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
           [attr.aria-label]="micLabel()"
           [attr.aria-pressed]="voice.phase() === 'recording'"
           [class.listening]="voice.phase() === 'recording'"
+          [class.configured]="canRecord()"
           [disabled]="!canRecord()"
           [attr.title]="voice.notice() ?? voice.status().warning ?? 'Dettatura vocale'"
           (pointerdown)="startRecording()"
@@ -51,11 +52,11 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
           (pointercancel)="stopRecording()"
           (click)="toggleRecording($event)"
         >
-          🎤
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="2" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         </button>
-        <span class="voice-label" data-testid="voice-label" role="status">{{ micLabel() }}</span>
+        <span class="voice-label" data-testid="voice-label" role="status">{{ voice.status().configured ? micLabel() : '' }}</span>
       </div>
-      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()">↑</button>
+      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
     </div>
@@ -67,10 +68,10 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     }
   `,
   styles: `
-    :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
+    :host { display: block; flex: none; background: var(--input-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
     .composer { border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 8px; }
     .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
-    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-size: 14px; overflow: auto; }
+    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; font-size: 14px; overflow: auto; }
     .editor:disabled { opacity: .65; }
     .bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
     .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
@@ -78,9 +79,15 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     .icon { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
     .icon:disabled { opacity: .45; cursor: default; }
     .icon:not(:disabled):hover { background: var(--border); color: var(--text); }
-    .ai { color: var(--accent); font-weight: 700; }
+    .ai { color: var(--accent); font-weight: 700; gap: 3px; }
+    .ai svg { width: 15px; height: 15px; }
+    .mic { color: var(--text-muted); }
+    .mic.configured { color: var(--text); }
+    .mic svg { width: 17px; height: 17px; }
+    .send svg { width: 17px; height: 17px; }
     .send { width: 26px; padding: 0; border-radius: 50%; background: var(--accent); color: var(--terminal-bg); font-size: 15px; font-weight: 700; }
     .send:not(:disabled):hover { background: var(--accent); color: var(--terminal-bg); }
+    .send:disabled { opacity: .45; }
     .voice { display: flex; flex-direction: row-reverse; align-items: center; gap: 2px; }
     .mic.listening { color: var(--accent); }
     .voice-label { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 10px; line-height: 1; }

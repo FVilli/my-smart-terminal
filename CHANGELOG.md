@@ -1,6 +1,12 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.1
+### Fixed
+- Composer background/monospace/icons/mic status and hidden unconfigured audio label.
+- Transparent Ubuntu/menu icon.
+- Single active/inactive right-panel toggle.
+
 ## 1.3.0
 ### Added
 - Full-window 35px VS Code-style header, panel toggles, custom window controls and transparent icon.

@@ -1,6 +1,16 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.1
+
+Visual fixes release.
+
+### Fixed
+
+- Composer now shares its input background outside the border, uses explicit monospace text, cleaner SVG AI/mic/send icons, hides the “not configured” voice text and distinguishes configured/active microphone states.
+- Ubuntu menu/window icon now uses the transparent RGBA asset instead of an opaque square.
+- Right side panel is controlled by one toggle icon with distinct active/inactive variants; it remembers the last History/Clipboard section.
+
 ## v1.3.0
 
 Header and composer redesign release.
