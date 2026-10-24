@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { AiStore, correctionNotice } from '../ai/ai-store';
-import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
+import { SttStore, voiceLabel } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
@@ -45,11 +45,7 @@ import { MessageStore } from '../messages/message-store';
           [attr.aria-pressed]="voice.phase() === 'recording'"
           [class.listening]="voice.phase() === 'recording'"
           [class.configured]="voice.status().configured"
-          [attr.title]="voice.notice() ?? voice.status().warning ?? 'Dettatura vocale'"
-          (pointerdown)="canRecord() ? startRecording() : openSttSettings()"
-          (pointerup)="stopRecording()"
-          (pointerleave)="stopRecording()"
-          (pointercancel)="stopRecording()"
+          [attr.title]="voice.notice() ?? voice.status().warning ?? (voice.phase() === 'recording' ? 'Stop recording' : 'Start dictation')"
           (click)="toggleRecording($event)"
         >
           <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="2" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -82,7 +78,7 @@ import { MessageStore } from '../messages/message-store';
     .send:not(:disabled):hover { background: var(--accent); color: var(--terminal-bg); }
     .send:disabled { opacity: .45; }
     .voice { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .mic.listening { color: var(--accent); }
+    .mic.listening { color: #e5484d; }
     .voice-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
 })
@@ -159,13 +155,11 @@ export class AssistedInput implements OnDestroy {
     void this.voice.stop();
   }
 
-  /** Keyboard click (Enter/Space): `detail === 0`, so use the accessible toggle; mouse taps are already handled. */
-  protected toggleRecording(event: MouseEvent): void {
+  /** Click toggles dictation: first click records, second click stops and transcribes. */
+  protected toggleRecording(_event: MouseEvent): void {
+    if (this.voice.phase() === 'transcribing') return;
     if (!this.canRecord()) {
       this.openSttSettings();
-      return;
-    }
-    if (event.detail > 0) {
       return;
     }
     if (this.voice.phase() === 'recording') {
@@ -175,9 +169,25 @@ export class AssistedInput implements OnDestroy {
     }
   }
 
-  /** Appends dictated text to the draft: there is no automatic send. */
+  /** Inserts dictated text at the caret (or replaces the current selection); never sends it. */
   private insertTranscript(text: string): void {
-    this.draftChange.emit(appendTranscript(this.draft(), text));
+    const value = this.draft();
+    const element = this.textarea().nativeElement;
+    const start = element.selectionStart ?? value.length;
+    const end = element.selectionEnd ?? start;
+    const dictated = text.trim();
+    if (dictated.length === 0) return;
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    const prefix = before.length > 0 && !/\s$/.test(before) ? ' ' : '';
+    const suffix = after.length > 0 && !/^\s/.test(after) ? ' ' : '';
+    const next = `${before}${prefix}${dictated}${suffix}${after}`;
+    this.draftChange.emit(next);
+    queueMicrotask(() => {
+      const caret = before.length + prefix.length + dictated.length;
+      element.focus();
+      element.setSelectionRange(caret, caret);
+    });
   }
 
   protected async correctWithAi(): Promise<void> {

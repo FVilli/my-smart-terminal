@@ -556,7 +556,7 @@ const STT_SCRIPT = `(async () => {
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
     el.dispatchEvent(new Event('input', { bubbles: true }));
   };
-  const press = (type) => mic().dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, isPrimary: true }));
+  const clickMic = () => mic().click();
   const result = {};
   result.sessionReady = await waitFor(async () => (await api.listTerminals()).length === 1 && !textarea().disabled, 8000);
   const status = await api.sttStatus();
@@ -565,7 +565,7 @@ const STT_SCRIPT = `(async () => {
 
   // 1. Permission denied: localized message, terminal, and submission remain usable.
   navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
-  mic().click();
+  clickMic();
   result.deniedMessage = await waitFor(() => voiceLabel() === 'Microphone denied', 4000);
   setText('echo MIC_DENIED_STILL_WORKS');
   await sleep(100);
@@ -580,13 +580,27 @@ const STT_SCRIPT = `(async () => {
   oscillator.connect(destination);
   oscillator.start();
   navigator.mediaDevices.getUserMedia = async () => destination.stream;
-  press('pointerdown');
+  clickMic();
   result.listeningLabel = await waitFor(() => voiceLabel() === 'Listening…', 4000);
   await sleep(1200);
-  press('pointerup');
+  clickMic();
   result.transcriptInDraft = await waitFor(() => textarea().value.includes('test transcript'), 15000);
   result.labelBackToIdle = await waitFor(() => voiceLabel() === 'Voice ready', 4000);
-  try { oscillator.stop(); void context.close(); } catch {}
+  setText('Alpha Omega');
+  await sleep(100);
+  textarea().setSelectionRange(6, 6);
+  const context2 = new AudioContext();
+  const destination2 = context2.createMediaStreamDestination();
+  const oscillator2 = context2.createOscillator();
+  oscillator2.connect(destination2);
+  oscillator2.start();
+  navigator.mediaDevices.getUserMedia = async () => destination2.stream;
+  clickMic();
+  await waitFor(() => voiceLabel() === 'Listening…', 4000);
+  await sleep(500);
+  clickMic();
+  result.transcriptAtCursor = await waitFor(() => textarea().value.includes('Alpha test transcript Omega'), 15000);
+  try { oscillator.stop(); oscillator2.stop(); void context.close(); void context2.close(); } catch {}
 
   // 3. The text arrives in the editable draft and is not submitted.
   setText('edited test transcript');
