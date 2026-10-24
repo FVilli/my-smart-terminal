@@ -1032,9 +1032,9 @@ export function runSyncUiSmoke(window: BrowserWindow): void {
         result['copyWritesElectronClipboard'] = await pollUntilAsync(async () => (await clipboard.readText()) === 'echo SYNC_UI_OK', 3000);
         Object.assign(result, await run(SYNC_UI_INSERT_SCRIPT));
         const text = `SYNC_UI_CLIP_TEXT_${Date.now()}`;
-        clipboard.writeText(`export CLIP_API_KEY=smoke_secret_${Date.now()}`);
+        void clipboard.writeText(`export CLIP_API_KEY=smoke_secret_${Date.now()}`);
         await new Promise((resolve) => setTimeout(resolve, 1200));
-        clipboard.writeText(text);
+        void clipboard.writeText(text);
         result['clipboardEventRecorded'] = await pollUntil(() => readAllClipboardEvents().some((event) => event.text === text), 5000);
         Object.assign(result, await run(SYNC_UI_CLIPBOARD_SCRIPT));
         result['clipboardCopyWritesElectronClipboard'] = await pollUntilAsync(async () => (await clipboard.readText()) === text, 3000);

@@ -155,7 +155,8 @@ export interface SttGateway {
 
 /** Writes text to the system clipboard (Copy button). */
 export interface ClipboardTextWriter {
-  writeText(text: string): void;
+  /** Electron 45 async clipboard: dispatch awaits the promise, so the writer may return one. */
+  writeText(text: string): void | Promise<void>;
 }
 
 export interface SshGateway {

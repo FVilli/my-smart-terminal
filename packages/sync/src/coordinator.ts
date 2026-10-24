@@ -47,7 +47,8 @@ export class Coordinator {
       staleMs: options.staleMs,
       isPidAlive: options.isPidAlive,
       clock: options.clock,
-      onLost: () => this.enqueue(() => this.demote()),
+      // Election loss is a control event, not a request: enqueue and let the run loop report failures.
+      onLost: () => { void this.enqueue(() => this.demote()); },
     });
   }
 

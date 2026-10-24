@@ -229,7 +229,7 @@ function createWindow(): BrowserWindow {
   return window;
 }
 
-app.whenReady().then(async () => {
+void app.whenReady().then(async () => {
   if (process.platform === 'darwin') {
     Menu.setApplicationMenu(Menu.buildFromTemplate([{
       label: app.name,
@@ -330,9 +330,12 @@ app.whenReady().then(async () => {
     const ready = { mode: e2eMode, instance, role: runtime.isPrimary ? 'primary' : 'secondary', isPrimary: runtime.isPrimary, pid: process.pid, sessionId: created.allocation.sessionId, sessionDirectory: created.allocation.relativeDir, machine: created.machine };
     console.log(`SMART_TERMINAL_E2E_READY ${JSON.stringify(ready)}`);
     if (e2eMode === 'cross-machine' && instance !== 'A') {
-      const timer = setInterval(async () => {
-        const found = (await runtime.query({ query: marker })).entries.length > 0;
-        console.log(`SMART_TERMINAL_E2E_SEARCH ${JSON.stringify({ instance, found, query: marker })}`);
+      const timer = setInterval(() => {
+        // Fire-and-forget probe: overlapping ticks are harmless because each query is independent.
+        void (async () => {
+          const found = (await runtime.query({ query: marker })).entries.length > 0;
+          console.log(`SMART_TERMINAL_E2E_SEARCH ${JSON.stringify({ instance, found, query: marker })}`);
+        })();
       }, 500);
       timer.unref();
     }

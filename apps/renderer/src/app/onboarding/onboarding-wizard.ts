@@ -320,7 +320,7 @@ export class OnboardingWizard {
     void this.loadState();
     effect(() => {
       if (this.settings.open()) {
-        this.openFromSettings();
+        void this.openFromSettings();
       }
     });
   }

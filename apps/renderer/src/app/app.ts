@@ -76,7 +76,7 @@ export class App {
     });
     window.addEventListener('focus', () => {
       this.clipboardCapture.refresh();
-      this.ai.load();
+      void this.ai.load();
       void this.stt.load();
       this.sync.refresh();
       this.search.refresh();
