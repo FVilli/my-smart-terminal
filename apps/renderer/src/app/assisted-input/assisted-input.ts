@@ -78,7 +78,11 @@ import { MessageStore } from '../messages/message-store';
     .send:not(:disabled):hover { background: var(--accent); color: var(--terminal-bg); }
     .send:disabled { opacity: .45; }
     .voice { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .mic.listening { color: #e5484d; }
+    .mic.listening { animation: mic-pulse 2s ease-in-out infinite; }
+    @keyframes mic-pulse {
+      0%, 100% { color: #e5484d; opacity: 1; filter: drop-shadow(0 0 0 transparent); }
+      50% { color: #ff6b6b; opacity: 0.35; filter: drop-shadow(0 0 4px rgba(229, 72, 77, 0.7)); }
+    }
     .voice-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
 })
