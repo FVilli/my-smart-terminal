@@ -24,15 +24,15 @@ Publish SHA-256 checksums with the release artifacts. Sign macOS/Windows only wh
 4. Compare the UI with the approved mockup, including monospace and the 75/25 layout.
 5. Release notes: features, limitations, data migration, and installation instructions.
 
-## v1.3.1 implementation
-- Version `1.3.1` in root/desktop/renderer; `electron-builder` in `electron-builder.yml` with:
+## v1.3.2 implementation
+- Version `1.3.2` in root/desktop/renderer; `electron-builder` in `electron-builder.yml` with:
   - Linux: AppImage and `.deb` (`npm run package:linux`), icon `apps/desktop/build/icon-linux.png`, `executableName smart-terminal`, `syncDesktopName`.
   - macOS: `.dmg`; Windows: NSIS installer. Built by the respective native pipelines (the local Linux build produces Linux artifacts only).
   - `asar: true`, `node-pty` in `asarUnpack`, native rebuild for Electron, `artifactName` with name/version/os/arch.
 - `npm run package:dir` for a quick check; `npm run checksums` generates `release/SHA256SUMS` excluding update metadata.
 - CI: `.github/workflows/ci.yml` (Linux/macOS/Windows matrix, `npm ci`, lint, typecheck, test, coordinator, build, native rebuild, Linux smoke on Xvfb, package, checksums, artifact upload). `.github/workflows/release.yml` on `v*` tags publishes artifacts and `SHA256SUMS` with `GITHUB_TOKEN`; no release from PRs.
 - Linux smoke artifact verified with AppImage `--appimage-extract-and-run` and `SMART_TERMINAL_SMOKE=1` on a virtual display.
-- V1 artifacts are **unsigned**; no auto-update. Always publish `SHA256SUMS` and the unsigned notice. App version is `1.3.1`, expected tag `v1.3.1`.
+- V1 artifacts are **unsigned**; no auto-update. Always publish `SHA256SUMS` and the unsigned notice. App version is `1.3.2`, expected tag `v1.3.2`.
 
 ## Updates and compatibility
 The Markdown frontmatter schema has a `schema_version` field; a new app version must read previous schemas or perform explicit migrations with backup. Do not destructively modify synchronized content during automatic upgrades.

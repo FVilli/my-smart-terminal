@@ -43,7 +43,7 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 | `--terminal-bg` | `#171e25` | matches mock |
 | `--tab-bg` | `#212b38` | inactive tab bar |
 | `--tab-active` | `#384a5d` | active tab, full-height fill |
-| `--input-bg` | `#222e3c` | assisted input |
+| `--input-bg` | `#222e3c` | composer interior; composer surroundings use terminal background |
 | `--sidebar-bg` | `#171e25` | sidebar, matches terminal |
 | `--card-bg` | `#222e3c` | history/clipboard cards, matches input |
 | `--border` | `#161d26` | separators |

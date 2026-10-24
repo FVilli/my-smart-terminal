@@ -68,7 +68,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     }
   `,
   styles: `
-    :host { display: block; flex: none; background: var(--input-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
+    :host { display: block; flex: none; background: var(--terminal-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
     .composer { border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 8px; }
     .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
     .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; font-size: 14px; overflow: auto; }

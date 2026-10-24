@@ -1,6 +1,14 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.2
+
+Composer background hotfix.
+
+### Fixed
+
+- The area outside the composer border now uses the terminal/app background; only the composer interior uses the input background. This removes the unwanted same-color band around the field.
+
 ## v1.3.1
 
 Visual fixes release.

@@ -29,7 +29,7 @@ const METRICS_SCRIPT = `(() => {
     sidebarBg: bg('app-sidebar-panel'),
     sidebarCardBg: bg('[data-testid="sidebar-entry"]'),
     terminalBg: bg('app-terminal-workarea'),
-    inputBg: bg('app-assisted-input') };
+    inputBg: bg('app-assisted-input .composer') };
 })()`;
 
 /** Window dimensions from SMART_TERMINAL_WINDOW_WIDTH/HEIGHT (default 1440x900). */
