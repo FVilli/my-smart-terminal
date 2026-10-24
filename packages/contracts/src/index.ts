@@ -385,6 +385,7 @@ export interface SttDiagnostics {
   durationMs?: number;
   textLength?: number;
   error?: string;
+  providerMessage?: string;
 }
 
 export interface SttSaveDebugAudioRequest {

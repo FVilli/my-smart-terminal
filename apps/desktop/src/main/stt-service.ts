@@ -84,7 +84,7 @@ export class SttService {
     return {
       configured,
       provider: config.sttProvider,
-      ...(config.sttModel !== undefined ? { model: config.sttModel } : {}),
+      ...(config.sttProvider === 'cloud' ? { model: config.sttModel ?? '' } : config.sttModel !== undefined ? { model: config.sttModel } : {}),
       hasToken,
       secureStorage,
       ...(warning !== undefined ? { warning } : {}),
@@ -115,7 +115,7 @@ export class SttService {
       mimeType,
       ...(token !== undefined ? { token } : {}),
       ...(config.sttProvider === 'local' && config.sttCommand !== undefined ? { command: config.sttCommand } : {}),
-      ...(config.sttModel !== undefined ? { model: config.sttModel } : {}),
+      ...(config.sttProvider === 'cloud' ? { model: config.sttModel ?? '' } : config.sttModel !== undefined ? { model: config.sttModel } : {}),
       ...((shared ? config.aiBaseUrl : config.sttBaseUrl) !== undefined ? { baseUrl: shared ? config.aiBaseUrl : config.sttBaseUrl } : {}),
       ...(config.sttResponseFormat !== undefined ? { responseFormat: config.sttResponseFormat } : {}),
       ...(config.sttLanguage !== undefined ? { language: config.sttLanguage } : {}),

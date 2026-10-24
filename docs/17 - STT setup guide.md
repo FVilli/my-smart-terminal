@@ -14,7 +14,7 @@ Smart Terminal uses the OpenAI-compatible AI provider configured in the **AI** t
 Open **Settings** with the gear, select the **STT** tab, and configure:
 
 - **STT provider:** `Use the same AI provider (OpenAI-compatible)` (the only option).
-- **Model:** select the audio model exposed by the provider. The current list includes `Parakeet TDT 0.6B v3 (GGUF)` (`audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF`).
+- **Model:** choose an explicit audio model, or **Server default (do not send model)** to omit the `model` field and let the provider choose. The current explicit option is `Parakeet TDT 0.6B v3 (GGUF)` (`audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF`).
 - **Language:** `EN (English)` or `IT (Italiano)`.
 
 The base URL and token are taken from the AI tab, so configure and test AI first. Use an `openai` or `openai-compatible` AI provider. AI settings, including the token, remain in the main process/keychain and are not copied into Markdown or logs.

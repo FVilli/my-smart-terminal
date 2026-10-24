@@ -34,6 +34,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
 
 const DEFAULT_STT_MODEL = 'audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF';
 const STT_MODEL_OPTIONS = [
+  { value: '', label: 'Server default (do not send model)' },
   { value: DEFAULT_STT_MODEL, label: 'Parakeet TDT 0.6B v3 (GGUF)' },
 ];
 
@@ -202,6 +203,7 @@ const STT_MODEL_OPTIONS = [
                         <dt>service reached</dt><dd>{{ debug.serviceReached ? 'yes' : 'no' }}</dd>
                         <dt>HTTP status</dt><dd>{{ debug.httpStatus ?? '—' }}</dd>
                         <dt>error</dt><dd>{{ debug.error ?? '—' }}</dd>
+                        <dt>provider message</dt><dd>{{ debug.providerMessage ?? '—' }}</dd>
                         <dt>endpoint</dt><dd>{{ debug.endpoint ?? '—' }}</dd>
                         <dt>model</dt><dd>{{ debug.model ?? '—' }}</dd>
                         <dt>language</dt><dd>{{ debug.language ?? '—' }}</dd>
@@ -468,7 +470,7 @@ export class OnboardingWizard {
     this.patch({
       sttProvider: 'cloud',
       sttUseAiProvider: true,
-      sttModel: this.config().sttModel ?? DEFAULT_STT_MODEL,
+      sttModel: this.config().sttModel,
       sttLanguage: this.config().sttLanguage ?? this.autoSttLanguage(),
     });
   }
@@ -478,7 +480,7 @@ export class OnboardingWizard {
   }
 
   protected sttModelValue(): string {
-    return this.config().sttModel ?? DEFAULT_STT_MODEL;
+    return this.config().sttModel ?? '';
   }
 
   protected sttLanguageValue(): string {
@@ -745,7 +747,7 @@ export class OnboardingWizard {
       sttUseAiProvider,
       sttResponseFormat,
       sttLanguage: this.config().sttProvider === 'cloud' ? (sttLanguage ?? this.autoSttLanguage()) : sttLanguage,
-      sttModel: this.config().sttProvider === 'cloud' ? (sttModel ?? DEFAULT_STT_MODEL) : sttModel,
+      sttModel,
       terminalFont,
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),

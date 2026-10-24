@@ -17,7 +17,20 @@ export interface SttResult {
 }
 
 export class SttHttpError extends Error {
-  constructor(readonly httpStatus: number, readonly contentType?: string) { super(`HTTP ${httpStatus}`); this.name = 'SttHttpError'; }
+  constructor(readonly httpStatus: number, readonly contentType?: string, readonly providerMessage?: string) { super(`HTTP ${httpStatus}`); this.name = 'SttHttpError'; }
+}
+
+function safeProviderMessage(body: string, token?: string): string | undefined {
+  let message: unknown;
+  try {
+    const data = JSON.parse(body) as { error?: { message?: unknown } | string; message?: unknown; detail?: unknown };
+    message = typeof data.error === 'object' && data.error !== null ? data.error.message : typeof data.error === 'string' ? data.error : data.message ?? data.detail;
+  } catch { return undefined; }
+  if (typeof message !== 'string') return undefined;
+  let safe = message.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500);
+  if (token !== undefined && token.length > 0) safe = safe.replaceAll(token, '[redacted]');
+  safe = safe.replace(/sk-[A-Za-z0-9._-]+/g, '[redacted]');
+  return safe.length > 0 ? safe : undefined;
 }
 
 export class SttJsonError extends Error {
@@ -132,7 +145,8 @@ export class OpenAiSttAdapter implements SttAdapter {
     try {
       const form = new FormData();
       form.append('file', new Blob([request.audio], { type: request.mimeType }), 'audio');
-      form.append('model', this.options.model || 'whisper-1');
+      if (this.options.model === undefined) form.append('model', 'whisper-1');
+      else if (this.options.model !== '') form.append('model', this.options.model);
       form.append('response_format', request.responseFormat ?? this.options.responseFormat ?? 'json');
       if (request.language !== undefined) {
         form.append('language', request.language);
@@ -146,7 +160,8 @@ export class OpenAiSttAdapter implements SttAdapter {
       });
       const contentType = response.headers.get('content-type') ?? undefined;
       if (!response.ok) {
-        throw new SttHttpError(response.status, contentType);
+        const body = await response.text().catch(() => '');
+        throw new SttHttpError(response.status, contentType, safeProviderMessage(body, this.options.token));
       }
       let data: unknown;
       try { data = await response.json(); } catch {
@@ -259,6 +274,7 @@ export async function transcribeAudio(request: TranscribeAudioRequest): Promise<
         ...(error.contentType !== undefined ? { contentType: error.contentType } : {}),
         elapsedMs,
         error: `HTTP ${error.httpStatus}`,
+        ...(error.providerMessage !== undefined ? { providerMessage: error.providerMessage } : {}),
       });
     }
     if (error instanceof SttJsonError) {

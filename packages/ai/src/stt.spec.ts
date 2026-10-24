@@ -149,9 +149,9 @@ describe('OpenAiSttAdapter', () => {
       token: 'secret-token',
       audio: audio(),
       mimeType: 'audio/webm',
-      fetch: (async () => new Response('server exploded', { status: 500 })) as unknown as typeof fetch,
+      fetch: (async () => new Response(JSON.stringify({ error: { message: 'model not downloaded' } }), { status: 500 })) as unknown as typeof fetch,
     });
-    expect(serverError).toMatchObject({ diagnostics: { stage: 'http', serviceReached: true, httpStatus: 500, error: 'HTTP 500' } });
+    expect(serverError).toMatchObject({ diagnostics: { stage: 'http', serviceReached: true, httpStatus: 500, error: 'HTTP 500', providerMessage: 'model not downloaded' } });
     expect(JSON.stringify(serverError)).not.toContain('server exploded');
     const invalidJson = await transcribeAudio({
       provider: 'cloud',
