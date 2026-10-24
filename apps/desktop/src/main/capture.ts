@@ -104,7 +104,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             input.dispatchEvent(new Event('input', { bubbles: true }));
             await sleep(300);
             click('ai-correction');
-            await waitFor(() => q('ai-notice') && q('ai-notice').textContent.includes('review'), 8000);
+            await waitFor(() => q('message-center') && q('message-center').textContent.includes('review'), 8000);
           }
           if (${JSON.stringify(scenario)} === 'history') {
             await waitFor(() => q('sidebar-tab-history'));
@@ -125,7 +125,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-command');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
           if (${JSON.stringify(scenario)} === 'ssh-menu') checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;
-          if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('ai-notice') && q('ai-notice').textContent.includes('review');
+          if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('message-center') && q('message-center').textContent.includes('review');
           if (${JSON.stringify(scenario)} === 'history') checks['historyEntries'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0;
           if (${JSON.stringify(scenario)} === 'clipboard') checks['clipboardRecorded'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0 && !!q('clipboard-status') && q('clipboard-status').textContent.includes('Clipboard capture on');
           await sleep(800);

@@ -15,9 +15,10 @@ import {
   type SttProvider,
   type SttResponseFormat,
 } from '@smart-terminal/contracts';
-import { SttStore } from '../stt/stt-store';
+import { SttStore, normalizeAudioMime, sttNotice } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
+import { MessageStore } from '../messages/message-store';
 
 type Step = 1 | 2 | 3 | 4;
 type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
@@ -174,12 +175,15 @@ const STT_MODEL_OPTIONS = [
                       <option value="it">IT (Italiano)</option>
                     </select>
                   </label>
-                  <div class="test-row">
-                    <button type="button" data-testid="onboarding-test-stt" [disabled]="busy() || testingStt() || !canUseAiProvider()" (click)="testSttProvider()">
-                      {{ testingStt() ? 'Recording…' : 'TEST' }}
-                    </button>
-                    <span class="hint">Records about 2 seconds, transcribes with the current values, and discards the audio.</span>
+                  <div class="stt-test-controls">
+                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || busy() || !canUseAiProvider()" (click)="startSttRecording()">REC</button>
+                    <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()">STOP</button>
+                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null" (click)="playSttAudio()">PLAY</button>
+                    <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s</span>
                   </div>
+                  <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()">
+                    {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}
+                  </button>
                   @if (sttTestResult(); as result) {
                     <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
                   }
@@ -274,6 +278,7 @@ export class OnboardingWizard {
   private readonly stt = inject(SttStore);
   private readonly settings = inject(SettingsStore);
   private readonly appearance = inject(AppearanceStore);
+  private readonly messages = inject(MessageStore);
   protected readonly terminalFonts = TERMINAL_FONTS;
   protected readonly aiProviders = AI_PROVIDERS;
   protected readonly sttProviders = STT_PROVIDERS;
@@ -296,6 +301,15 @@ export class OnboardingWizard {
   protected readonly aiTestResult = signal<SetupTestAiResult | null>(null);
   protected readonly testingStt = signal(false);
   protected readonly sttTestResult = signal<string | null>(null);
+  protected readonly testRecording = signal(false);
+  protected readonly testTranscribing = signal(false);
+  protected readonly testDurationMs = signal(0);
+  protected readonly testAudioUrl = signal<string | null>(null);
+  private testRecorder: MediaRecorder | null = null;
+  private testStream: MediaStream | null = null;
+  private testChunks: Blob[] = [];
+  private testBlob: Blob | null = null;
+  private testTimer: ReturnType<typeof setInterval> | undefined;
   private initialSnapshot = '';
 
   constructor() {
@@ -465,7 +479,7 @@ export class OnboardingWizard {
   }
 
   protected openHelp(topic: HelpTopic): void {
-    void this.api.helpOpen(topic).catch(() => this.errors.set({ config: 'Could not open the GitHub guide.' }));
+    void this.api.helpOpen(topic).catch(() => this.messages.show('critical', 'Could not open the GitHub guide. Check your default browser and try again.'));
   }
 
   protected helpTopic(): HelpTopic {
@@ -476,19 +490,74 @@ export class OnboardingWizard {
     return this.step() === 2 ? 'AI guide' : this.step() === 3 ? 'STT guide' : this.step() === 4 ? 'User manual' : 'Repository guide';
   }
 
-  protected async testSttProvider(): Promise<void> {
-    this.testingStt.set(true);
+  protected testDurationSeconds(): number {
+    return Math.floor(this.testDurationMs() / 1000);
+  }
+
+  protected async startSttRecording(): Promise<void> {
+    this.clearSttAudio();
+    this.sttTestResult.set(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const Recorder = globalThis.MediaRecorder;
+      if (typeof Recorder === 'undefined') {
+        for (const track of stream.getTracks()) track.stop();
+        this.sttTestResult.set('Audio recording is not available on this system.');
+        return;
+      }
+      this.testStream = stream;
+      this.testChunks = [];
+      const mimeType = Recorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+      const recorder = new Recorder(stream, { mimeType });
+      this.testRecorder = recorder;
+      recorder.ondataavailable = (event) => { if (event.data.size > 0) this.testChunks.push(event.data); };
+      recorder.onstop = () => {
+        for (const track of stream.getTracks()) track.stop();
+        this.testStream = null;
+        this.testRecorder = null;
+        this.testRecording.set(false);
+        this.stopSttTimer();
+        const blob = new Blob(this.testChunks, { type: normalizeAudioMime(mimeType) });
+        this.testBlob = blob.size > 0 ? blob : null;
+        this.testAudioUrl.set(blob.size > 0 ? URL.createObjectURL(blob) : null);
+      };
+      recorder.start(250);
+      this.testRecording.set(true);
+      this.testDurationMs.set(0);
+      this.testTimer = setInterval(() => this.testDurationMs.update((value) => value + 250), 250);
+    } catch {
+      this.sttTestResult.set('Microphone permission denied or unavailable.');
+    }
+  }
+
+  protected stopSttRecording(): void {
+    try { this.testRecorder?.stop(); } catch { this.testRecording.set(false); this.stopSttTimer(); }
+  }
+
+  protected playSttAudio(): void {
+    const url = this.testAudioUrl();
+    if (url === null) return;
+    const audio = new Audio(url);
+    void audio.play().catch(() => this.sttTestResult.set('Audio playback is unavailable.'));
+  }
+
+  protected async transcribeSttAudio(): Promise<void> {
+    const blob = this.testBlob;
+    if (blob === null) {
+      this.sttTestResult.set('Record audio before transcribing.');
+      return;
+    }
+    this.testTranscribing.set(true);
     this.sttTestResult.set(null);
     try {
       const config = this.payload();
       const saved = await this.api.onboardingSave({
         config,
         ...(this.aiToken() !== '' && config.aiProvider !== 'none' ? { aiToken: this.aiToken() } : {}),
-        ...(this.sttToken() !== '' && config.sttProvider === 'cloud' && config.sttUseAiProvider !== true ? { sttToken: this.sttToken() } : {}),
       });
       if (!saved.ok) {
         this.errors.set(saved.errors);
-        this.sttTestResult.set('Save the STT settings before testing.');
+        this.sttTestResult.set('Save the STT settings before transcribing.');
         return;
       }
       await this.stt.load();
@@ -496,52 +565,35 @@ export class OnboardingWizard {
         this.sttTestResult.set('STT is not configured. Configure the AI provider first.');
         return;
       }
-    } catch {
-      this.sttTestResult.set('Could not prepare the STT test.');
-      return;
-    }
-    let stopTimer: ReturnType<typeof setTimeout> | undefined;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    try {
-      const text = await new Promise<string | null>((resolve) => {
-        let settled = false;
-        const off = this.stt.onTranscript((value) => {
-          if (settled) return;
-          settled = true;
-          if (stopTimer !== undefined) clearTimeout(stopTimer);
-          if (timeout !== undefined) clearTimeout(timeout);
-          off();
-          resolve(value);
-        });
-        timeout = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          off();
-          resolve(null);
-        }, 12000);
-        void this.stt.start().then(() => {
-          if (this.stt.error() !== null) {
-            if (settled) return;
-            settled = true;
-            if (timeout !== undefined) clearTimeout(timeout);
-            off();
-            resolve(null);
-            return;
-          }
-          stopTimer = setTimeout(() => void this.stt.stop(), 2200);
-        });
+      const result = await this.api.sttTranscribe({
+        audio: new Uint8Array(await blob.arrayBuffer()),
+        mimeType: normalizeAudioMime(blob.type),
       });
-      if (text !== null && text.trim().length > 0) {
-        this.sttTestResult.set(`Recognized: “${text.trim()}”`);
-      } else {
-        this.sttTestResult.set(this.stt.notice() ?? 'No transcription result. Check the STT provider and microphone permission.');
-      }
+      this.sttTestResult.set(result.skipped ? sttNotice(result.reason) : `Transcription: “${result.text.trim()}”`);
+    } catch {
+      this.sttTestResult.set('Could not transcribe the recorded audio.');
     } finally {
-      if (stopTimer !== undefined) clearTimeout(stopTimer);
-      if (timeout !== undefined) clearTimeout(timeout);
-      void this.stt.load();
-      this.testingStt.set(false);
+      this.testTranscribing.set(false);
     }
+  }
+
+  private stopSttTimer(): void {
+    if (this.testTimer !== undefined) { clearInterval(this.testTimer); this.testTimer = undefined; }
+  }
+
+  private clearSttAudio(): void {
+    this.stopSttTimer();
+    this.testRecorder?.stop();
+    this.testRecorder = null;
+    this.testStream?.getTracks().forEach((track) => track.stop());
+    this.testStream = null;
+    this.testChunks = [];
+    this.testBlob = null;
+    const url = this.testAudioUrl();
+    if (url !== null) URL.revokeObjectURL(url);
+    this.testAudioUrl.set(null);
+    this.testRecording.set(false);
+    this.testDurationMs.set(0);
   }
 
   protected async testAiProvider(): Promise<void> {

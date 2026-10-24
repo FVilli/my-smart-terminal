@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { AiStore, correctionNotice } from '../ai/ai-store';
 import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
+import { MessageStore } from '../messages/message-store';
 
 @Component({
   selector: 'app-assisted-input',
@@ -58,12 +59,6 @@ import { AppearanceStore } from '../appearance/appearance-store';
       <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
-    @if (notice(); as message) {
-      <p class="notice" data-testid="ai-notice">{{ message }}</p>
-    }
-    @if (voice.notice(); as message) {
-      <p class="notice" data-testid="stt-notice">{{ message }}</p>
-    }
   `,
   styles: `
     :host { display: block; flex: none; background: var(--terminal-bg); border-top: 1px solid var(--border); padding: 8px 16px; }
@@ -89,13 +84,13 @@ import { AppearanceStore } from '../appearance/appearance-store';
     .voice { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .mic.listening { color: var(--accent); }
     .voice-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    .notice { margin: 8px 0 0; min-height: 16px; color: var(--text-muted); font-size: 12px; }
   `,
 })
 export class AssistedInput implements OnDestroy {
   private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('textarea');
   private readonly settings = inject(SettingsStore);
   protected readonly appearance = inject(AppearanceStore);
+  private readonly messages = inject(MessageStore);
   readonly draft = input('');
   /** No active session or the session is not running: editing, sending, and microphone are disabled. */
   readonly disabled = input(false);
@@ -103,7 +98,6 @@ export class AssistedInput implements OnDestroy {
   readonly submitted = output<string>();
   protected readonly ai = inject(AiStore);
   protected readonly voice = inject(SttStore);
-  protected readonly notice = signal<string | null>(null);
   protected readonly canSend = computed(() => !this.disabled() && this.draft().trim().length > 0);
   protected readonly canCorrect = computed(() => this.ai.canCorrect() && this.draft().trim().length > 0);
   protected readonly canRecord = computed(() => !this.disabled() && this.voice.status().configured);
@@ -112,6 +106,10 @@ export class AssistedInput implements OnDestroy {
 
   constructor() {
     this.unsubscribe = this.voice.onTranscript((text) => this.insertTranscript(text));
+    effect(() => {
+      const message = this.voice.notice();
+      if (message !== null) this.messages.show('warning', message);
+    });
   }
 
   ngOnDestroy(): void {
@@ -179,7 +177,6 @@ export class AssistedInput implements OnDestroy {
 
   /** Appends dictated text to the draft: there is no automatic send. */
   private insertTranscript(text: string): void {
-    this.notice.set(null);
     this.draftChange.emit(appendTranscript(this.draft(), text));
   }
 
@@ -188,7 +185,7 @@ export class AssistedInput implements OnDestroy {
     if (result === null) {
       return;
     }
-    this.notice.set(correctionNotice(result));
+    this.messages.show('info', correctionNotice(result));
     if (!result.skipped && result.changed) {
       this.draftChange.emit(result.corrected);
     }

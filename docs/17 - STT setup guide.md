@@ -21,7 +21,7 @@ The base URL and token are taken from the AI tab, so configure and test AI first
 
 ## TEST
 
-Select **TEST**. Smart Terminal saves the current STT values, activates the microphone, records for about two seconds, sends the audio to the configured provider, and displays the recognized text. The audio is discarded and the result is not sent to the terminal.
+Select **REC**, speak, then **STOP**. The recording time is shown. Use **PLAY** to listen to the in-memory sample, then **TRANSCRIBE** to save the current values and send the audio to the provider. The result or detailed error appears below the controls. The audio is discarded and the result is not sent to the terminal.
 
 The first time, grant microphone permission if the operating system asks. If the microphone is denied or unavailable, the terminal remains usable. If the AI provider/token is not configured, fix the AI tab first.
 
@@ -33,8 +33,8 @@ The STT language is independent from the terminal locale. Set `EN` or `IT` expli
 
 | Symptom | Action |
 | --- | --- |
-| **TEST does not start** | Configure an OpenAI/OpenAI-compatible AI provider and token in the AI tab first. |
-| **Microphone denied** | Grant microphone permission in the OS settings, then retry TEST. |
+| **REC does not start** | Configure an OpenAI/OpenAI-compatible AI provider and token in the AI tab first. |
+| **Microphone denied** | Grant microphone permission in the OS settings, then retry REC. |
 | **Microphone unavailable** | Select a working input device; close applications that hold exclusive access. |
 | **No speech recognized** | Record closer to the microphone and retry; the audio is discarded. |
 | **Provider timeout/error** | Check network, AI base URL, model and token; the terminal remains usable. |

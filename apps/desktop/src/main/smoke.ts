@@ -499,7 +499,7 @@ const AI_SCRIPT = `(async () => {
   };
   const textarea = () => document.querySelector('[data-testid="assisted-textarea"]');
   const aiButton = () => document.querySelector('[data-testid="ai-correction"]');
-  const notice = () => document.querySelector('[data-testid="ai-notice"]');
+  const notice = () => document.querySelector('[data-testid="message-center"]');
   const setText = (value) => {
     const el = textarea();
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
@@ -647,7 +647,7 @@ const SETTINGS_SCRIPT = `(async () => {
   click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
   result.sttSharedProvider = q('onboarding-stt-provider')?.value === 'shared';
-  result.sttSharedFields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-test-stt');
+  result.sttSharedFields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
   click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font'));
   const appearanceHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
   result.fixedSettingsHeight = settingsHeight > 400 && Math.abs(settingsHeight - appearanceHeight) <= 1;
@@ -733,7 +733,7 @@ const STT_SETUP_SCRIPT = `(async () => {
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-stt');
   result.provider = await waitFor(() => q('onboarding-stt-provider')?.value === 'shared');
-  result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-test-stt');
+  result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
   const language = q('onboarding-stt-language');
   if (language) { language.value = 'en'; language.dispatchEvent(new Event('change', { bubbles: true })); }
   const context = new AudioContext();
@@ -742,7 +742,13 @@ const STT_SETUP_SCRIPT = `(async () => {
   oscillator.connect(destination);
   oscillator.start();
   navigator.mediaDevices.getUserMedia = async () => destination.stream;
-  click('onboarding-test-stt');
+  click('onboarding-stt-rec');
+  result.recordingStarted = await waitFor(() => !!q('onboarding-stt-stop') && q('onboarding-stt-stop').disabled === false, 5000);
+  await sleep(600);
+  click('onboarding-stt-stop');
+  result.playEnabled = await waitFor(() => !!q('onboarding-stt-play') && q('onboarding-stt-play').disabled === false, 5000);
+  click('onboarding-stt-play');
+  click('onboarding-stt-transcribe');
   result.resultVisible = await waitFor(() => !!q('onboarding-stt-result'), 20000);
   result.recognized = await waitFor(() => (q('onboarding-stt-result')?.textContent ?? '').includes('test transcript'), 20000);
   result.notSent = (await window.smartTerminal.search({ query: 'test transcript' })).entries.length === 0;
@@ -1179,7 +1185,7 @@ const ONBOARDING_PHASE_SCRIPT = (phase: string, repo: string, machine: string): 
   result.step3 = await waitFor(() => !!q('onboarding-step-3'), 4000);
   result.sttModel = !!q('onboarding-stt-model');
   result.sttLanguage = !!q('onboarding-stt-language');
-  result.sttTest = !!q('onboarding-test-stt');
+  result.sttTest = !!q('onboarding-stt-rec') && !!q('onboarding-stt-transcribe');
   click('onboarding-save');
   result.restartNoticeShown = await waitFor(() => !!q('onboarding-restart-notice') && !!q('onboarding-restart'), 6000);
   result.warningShownWhenInsecure = secure || !!q('onboarding-warning');

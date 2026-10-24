@@ -1,6 +1,21 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.7
+
+Message/font/STT test hotfix.
+
+### Added
+
+- A single borderless message area with info/warning/critical emoji and dismiss control; AI/STT operational notices are routed there.
+- STT test controls: REC, STOP, PLAY with recorded duration, then TRANSCRIBE with result or detailed error.
+
+### Fixed
+
+- Composer uses the selected terminal font stack directly, with an actual monospace fallback (no `ui-monospace` resolving to a sans font).
+- GitHub help failures are reported in the central message area.
+- Composer keeps the text area full-height with a vertical action column on the right.
+
 ## v1.3.6
 
 Composer layout hotfix.

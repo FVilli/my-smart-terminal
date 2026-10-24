@@ -213,12 +213,12 @@ export interface ClipboardWriteRequest {
 }
 
 export const TERMINAL_FONTS = [
-  { id: 'jetbrains', label: 'JetBrains Mono', stack: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, monospace" },
-  { id: 'cascadia', label: 'Cascadia Code', stack: "'Cascadia Code', 'JetBrains Mono', ui-monospace, monospace" },
-  { id: 'fira', label: 'Fira Code', stack: "'Fira Code', 'JetBrains Mono', ui-monospace, monospace" },
-  { id: 'source-code-pro', label: 'Source Code Pro', stack: "'Source Code Pro', 'JetBrains Mono', ui-monospace, monospace" },
-  { id: 'ubuntu-mono', label: 'Ubuntu Mono', stack: "'Ubuntu Mono', 'JetBrains Mono', ui-monospace, monospace" },
-  { id: 'system', label: 'System monospace', stack: 'ui-monospace, monospace' },
+  { id: 'jetbrains', label: 'JetBrains Mono', stack: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
+  { id: 'cascadia', label: 'Cascadia Code', stack: "'Cascadia Code', 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
+  { id: 'fira', label: 'Fira Code', stack: "'Fira Code', 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
+  { id: 'source-code-pro', label: 'Source Code Pro', stack: "'Source Code Pro', 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
+  { id: 'ubuntu-mono', label: 'Ubuntu Mono', stack: "'Ubuntu Mono', 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
+  { id: 'system', label: 'System monospace', stack: "'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
 ] as const;
 export const TERMINAL_FONT_IDS = TERMINAL_FONTS.map(({ id }) => id);
 export type TerminalFontId = (typeof TERMINAL_FONT_IDS)[number];

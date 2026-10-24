@@ -35,6 +35,7 @@
         </div>
       }
     </app-terminal-workarea>
+    <app-message-center />
     <app-assisted-input
       [draft]="store.activeDraft()"
       [disabled]="store.activeSession()?.status !== 'running'"
