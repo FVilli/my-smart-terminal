@@ -277,6 +277,22 @@ const MIC_MESSAGES: Record<MicState, string> = {
     .footer-help:hover { color: var(--text); }
     button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stt-test-controls { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .stt-test-controls button { display: inline-flex; align-items: center; gap: 5px; }
+    .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: #e5484d; }
+    .stop-square { display: inline-block; flex: none; width: 9px; height: 9px; background: currentColor; }
+    .play-triangle { display: inline-block; flex: none; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid currentColor; }
+    .transcribe-icon { display: inline-block; flex: none; position: relative; width: 10px; height: 12px; border: 1px solid currentColor; border-radius: 1px; }
+    .transcribe-icon::after { content: ''; position: absolute; left: 2px; top: 3px; width: 5px; height: 1px; background: currentColor; box-shadow: 0 3px 0 currentColor; }
+    .stt-debug { margin-top: 8px; color: var(--text-muted); font-size: 11px; }
+    .stt-debug summary { cursor: pointer; color: var(--accent); }
+    .stt-debug dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0 0; }
+    .stt-debug dt { color: var(--text-muted); }
+    .stt-debug dd { margin: 0; overflow-wrap: anywhere; }
+    .stt-details { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 11px; }
+    .stt-details th { width: 100px; padding: 3px 8px 3px 0; text-align: left; font-weight: 400; color: var(--text-muted); vertical-align: top; }
+    .stt-details td { padding: 3px 0; overflow-wrap: anywhere; color: var(--text); }
+    audio[data-testid='onboarding-stt-player'] { display: block; width: 100%; height: 34px; margin-top: 8px; }
     [data-testid='onboarding-mic-check'] { margin-top: 12px; }
     .model-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 10px; }
     .model-row label { flex: 1; margin: 0; }
