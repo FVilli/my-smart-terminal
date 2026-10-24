@@ -765,10 +765,10 @@ const STT_SETUP_SCRIPT = `(async () => {
   result.playEnabled = await waitFor(() => !!q('onboarding-stt-play') && q('onboarding-stt-play').disabled === false, 5000);
   click('onboarding-stt-play');
   click('onboarding-stt-transcribe');
-  result.resultVisible = await waitFor(() => !!q('onboarding-stt-result'), 20000);
-  result.recognized = await waitFor(() => (q('onboarding-stt-result')?.textContent ?? '').includes('test transcript'), 20000);
-  result.debugVisible = !!q('onboarding-stt-debug');
-  result.debugSummary = (q('onboarding-stt-debug')?.querySelector('summary')?.textContent ?? '').length > 0;
+  result.resultVisible = await waitFor(() => { const text = (q('onboarding-stt-transcription')?.textContent ?? '').trim(); return text.length > 0 && text !== '—'; }, 20000);
+  result.recognized = await waitFor(() => (q('onboarding-stt-transcription')?.textContent ?? '').includes('test transcript'), 20000);
+  result.debugVisible = (q('onboarding-stt-details')?.querySelectorAll('tr').length ?? 0) >= 5;
+  result.debugSummary = ((q('onboarding-stt-file')?.textContent ?? '').trim().length > 1) && (q('onboarding-stt-details')?.querySelectorAll('tr').length ?? 0) >= 5;
   result.notSent = (await window.smartTerminal.search({ query: 'test transcript' })).entries.length === 0;
   try { oscillator.stop(); void context.close(); } catch {}
   return result;
