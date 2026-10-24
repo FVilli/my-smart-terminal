@@ -382,7 +382,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.sttSaveDebugAudio]: ChannelDefinition<[SttSaveDebugAudioRequest], SttSaveDebugAudioResult>;
 }
 
-export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
+function buildAppChannels(env: RuntimeEnvironment, services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.appPing | typeof IPC_CHANNELS.appRuntimeInfo | typeof IPC_CHANNELS.appRelaunch | typeof IPC_CHANNELS.windowControl | typeof IPC_CHANNELS.helpOpen> {
   return {
     [IPC_CHANNELS.appPing]: {
       validate: noArguments,
@@ -392,6 +392,23 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: noArguments,
       handle: () => ({ appVersion: env.appVersion, platform: env.platform, isPackaged: env.isPackaged, isPrimary: env.isPrimary() }),
     },
+    [IPC_CHANNELS.appRelaunch]: {
+      validate: noArguments,
+      handle: () => services.app.relaunch(),
+    },
+    [IPC_CHANNELS.windowControl]: {
+      validate: validateWindowControl,
+      handle: (sender, { action }) => services.window.control(sender.senderId, action),
+    },
+    [IPC_CHANNELS.helpOpen]: {
+      validate: validateHelpTopic,
+      handle: (_sender, topic) => services.help.open(topic),
+    },
+  };
+}
+
+function buildTerminalChannels(terminals: TerminalGateway): Pick<IpcChannelMap, typeof IPC_CHANNELS.terminalCreate | typeof IPC_CHANNELS.terminalWrite | typeof IPC_CHANNELS.terminalResize | typeof IPC_CHANNELS.terminalClose | typeof IPC_CHANNELS.terminalList> {
+  return {
     [IPC_CHANNELS.terminalCreate]: {
       validate: validateTerminalCreate,
       handle: (sender, request) => terminals.create(sender.senderId, request),
@@ -412,6 +429,11 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: noArguments,
       handle: (sender) => terminals.list(sender.senderId),
     },
+  };
+}
+
+function buildCaptureChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.historyRecord | typeof IPC_CHANNELS.clipboardConfigure | typeof IPC_CHANNELS.clipboardSetActive | typeof IPC_CHANNELS.clipboardClear | typeof IPC_CHANNELS.clipboardState | typeof IPC_CHANNELS.clipboardWrite> {
+  return {
     [IPC_CHANNELS.historyRecord]: {
       validate: validateHistoryRecord,
       handle: (sender, request) => services.history.record(sender.senderId, request),
@@ -436,6 +458,11 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: validateClipboardWrite,
       handle: (_sender, { text }) => services.clipboardWriter.writeText(text),
     },
+  };
+}
+
+function buildIndexChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.searchQuery | typeof IPC_CHANNELS.searchFacets | typeof IPC_CHANNELS.syncStatus | typeof IPC_CHANNELS.sshAliases> {
+  return {
     [IPC_CHANNELS.searchQuery]: {
       validate: validateSearchQuery,
       handle: (_sender, request) => services.search.query(request),
@@ -452,6 +479,11 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: noArguments,
       handle: () => services.ssh.aliases(),
     },
+  };
+}
+
+function buildSetupChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.onboardingState | typeof IPC_CHANNELS.onboardingValidate | typeof IPC_CHANNELS.onboardingSave | typeof IPC_CHANNELS.onboardingSkip | typeof IPC_CHANNELS.setupTestRemote | typeof IPC_CHANNELS.secretsStatus | typeof IPC_CHANNELS.secretsLogout> {
+  return {
     [IPC_CHANNELS.onboardingState]: {
       validate: noArguments,
       handle: () => services.onboarding.state(),
@@ -480,14 +512,11 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       validate: validateSecretsLogout,
       handle: (_sender, { key }) => services.onboarding.logout(key),
     },
-    [IPC_CHANNELS.windowControl]: {
-      validate: validateWindowControl,
-      handle: (sender, { action }) => services.window.control(sender.senderId, action),
-    },
-    [IPC_CHANNELS.appRelaunch]: {
-      validate: noArguments,
-      handle: () => services.app.relaunch(),
-    },
+  };
+}
+
+function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
+  return {
     [IPC_CHANNELS.aiStatus]: {
       validate: noArguments,
       handle: () => services.ai.status(),
@@ -503,10 +532,6 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
         if (!validation.ok) return { ok: false, provider: request.config.aiProvider, error: 'Invalid AI configuration.' };
         return services.ai.testConnection(request);
       },
-    },
-    [IPC_CHANNELS.helpOpen]: {
-      validate: validateHelpTopic,
-      handle: (_sender, topic) => services.help.open(topic),
     },
     [IPC_CHANNELS.sttStatus]: {
       validate: noArguments,
@@ -527,6 +552,18 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       handle: (_sender, request) => services.stt.transcribe(request),
       maxPayloadBytes: STT_MAX_AUDIO_BYTES + 4096,
     },
+  };
+}
+
+export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
+  // Channels are grouped by the service that owns them; sender/size/validation semantics stay per channel.
+  return {
+    ...buildAppChannels(env, services),
+    ...buildTerminalChannels(terminals),
+    ...buildCaptureChannels(services),
+    ...buildIndexChannels(services),
+    ...buildSetupChannels(services),
+    ...buildAiChannels(services),
   };
 }
 
