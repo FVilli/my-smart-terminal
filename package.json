@@ -60,7 +60,8 @@
     "test:linux-install": "node scripts/verify-linux-install-scripts.mjs",
     "test:doc-consistency": "node scripts/verify-doc-consistency.mjs",
     "package:deb": "npm run build && electron-builder --linux deb --config electron-builder.yml --publish never",
-    "test:deb": "node scripts/verify-linux-package.mjs --deb-only"
+    "test:deb": "node scripts/verify-linux-package.mjs --deb-only",
+    "test:unsloth": "tsx scripts/test-unsloth-transcription.ts"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "22.6.0",

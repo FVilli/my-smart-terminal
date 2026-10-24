@@ -12,3 +12,6 @@ apps/desktop/build/*
 !apps/desktop/build/icon-linux.png
 *.log
 .smoke-data/
+
+# Local STT debug recordings
+audio/
