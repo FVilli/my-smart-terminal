@@ -162,31 +162,33 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   @if (!canUseAiProvider()) {
                     <p class="warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
                   }
-                  <label>Model
-                    <select data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
-                      @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
-                    </select>
-                  </label>
+                  <div class="model-row">
+                    <label>Model
+                      <select data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
+                        @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
+                      </select>
+                    </label>
+                    <button type="button" class="refresh-models" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
                   @if (sttModelWarning(); as modelWarning) {
                     <p class="warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
                   }
-                  <div class="test-row">
-                    <button type="button" data-testid="onboarding-stt-refresh-models" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">{{ sttModelsLoading() ? 'Loading models…' : 'Refresh models' }}</button>
-                    @if (sttModelsError(); as modelsError) { <span class="hint" data-testid="onboarding-stt-models-error">{{ modelsError }}</span> }
-                  </div>
+                  @if (sttModelsError(); as modelsError) { <p class="hint" data-testid="onboarding-stt-models-error">{{ modelsError }}</p> }
                   <label>Language
                     <select data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
                       <option value="en">EN (English)</option>
                       <option value="it">IT (Italiano)</option>
                     </select>
                   </label>
+                  <h4>Test mic & trascription</h4>
                   <div class="stt-test-controls">
                     <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()"><span class="rec-dot" aria-hidden="true"></span> REC</button>
                     <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()"><span class="stop-square" aria-hidden="true"></span> STOP</button>
                     <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()"><span class="play-triangle" aria-hidden="true"></span> PLAY</button>
                     <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()"><span class="transcribe-icon" aria-hidden="true"></span> {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}</button>
                   </div>
-                  <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
                   @if (testAudioUrl() !== null) {
                     <audio #audioPlayer controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
                   }
@@ -199,29 +201,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <tr><th>elapsed</th><td>{{ sttDebug()?.elapsedMs ?? 0 }} ms</td></tr>
                     </tbody>
                   </table>
-                  @if (sttTestResult(); as result) {
-                    <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
-                  }
-                  @if (sttDebug(); as debug) {
-                    <details class="stt-debug" data-testid="onboarding-stt-debug">
-                      <summary>{{ debugSummary() }}</summary>
-                      <dl>
-                        <dt>stage</dt><dd>{{ debug.stage }}</dd>
-                        <dt>service reached</dt><dd>{{ debug.serviceReached ? 'yes' : 'no' }}</dd>
-                        <dt>HTTP status</dt><dd>{{ debug.httpStatus ?? '—' }}</dd>
-                        <dt>error</dt><dd>{{ debug.error ?? '—' }}</dd>
-                        <dt>provider message</dt><dd>{{ debug.providerMessage ?? '—' }}</dd>
-                        <dt>endpoint</dt><dd>{{ debug.endpoint ?? '—' }}</dd>
-                        <dt>model</dt><dd>{{ debug.model ?? '—' }}</dd>
-                        <dt>language</dt><dd>{{ debug.language ?? '—' }}</dd>
-                        <dt>elapsed</dt><dd>{{ debug.elapsedMs ?? 0 }} ms</dd>
-                        <dt>audio</dt><dd>{{ debug.audioBytes ?? 0 }} bytes · {{ debug.mimeType ?? '—' }} · {{ debug.durationMs ?? 0 }} ms</dd>
-                        <dt>content type</dt><dd>{{ debug.contentType ?? '—' }}</dd>
-                        <dt>JSON valid</dt><dd>{{ debug.jsonValid ?? '—' }}</dd>
-                        <dt>text length</dt><dd>{{ debug.textLength ?? 0 }}</dd>
-                      </dl>
-                    </details>
-                  }
                 </div>
               }
               @case (4) {
@@ -299,6 +278,11 @@ const MIC_MESSAGES: Record<MicState, string> = {
     button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     [data-testid='onboarding-mic-check'] { margin-top: 12px; }
+    .model-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 10px; }
+    .model-row label { flex: 1; margin: 0; }
+    .refresh-models { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: none; padding: 0; }
+    .refresh-models svg { width: 16px; height: 16px; }
+    .refresh-models:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
     .test-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
     .test-row .hint { flex: 1; min-width: 180px; }
     .remote-result { margin: 8px 0 0; font-size: 12px; line-height: 1.45; }
