@@ -1,6 +1,29 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.0
+
+Header and composer redesign release.
+
+### Added
+
+- Full-window VS Code-inspired 35px title bar: transparent app icon, centered runtime version, Settings gear, History/Clipboard panel toggles and `_ □ ×` window controls on Linux/Windows.
+- Right-panel visibility controls synchronized with History/Clipboard tabs; terminal expands when hidden.
+- Custom window-control IPC with maximize/restore state.
+- Transparent-background application icon.
+- Single-container composer with 8px rounded border; AI, microphone and send controls inside bottom-right.
+
+### Changed
+
+- Session tabs reduced to 38px and moved directly below the title bar.
+- macOS preserves native traffic lights; Linux/Windows use the custom frame.
+- Palette and visual baseline updated for the new shell.
+
+### Fixed
+
+- Header version/title visibility and second-open Settings behavior carried forward from 1.2.x.
+- Composer keyboard, IME, AI and STT semantics preserved.
+
 ## v1.2.2
 
 Hotfix release.
