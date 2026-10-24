@@ -4,7 +4,6 @@ import { AppearanceStore } from './appearance/appearance-store';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import type { SidebarTab } from './session.model';
 import { AssistedInput } from './assisted-input/assisted-input';
-import { MessageCenter } from './messages/message-center';
 import { OnboardingWizard } from './onboarding/onboarding-wizard';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
@@ -20,7 +19,7 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 
 @Component({
   selector: 'app-root',
-  imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, MessageCenter, AssistedInput, SidebarPanel, StatusFooter],
+  imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
