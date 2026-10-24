@@ -1,6 +1,10 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.6
+### Changed
+- Full-height scrollable composer editor and right-side vertical action column; inline terminal-font binding.
+
 ## 1.3.5
 ### Changed
 - Minimal shared-AI STT UI, compact menu, fixed settings, footer GitHub link, in-field composer hint.

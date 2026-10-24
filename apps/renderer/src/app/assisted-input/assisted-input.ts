@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type
 import { AiStore, correctionNotice } from '../ai/ai-store';
 import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
+import { AppearanceStore } from '../appearance/appearance-store';
 
 @Component({
   selector: 'app-assisted-input',
@@ -22,8 +23,7 @@ import { SettingsStore } from '../settings/settings-store';
         (input)="draftChange.emit($any($event.target).value)"
         (keydown)="onKeydown($event)"
       ></textarea>
-      <div class="bottom">
-        <div class="actions">
+      <div class="actions">
       <button
         type="button"
         class="icon ai"
@@ -56,7 +56,6 @@ import { SettingsStore } from '../settings/settings-store';
         <span class="voice-label" data-testid="voice-label" role="status">{{ voice.status().configured ? micLabel() : '' }}</span>
       </div>
       <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        </div>
       </div>
     </div>
     @if (notice(); as message) {
@@ -67,20 +66,19 @@ import { SettingsStore } from '../settings/settings-store';
     }
   `,
   styles: `
-    :host { display: block; flex: none; background: var(--terminal-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
-    .composer { border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 8px; }
+    :host { display: block; flex: none; background: var(--terminal-bg); border-top: 1px solid var(--border); padding: 8px 16px; }
+    .composer { display: flex; align-items: stretch; gap: 8px; height: 120px; min-height: 120px; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 6px 5px 8px; }
     .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
-    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono), monospace; font-size: 14px; font-weight: 400; font-style: normal; line-height: 1.5; font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; overflow: auto; }
+    .editor { display: block; flex: 1 1 auto; width: 100%; height: 100%; min-width: 0; min-height: 0; resize: none; background: transparent; border: 0; outline: 0; padding: 2px 4px 2px 2px; color: var(--text); font-family: var(--font-mono), monospace; font-size: 14px; font-weight: 400; font-style: normal; line-height: 1.5; font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
     .editor:disabled { opacity: .65; }
     .editor::placeholder { color: var(--text-muted); opacity: 1; font-family: inherit; font-size: inherit; font-weight: inherit; font-style: inherit; line-height: inherit; }
-    .bottom { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 26px; }
-    .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
-    .actions { display: flex; flex: none; align-items: center; gap: 4px; }
-    .icon { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
+    .actions { display: flex; flex: 0 0 30px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-width: 0; }
+    .icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 26px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
     .icon:disabled { opacity: .45; cursor: default; }
     .icon:not(:disabled):hover { background: var(--border); color: var(--text); }
     .ai { color: var(--accent); font-weight: 700; gap: 3px; }
     .ai svg { width: 15px; height: 15px; }
+    .ai { flex-direction: row; gap: 2px; font-size: 10px; }
     .mic { color: var(--text-muted); }
     .mic.configured { color: var(--text); }
     .mic svg { width: 17px; height: 17px; }
@@ -88,15 +86,16 @@ import { SettingsStore } from '../settings/settings-store';
     .send { width: 26px; padding: 0; border-radius: 50%; background: var(--accent); color: var(--terminal-bg); font-size: 15px; font-weight: 700; }
     .send:not(:disabled):hover { background: var(--accent); color: var(--terminal-bg); }
     .send:disabled { opacity: .45; }
-    .voice { display: flex; flex-direction: row-reverse; align-items: center; gap: 2px; }
+    .voice { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .mic.listening { color: var(--accent); }
-    .voice-label { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 10px; line-height: 1; }
+    .voice-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .notice { margin: 8px 0 0; min-height: 16px; color: var(--text-muted); font-size: 12px; }
   `,
 })
 export class AssistedInput implements OnDestroy {
   private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('textarea');
   private readonly settings = inject(SettingsStore);
+  protected readonly appearance = inject(AppearanceStore);
   readonly draft = input('');
   /** No active session or the session is not running: editing, sending, and microphone are disabled. */
   readonly disabled = input(false);

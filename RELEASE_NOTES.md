@@ -1,6 +1,16 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.6
+
+Composer layout hotfix.
+
+### Changed
+
+- Composer text area now fills the full height and scrolls vertically.
+- AI, microphone and send controls are arranged in a vertical column on the right.
+- Input font is bound directly to the selected terminal-font stack, with a monospace fallback.
+
 ## v1.3.5
 
 Rapid UI/STT simplification release.

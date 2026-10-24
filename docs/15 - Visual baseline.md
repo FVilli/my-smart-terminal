@@ -30,7 +30,7 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 | Header/title bar | 35 px (`#171e25`) |
 | Tab bar | 38 px (active tab `#384a5d`) |
 | Terminal | ~672 px (`#171e25`) |
-| Assisted input | ~103 px (`#222e3c`) |
+| Assisted input | ~136 px (`#222e3c`) |
 | Footer | 28 px (`#212b38`) |
 | Sidebar | 360 px at 1440 (25%), `#171e25` |
 | Main accent | `#4cc2a5` |

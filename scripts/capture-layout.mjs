@@ -38,7 +38,7 @@ for (const { width, height } of viewports) {
     if (metrics.overflow !== false) problems.push('overflow');
     if (Math.abs(metrics.headerHeight - 35) > 2) problems.push(`header ${metrics.headerHeight}`);
     if (Math.abs(metrics.tabBarHeight - 38) > 2) problems.push(`tabs ${metrics.tabBarHeight}`);
-    if (metrics.inputHeight < 96 || metrics.inputHeight > 130) problems.push(`input ${metrics.inputHeight}`);
+    if (metrics.inputHeight < 110 || metrics.inputHeight > 160) problems.push(`input ${metrics.inputHeight}`);
     if (Math.abs(metrics.footerHeight - 28) > 2) problems.push(`footer ${metrics.footerHeight}`);
     if (metrics.activeTabBg !== 'rgb(56, 74, 93)') problems.push(`active tab ${metrics.activeTabBg}`);
     if (metrics.sidebarBg !== 'rgb(23, 30, 37)') problems.push(`sidebar ${metrics.sidebarBg}`);
