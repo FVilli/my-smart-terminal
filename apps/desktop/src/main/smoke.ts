@@ -589,8 +589,8 @@ const STT_SCRIPT = `(async () => {
 
   // 4. No layout overflow with the voice label.
   const host = document.querySelector('app-assisted-input');
-  const row = document.querySelector('app-assisted-input .row');
-  result.noOverflow = host.scrollWidth <= host.clientWidth && row.scrollWidth <= row.clientWidth;
+  const composer = document.querySelector('app-assisted-input .composer');
+  result.noOverflow = !!host && !!composer && host.scrollWidth <= host.clientWidth && composer.scrollWidth <= composer.clientWidth;
   return result;
 })()`;
 
