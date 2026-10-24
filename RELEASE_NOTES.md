@@ -1,6 +1,23 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.5
+
+Rapid UI/STT simplification release.
+
+### Changed
+
+- STT settings reduced to one shared-AI provider option, a model select, an EN/IT language select, and an end-to-end TEST button.
+- Session (+) menu is denser; SSH is visually stronger than the connection name.
+- Composer guidance is an in-field placeholder; AI/mic/send stay bottom-right inside the border.
+- Settings has a fixed-height, scrollable body and a `[Cancel] [Save]` footer; GitHub guide link at bottom-left.
+- Microphone with unconfigured STT opens Settings on the STT tab.
+
+### Fixed
+
+- STT TEST saves current values before recording; shared mode reuses the AI base URL/token.
+- Composer text/placeholder use the same explicit monospace family and colors.
+
 ## v1.3.4
 
 Composer regression hotfix.

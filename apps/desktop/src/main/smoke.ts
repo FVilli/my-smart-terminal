@@ -646,9 +646,8 @@ const SETTINGS_SCRIPT = `(async () => {
   click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));
   click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
-  const sttProvider = q('onboarding-stt-provider'); sttProvider.value = 'cloud'; sttProvider.dispatchEvent(new Event('change', { bubbles: true }));
-  result.sttUseAiOption = await waitFor(() => !!q('onboarding-stt-use-ai'));
-  result.sttSeparateFields = !!q('onboarding-stt-url') && !!q('onboarding-stt-token');
+  result.sttSharedProvider = q('onboarding-stt-provider')?.value === 'shared';
+  result.sttSharedFields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-test-stt');
   click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font'));
   const appearanceHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
   result.fixedSettingsHeight = settingsHeight > 400 && Math.abs(settingsHeight - appearanceHeight) <= 1;
@@ -733,16 +732,10 @@ const STT_SETUP_SCRIPT = `(async () => {
   click('settings-open');
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-stt');
-  result.step3 = await waitFor(() => !!q('onboarding-stt-provider'));
-  const provider = q('onboarding-stt-provider'); provider.value = 'cloud'; provider.dispatchEvent(new Event('change', { bubbles: true }));
-  await waitFor(() => !!q('onboarding-stt-url'));
-  result.useAiCheckbox = !!q('onboarding-stt-use-ai');
-  result.fields = !!q('onboarding-stt-url') && !!q('onboarding-stt-token') && !!q('onboarding-stt-format') && !!q('onboarding-stt-language');
-  const base = q('onboarding-stt-url'); base.value = 'https://unsloth.example/v1'; base.dispatchEvent(new Event('input', { bubbles: true }));
-  const model = q('onboarding-stt-model'); model.value = 'parakeet-tdt-0.6b-v3'; model.dispatchEvent(new Event('input', { bubbles: true }));
-  q('onboarding-stt-format').value = 'verbose_json'; q('onboarding-stt-format').dispatchEvent(new Event('change', { bubbles: true }));
-  const language = q('onboarding-stt-language'); language.value = 'en'; language.dispatchEvent(new Event('input', { bubbles: true }));
-  return result;
+  result.provider = await waitFor(() => q('onboarding-stt-provider')?.value === 'shared');
+  result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-test-stt');
+  const language = q('onboarding-stt-language');
+  if (language) { language.value = 'en'; language.dispatchEvent(new Event('change', { bubbles: true })); }
   const context = new AudioContext();
   const destination = context.createMediaStreamDestination();
   const oscillator = context.createOscillator();
@@ -1184,9 +1177,9 @@ const ONBOARDING_PHASE_SCRIPT = (phase: string, repo: string, machine: string): 
   result.keychainWarningShownWhenInsecure = secure || !!q('onboarding-keychain-warning');
   click('onboarding-next');
   result.step3 = await waitFor(() => !!q('onboarding-step-3'), 4000);
-  setValue('onboarding-stt-provider', 'local');
-  click('onboarding-mic-check');
-  result.micHandled = await waitFor(() => q('onboarding-mic-status').textContent.trim().length > 0 && !q('onboarding-mic-status').textContent.includes('Richiesta'), 8000);
+  result.sttModel = !!q('onboarding-stt-model');
+  result.sttLanguage = !!q('onboarding-stt-language');
+  result.sttTest = !!q('onboarding-test-stt');
   click('onboarding-save');
   result.restartNoticeShown = await waitFor(() => !!q('onboarding-restart-notice') && !!q('onboarding-restart'), 6000);
   result.warningShownWhenInsecure = secure || !!q('onboarding-warning');
@@ -1215,7 +1208,7 @@ export function runOnboardingSmoke(window: BrowserWindow): void {
           return {};
         }
       })();
-      checks['configWritten'] = parsed['schema_version'] === 1 && parsed['machine_name'] === machine && parsed['data_repo_path'] === repo && parsed['ai_provider'] === 'anthropic' && parsed['stt_provider'] === 'local';
+      checks['configWritten'] = parsed['schema_version'] === 1 && parsed['machine_name'] === machine && parsed['data_repo_path'] === repo && parsed['ai_provider'] === 'anthropic' && parsed['stt_provider'] === 'cloud' && parsed['stt_use_ai_provider'] === true;
       checks['configHasNoToken'] = !config.includes(token);
       checks['noPlaintextTokenAnywhere'] = !anyFileContains(userData, token);
       checks['repoCreated'] = fs.existsSync(repo);

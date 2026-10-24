@@ -54,7 +54,7 @@ Use **Skip** to continue without AI. AI correction is explicit and reviewable; i
 
 For permissions, local commands, cloud tokens and troubleshooting, see the [STT setup guide](17%20-%20STT%20setup%20guide.md).
 
-The exact fields are **STT provider**, **Model (optional)**, **Base URL (optional)**, **Response format** (`json` or `verbose_json`), **Language (optional)**, and, for cloud STT, **Token (optional, keychain only)**. Choose **none**, **local**, or **cloud**. A local provider additionally shows **Local STT command (absolute path)**; a cloud provider uses its keychain token. In Settings, the same fields are under the **STT** tab; see the [STT setup guide](17%20-%20STT%20setup%20guide.md). Select **Check microphone** and grant the operating system permission when prompted. After configuring STT, select **Test transcription** to verify an editable result. The result may say **Microphone available. No recording is saved.**, **Microphone permission denied. You can continue without it.**, or **No microphone available. You can continue without it.** Use **Skip** to leave STT disabled; a denied or unavailable microphone does not affect terminal use.
+The STT tab is intentionally minimal: **Use the same AI provider (OpenAI-compatible)**, a **Model** select, an **EN/IT** language select, and **TEST**. It reuses the AI base URL and token. TEST saves the current values, records for about two seconds, transcribes, and discards the audio. Configure and test AI first; see the [STT setup guide](17%20-%20STT%20setup%20guide.md). A denied or unavailable microphone does not affect the terminal.
 
 ### Later launches: Settings
 

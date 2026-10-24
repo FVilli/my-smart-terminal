@@ -30,6 +30,11 @@ const MIC_MESSAGES: Record<MicState, string> = {
   unavailable: 'No microphone available. You can continue without it.',
 };
 
+const DEFAULT_STT_MODEL = 'audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF';
+const STT_MODEL_OPTIONS = [
+  { value: DEFAULT_STT_MODEL, label: 'Parakeet TDT 0.6B v3 (GGUF)' },
+];
+
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
@@ -151,60 +156,32 @@ const MIC_MESSAGES: Record<MicState, string> = {
               @case (3) {
                 <div data-testid="onboarding-step-3">
                   <label>STT provider
-                    <select data-testid="onboarding-stt-provider" [value]="config().sttProvider" (change)="patch({ sttProvider: sttProvider($event) })">
-                      @for (provider of sttProviders; track provider) {
-                        <option [value]="provider" [selected]="provider === config().sttProvider">{{ provider }}</option>
-                      }
+                    <select data-testid="onboarding-stt-provider" [value]="'shared'" (change)="enableSharedStt()">
+                      <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
                     </select>
                   </label>
-                  @if (config().sttProvider !== 'none') {
-                    <label>Model (optional)
-                      <span class="hint">Cloud model; self-hosted Parakeet model IDs are also supported.</span>
-                      <input data-testid="onboarding-stt-model" [value]="config().sttModel ?? ''" (input)="patch({ sttModel: value($event) })" />
-                    </label>
-                    @if (config().sttProvider === 'cloud') {
-                      <label><input type="checkbox" data-testid="onboarding-stt-use-ai" [checked]="config().sttUseAiProvider === true" [disabled]="!canUseAiProvider()" (change)="patch({ sttUseAiProvider: checked($event) })" /> Use same AI provider (OpenAI-compatible)</label>
-                      @if (!canUseAiProvider()) { <p class="hint" data-testid="onboarding-stt-ai-unavailable">Select OpenAI or OpenAI-compatible in the AI tab to share its provider.</p> }
-                      @if (config().sttUseAiProvider && canUseAiProvider()) { <p class="hint">Using AI provider, base URL, and token from the AI tab.</p> }
-                      @if (!config().sttUseAiProvider) {
-                      <label>Base URL (optional)
-                        <span class="hint">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
-                        <input data-testid="onboarding-stt-url" [value]="config().sttBaseUrl ?? ''" (input)="patch({ sttBaseUrl: value($event) })" />
-                      </label>
-                      }
-                      <label>Response format
-                        <select data-testid="onboarding-stt-format" [value]="config().sttResponseFormat ?? 'json'" (change)="patch({ sttResponseFormat: sttResponseFormat($event) })">
-                          <option value="json">json</option><option value="verbose_json">verbose_json</option>
-                        </select>
-                      </label>
-                      <label>Language (optional)
-                        <input data-testid="onboarding-stt-language" placeholder="e.g. en" [value]="config().sttLanguage ?? ''" (input)="patch({ sttLanguage: value($event) })" />
-                      </label>
-                      @if (!config().sttUseAiProvider) {
-                        <label>Token (optional, keychain only)
-                          <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
-                        </label>
-                      }
-                    }
-                    @if (config().sttProvider === 'local') {
-                      <label>Local STT command (absolute path)
-                        <input data-testid="onboarding-stt-command" [value]="config().sttCommand ?? ''" (input)="patch({ sttCommand: value($event) })" />
-                      </label>
-                      @if (errors()['sttCommand']; as message) { <p class="error" data-testid="onboarding-error-stt-command">{{ message }}</p> }
-                    }
+                  @if (!canUseAiProvider()) {
+                    <p class="warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
                   }
-                  <button type="button" data-testid="onboarding-mic-check" (click)="checkMicrophone()">Check microphone</button>
-                  <p class="hint" data-testid="onboarding-mic-status" role="status">{{ micMessage() }}</p>
-                  @if (config().sttProvider !== 'none') {
-                    <div class="test-row">
-                      <button type="button" data-testid="onboarding-test-stt" [disabled]="busy() || testingStt()" (click)="testSttProvider()">
-                        {{ testingStt() ? 'Recording…' : 'Test transcription' }}
-                      </button>
-                      <span class="hint">Records up to 3 seconds, transcribes, and discards the audio.</span>
-                    </div>
-                    @if (sttTestResult(); as result) {
-                      <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
-                    }
+                  <label>Model
+                    <select data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
+                      @for (model of sttModelOptions; track model.value) { <option [value]="model.value">{{ model.label }}</option> }
+                    </select>
+                  </label>
+                  <label>Language
+                    <select data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
+                      <option value="en">EN (English)</option>
+                      <option value="it">IT (Italiano)</option>
+                    </select>
+                  </label>
+                  <div class="test-row">
+                    <button type="button" data-testid="onboarding-test-stt" [disabled]="busy() || testingStt() || !canUseAiProvider()" (click)="testSttProvider()">
+                      {{ testingStt() ? 'Recording…' : 'TEST' }}
+                    </button>
+                    <span class="hint">Records about 2 seconds, transcribes with the current values, and discards the audio.</span>
+                  </div>
+                  @if (sttTestResult(); as result) {
+                    <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
                   }
                 </div>
               }
@@ -367,6 +344,7 @@ export class OnboardingWizard {
       this.visible.set(true);
       this.restartNotice.set(false);
       this.confirmDiscard.set(false);
+      if (this.step() === 3) this.enableSharedStt();
       this.initialSnapshot = JSON.stringify(this.payload());
     } catch {
       this.settings.close();
@@ -430,11 +408,40 @@ export class OnboardingWizard {
   protected selectTab(step: Step): void {
     this.errors.set({});
     this.step.set(step);
+    if (step === 3) this.enableSharedStt();
   }
 
   protected checked(event: Event): boolean { return (event.target as HTMLInputElement).checked; }
 
+  protected readonly sttModelOptions = STT_MODEL_OPTIONS;
+
   protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible'; }
+
+  protected enableSharedStt(): void {
+    this.patch({
+      sttProvider: 'cloud',
+      sttUseAiProvider: true,
+      sttModel: this.config().sttModel ?? DEFAULT_STT_MODEL,
+      sttLanguage: this.config().sttLanguage ?? this.autoSttLanguage(),
+    });
+  }
+
+  private autoSttLanguage(): 'en' | 'it' {
+    return typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('it') ? 'it' : 'en';
+  }
+
+  protected sttModelValue(): string {
+    return this.config().sttModel ?? DEFAULT_STT_MODEL;
+  }
+
+  protected sttLanguageValue(): string {
+    return this.config().sttLanguage === 'it' ? 'it' : this.config().sttLanguage === 'en' ? 'en' : this.autoSttLanguage();
+  }
+
+  protected sttLanguage(event: Event): 'en' | 'it' {
+    return this.value(event) === 'it' ? 'it' : 'en';
+  }
+
 
   protected sttProvider(event: Event): SttProvider {
     return STT_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
@@ -472,6 +479,27 @@ export class OnboardingWizard {
   protected async testSttProvider(): Promise<void> {
     this.testingStt.set(true);
     this.sttTestResult.set(null);
+    try {
+      const config = this.payload();
+      const saved = await this.api.onboardingSave({
+        config,
+        ...(this.aiToken() !== '' && config.aiProvider !== 'none' ? { aiToken: this.aiToken() } : {}),
+        ...(this.sttToken() !== '' && config.sttProvider === 'cloud' && config.sttUseAiProvider !== true ? { sttToken: this.sttToken() } : {}),
+      });
+      if (!saved.ok) {
+        this.errors.set(saved.errors);
+        this.sttTestResult.set('Save the STT settings before testing.');
+        return;
+      }
+      await this.stt.load();
+      if (!this.stt.status().configured) {
+        this.sttTestResult.set('STT is not configured. Configure the AI provider first.');
+        return;
+      }
+    } catch {
+      this.sttTestResult.set('Could not prepare the STT test.');
+      return;
+    }
     let stopTimer: ReturnType<typeof setTimeout> | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -547,11 +575,11 @@ export class OnboardingWizard {
       dataRepoRemote,
       aiBaseUrl,
       aiModel,
-      sttModel,
       sttBaseUrl,
       sttUseAiProvider,
       sttResponseFormat,
-      sttLanguage,
+      sttLanguage: this.config().sttProvider === 'cloud' ? (sttLanguage ?? this.autoSttLanguage()) : sttLanguage,
+      sttModel: this.config().sttProvider === 'cloud' ? (sttModel ?? DEFAULT_STT_MODEL) : sttModel,
       terminalFont,
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
@@ -570,6 +598,7 @@ export class OnboardingWizard {
       this.errors.set(errors);
       if (Object.keys(errors).length === 0 && current < 3) {
         this.step.set((current + 1) as Step);
+        if (current === 2) this.enableSharedStt();
       }
     } catch {
       this.errors.set({ config: 'Validation failed.' });
