@@ -113,9 +113,13 @@ export function shortTimestamp(timestamp: string): string {
             }
           </header>
           <p class="preview my-1.5 font-mono text-xs leading-[normal] wrap-anywhere" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
-          <div class="entry-actions flex gap-2">
-            <button type="button" class="btn px-2.5 py-1 text-xs leading-[normal]" data-testid="entry-copy" (click)="copyText.emit(entry.text)">Copy</button>
-            <button type="button" class="btn px-2.5 py-1 text-xs leading-[normal]" data-testid="entry-insert" (click)="insertText.emit(entry.text)">Insert</button>
+          <div class="entry-actions mt-1 flex justify-end gap-1">
+            <button type="button" class="icon-btn h-6 w-6" data-testid="entry-copy" aria-label="Copy entry" title="Copy" (click)="copyText.emit(entry.text)">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4H5.5A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            </button>
+            <button type="button" class="icon-btn h-6 w-6" data-testid="entry-insert" aria-label="Insert entry" title="Insert" (click)="insertText.emit(entry.text)">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v8m0 0-3-3m3 3 3-3M4 15h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
         </article>
       } @empty {

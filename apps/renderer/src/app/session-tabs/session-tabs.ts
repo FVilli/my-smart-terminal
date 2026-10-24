@@ -51,7 +51,7 @@ import type { TerminalSessionView } from '../session.model';
             <button
               type="button"
               role="menuitem"
-              class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted"
+              [class]="menuItemClass"
               data-testid="session-new-local"
               (click)="menuOpen.set(false); createLocal.emit()"
             >
@@ -61,6 +61,7 @@ import type { TerminalSessionView } from '../session.model';
               <button
                 type="button"
                 role="menuitem"
+                [class]="menuItemClass"
                 data-testid="session-new-ssh"
                 [attr.data-alias]="alias"
                 (click)="menuOpen.set(false); createSsh.emit(alias)"
@@ -68,7 +69,7 @@ import type { TerminalSessionView } from '../session.model';
                 <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">{{ alias }}</small>
               </button>
             } @empty {
-              <button type="button" role="menuitem" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted" data-testid="session-new-ssh" disabled>
+              <button type="button" role="menuitem" [class]="menuItemClass" data-testid="session-new-ssh" disabled>
                 <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">No hosts in ~/.ssh/config</small>
               </button>
             }
@@ -85,6 +86,8 @@ import type { TerminalSessionView } from '../session.model';
   `,
 })
 export class SessionTabs {
+  /** Shared session-menu item styling; keeps Local, SSH hosts and the empty state identical. */
+  protected readonly menuItemClass = 'cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted';
   readonly sessions = input.required<readonly TerminalSessionView[]>();
   readonly activeId = input<string | null>(null);
   readonly selected = output<string>();

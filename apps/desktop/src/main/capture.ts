@@ -129,7 +129,12 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding-ai') checks['onboardingAiStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 2 of 3') && !!q('onboarding-ai-url');
           if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-model');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
-          if (${JSON.stringify(scenario)} === 'ssh-menu') checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;
+          if (${JSON.stringify(scenario)} === 'ssh-menu') {
+            checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;
+            // Regression guard: menu items must use the menu surface, never the UA button background.
+            checks['sshMenuItemsStyled'] = Array.from(document.querySelectorAll('[data-testid="session-new-local"], [data-testid="session-new-ssh"]'))
+              .every((el) => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)');
+          }
           if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('message-center') && q('message-center').textContent.includes('review');
           if (${JSON.stringify(scenario)} === 'history') checks['historyEntries'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0;
           if (${JSON.stringify(scenario)} === 'clipboard') checks['clipboardRecorded'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0 && !!q('clipboard-status') && q('clipboard-status').textContent.includes('Clipboard capture on');
