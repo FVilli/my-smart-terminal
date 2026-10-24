@@ -20,13 +20,13 @@ const ICONS: Record<MessageKind, string> = {
     }
   `,
   styles: `
-    :host { display: block; flex: none; }
-    .message { display: flex; align-items: baseline; gap: 7px; padding: 3px 16px 5px; background: transparent; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
+    :host { display: block; flex: 1 1 auto; min-width: 0; }
+    .message { display: flex; align-items: center; gap: 7px; min-height: 28px; padding: 0 8px; background: transparent; color: var(--text-muted); font-size: 12px; line-height: 1.2; }
     .message[data-kind='warning'] .text { color: #e0b050; }
     .message[data-kind='critical'] .text { color: var(--danger); }
     .emoji { flex: none; }
-    .text { flex: 1; min-width: 0; }
-    .dismiss { flex: none; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; }
+    .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dismiss { flex: none; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; }
     .dismiss:hover { color: var(--text); }
   `,
 })

@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { syncBadge } from '../session.model';
+import { MessageCenter } from '../messages/message-center';
 
 @Component({
   selector: 'app-status-footer',
+  imports: [MessageCenter],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="badge" data-testid="sync-badge" [attr.data-state]="badge().state">
       <span class="dot"></span>{{ badge().label }}
     </span>
+    <app-message-center />
     @if (primary()) {
       <span class="primary" data-testid="primary-indicator" title="Primary instance">★ Primary instance</span>
     }

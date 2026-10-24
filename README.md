@@ -161,7 +161,7 @@ packages/ai/        AI and STT providers
 
 ## Status and known limitations
 
-v1.3.7 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
+v1.3.8 is a complete desktop release tested on Linux; macOS/Windows are covered by the CI pipeline. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
 
 ## License
 

@@ -1,6 +1,15 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.8
+
+Footer message placement hotfix.
+
+### Fixed
+
+- The single message area now lives inside the status footer at the bottom, between sync status and the primary indicator, rather than as a separate row above the composer.
+- Message text remains borderless with info/warning/critical emoji and a dismiss control.
+
 ## v1.3.7
 
 Message/font/STT test hotfix.

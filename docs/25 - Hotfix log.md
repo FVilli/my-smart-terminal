@@ -46,3 +46,4 @@ The entries below are historical release records. Their versions describe the af
 | HF-20261025-01 | 1.3.7 | Operational feedback text appeared in multiple unrelated places. | Single borderless message area with info/warning/critical emoji and dismiss; AI/STT notices routed there. | AI/STT/editor smokes. |
 | HF-20261025-02 | 1.3.7 | Input font still resolved to a sans fallback. | Removed `ui-monospace` from terminal stacks, added real mono fallbacks and direct inline font binding. | computed editor font smoke. |
 | HF-20261025-03 | 1.3.7 | STT test could only auto-record and did not show recording/replay/duration. | Added REC/STOP/PLAY and TRANSCRIBE with detailed result/error. | STT setup smoke. |
+| HF-20261025-04 | 1.3.8 | Message area was placed above the composer. | Moved the single borderless message area into the bottom status footer, between sync and primary. | AI smoke and layout checks. |
