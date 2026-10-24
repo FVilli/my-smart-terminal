@@ -42,6 +42,8 @@ import {
   type SetupTestAiRequest,
   type SetupTestAiResult,
   type SttStatus,
+  type SttSaveDebugAudioRequest,
+  type SttSaveDebugAudioResult,
   type SttTranscribeRequest,
   type SttTranscribeResult,
   type SyncStatusEvent,
@@ -146,6 +148,7 @@ export interface AiGateway {
 export interface SttGateway {
   status(): SttStatus | Promise<SttStatus>;
   transcribe(request: SttTranscribeRequest): SttTranscribeResult | Promise<SttTranscribeResult>;
+  saveDebugAudio(request: SttSaveDebugAudioRequest): SttSaveDebugAudioResult | Promise<SttSaveDebugAudioResult>;
 }
 
 /** Writes text to the system clipboard (Copy button). */
@@ -301,6 +304,10 @@ export const validateSetupTestAi = singleRequest<SetupTestAiRequest>(
 
 const isOptionalIso = (value: unknown): boolean => value === undefined || (typeof value === 'string' && isIsoTimestamp(value));
 
+export const validateSttSaveDebugAudio = singleRequest<SttSaveDebugAudioRequest>(
+  (v) => hasExactKeys(v, ['audio','mimeType'], ['durationMs']) && v['audio'] instanceof Uint8Array && v['audio'].byteLength > 0 && v['audio'].byteLength <= STT_MAX_AUDIO_BYTES && isAudioMimeType(v['mimeType']) && (v['durationMs'] === undefined || (typeof v['durationMs'] === 'number' && Number.isInteger(v['durationMs']) && v['durationMs'] >= 0 && v['durationMs'] <= 60000)),
+);
+
 export const validateSttTranscribe = singleRequest<SttTranscribeRequest>(
   (v) =>
     hasExactKeys(v, ['audio', 'mimeType'], ['durationMs']) &&
@@ -368,6 +375,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
+  [IPC_CHANNELS.sttSaveDebugAudio]: ChannelDefinition<[SttSaveDebugAudioRequest], SttSaveDebugAudioResult>;
 }
 
 export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGateway, services: IpcServices): IpcChannelMap {
@@ -501,6 +509,11 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
       handle: () => services.stt.status(),
     },
     // Audio travels as Uint8Array (structured clone): the limit increases to 10 MiB plus overhead for the JSON wrapper.
+    [IPC_CHANNELS.sttSaveDebugAudio]: {
+      validate: validateSttSaveDebugAudio,
+      handle: (_sender, request) => services.stt.saveDebugAudio(request),
+      maxPayloadBytes: STT_MAX_AUDIO_BYTES + 4096,
+    },
     [IPC_CHANNELS.sttTranscribe]: {
       validate: validateSttTranscribe,
       handle: (_sender, request) => services.stt.transcribe(request),

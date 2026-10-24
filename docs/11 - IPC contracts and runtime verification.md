@@ -50,7 +50,7 @@ This document describes the current main/preload/renderer contract. The shared n
 | `app:relaunch` | none | `void` |
 | `window:control` | `'minimize' \| 'toggle-maximize' \| 'close'` | `void` |
 | `ai:status` / `ai:correct` | status or `{ text }` | AI status or correction result |
-| `stt:status` / `stt:transcribe` | status or `{ audio: Uint8Array, mimeType }` | STT status or `{ text, skipped, reason? }` |
+| `stt:status` / `stt:transcribe` / `stt:save-debug-audio` | status or `{ audio: Uint8Array, mimeType }` | STT status or `{ text, skipped, reason? }` |
 
 Main-to-renderer events are `terminal:data`, `terminal:exit`, `app:role-changed`, `sync:status`, `search:refreshed`, and `window:maximized` (`{ maximized: boolean }`).
 
@@ -64,7 +64,7 @@ AI setup uses the current unsaved `OnboardingConfig` and an optional token suppl
 
 STT results may include a sanitized `SttDiagnostics` object (stage, serviceReached, HTTP status, content type, JSON validity, elapsed time, endpoint, model, language, audio metadata and text length). Cloud STT configuration includes `sttBaseUrl`, `sttResponseFormat` (`json` or `verbose_json`), `sttLanguage`, and `sttUseAiProvider`. When `sttUseAiProvider` is true, the AI base URL and `ai:<provider>` token are used and the separate STT token is unnecessary. The base URL must be an HTTP(S) URL without credentials or query parameters. STT audio is validated in main, is limited to 10 MiB per request, and is never persisted.
 
-Window controls accept only `minimize`, `toggle-maximize`, or `close`. The renderer receives `window:maximized` after maximize-state changes; controls are not implemented as arbitrary window commands.
+The STT debug save channel writes the recorded test audio to `userData/stt-debug/` (0600) and returns only its path/size; it is not used by normal dictation. Window controls accept only `minimize`, `toggle-maximize`, or `close`. The renderer receives `window:maximized` after maximize-state changes; controls are not implemented as arbitrary window commands.
 
 ## Runtime behavior
 

@@ -76,6 +76,7 @@ const EXPECTED_KEYS = [
   'setupTestAi',
   'setupTestRemote',
   'sshAliases',
+  'sttSaveDebugAudio',
   'sttStatus',
   'sttTranscribe',
   'syncStatus',
@@ -760,9 +761,12 @@ const STT_SETUP_SCRIPT = `(async () => {
 
 /** STT setup smoke, enabled by SMART_TERMINAL_STT_SETUP_SMOKE=1. */
 export function runSttSetupSmoke(window: BrowserWindow): void {
-  runUiSmoke(window, STT_SETUP_SCRIPT, 'SMART_TERMINAL_STT_SETUP_SMOKE_RESULT', async () => ({
-    noAudioFileInUserData: hasNoAudioArtifacts(app.getPath('userData')),
-  }));
+  runUiSmoke(window, STT_SETUP_SCRIPT, 'SMART_TERMINAL_STT_SETUP_SMOKE_RESULT', async () => {
+    const debugDir = path.join(app.getPath('userData'), 'stt-debug');
+    let debugAudioSaved = false;
+    try { debugAudioSaved = fs.readdirSync(debugDir).some((name) => AUDIO_FILE_PATTERN.test(name)); } catch { debugAudioSaved = false; }
+    return { debugAudioSaved };
+  });
 }
 
 export function runRemoteSetupSmoke(window: BrowserWindow): void {

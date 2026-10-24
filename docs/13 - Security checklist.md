@@ -25,6 +25,7 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - [x] Sanitized errors: stable codes, no stack/path/token to the renderer.
 - [x] AI/STT channels: text/audio also validated in main (defense in depth); token never returned.
 - [x] Setup AI: `setup:test-ai` / `setupTestAi` validates provider/base URL/model/token configuration in main, accepts current unsaved values, and is available only in the main process; token is never returned.
+- [x] STT debug audio is written only by the explicit test flow to `userData/stt-debug/` with 0600 permissions; normal dictation keeps no audio and the debug folder can be removed.
 - [x] STT diagnostics are sanitized: no token, audio, raw provider body, stack or arbitrary URL; `serviceReached` only after an HTTP response.
 - [x] STT setup: `sttBaseUrl`, `sttResponseFormat` (`json`/`verbose_json`), `sttLanguage`, and `sttUseAiProvider` are validated in main; shared mode uses the AI token and never returns it; URLs reject credentials and queries.
 - [x] Window control: `window:control` accepts only minimize, toggle-maximize, and close; maximize state is emitted through `window:maximized`.

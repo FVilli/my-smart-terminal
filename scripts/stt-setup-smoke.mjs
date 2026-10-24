@@ -31,7 +31,7 @@ const run = spawnSync(process.execPath, ['scripts/run-electron.mjs', 'apps/deskt
   stdio: 'inherit',
   env: { ...baseEnv, SMART_TERMINAL_USER_DATA: userData, SMART_TERMINAL_DATA_REPO: repo, SMART_TERMINAL_STT_TEST_MODE: '1', SMART_TERMINAL_STT_SETUP_SMOKE: '1' },
 });
-const artifacts = fs.readdirSync(userData, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile() && /\.(webm|wav|mp3|ogg|m4a|aac|flac|opus)$/i.test(entry.name));
-if (artifacts.length > 0) console.error('[stt-setup-smoke] found audio files', artifacts.map((entry) => entry.name));
+const debugAudio = fs.readdirSync(path.join(userData, 'stt-debug'), { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile() && /\.(webm|wav|mp3|ogg|m4a|aac|flac|opus)$/i.test(entry.name));
+if (debugAudio.length === 0) console.error('[stt-setup-smoke] debug audio file was not saved');
 fs.rmSync(root, { recursive: true, force: true });
-process.exit(run.status === 0 && artifacts.length === 0 ? 0 : 1);
+process.exit(run.status === 0 && debugAudio.length > 0 ? 0 : 1);

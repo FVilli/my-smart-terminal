@@ -182,6 +182,9 @@ const STT_MODEL_OPTIONS = [
                     <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()">PLAY</button>
                     <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
                   </div>
+                  @if (testAudioPath(); as audioPath) {
+                    <p class="hint" data-testid="onboarding-stt-audio-path">Saved audio: {{ audioPath }}</p>
+                  }
                   @if (testAudioUrl() !== null) {
                     <audio #audioPlayer controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
                   }
@@ -333,6 +336,7 @@ export class OnboardingWizard {
   protected readonly testPlayback = signal(false);
   protected readonly testRecState = signal<'idle' | 'requesting' | 'recording' | 'stopping' | 'ready' | 'playing' | 'error'>('idle');
   protected readonly sttDebug = signal<SttDiagnostics | null>(null);
+  protected readonly testAudioPath = signal<string | null>(null);
   private testRecorder: MediaRecorder | null = null;
   private testStream: MediaStream | null = null;
   private testChunks: Blob[] = [];
@@ -558,7 +562,7 @@ export class OnboardingWizard {
       this.testRecorder = recorder;
       recorder.ondataavailable = (event) => { if (event.data.size > 0) this.testChunks.push(event.data); };
       recorder.onerror = () => { this.testRecState.set('error'); this.testRecording.set(false); this.stopSttTimer(); this.sttTestResult.set('Audio recorder failed while recording.'); };
-      recorder.onstop = () => {
+      recorder.onstop = () => { void (async () => {
         for (const track of stream.getTracks()) track.stop();
         this.testStream = null;
         this.testRecorder = null;
@@ -569,8 +573,20 @@ export class OnboardingWizard {
         this.testAudioBytes.set(blob.size);
         this.testAudioUrl.set(this.testBlob !== null ? URL.createObjectURL(blob) : null);
         this.testRecState.set(this.testBlob !== null ? 'ready' : 'error');
+        if (this.testBlob !== null) {
+          try {
+            const saved = await this.api.sttSaveDebugAudio({
+              audio: new Uint8Array(await this.testBlob.arrayBuffer()),
+              mimeType: normalizeAudioMime(mimeType),
+              durationMs: this.testDurationMs(),
+            });
+            this.testAudioPath.set(saved.path);
+          } catch {
+            this.testAudioPath.set(null);
+          }
+        }
         if (this.testBlob === null) this.sttTestResult.set(blob.size === 0 ? 'No audio data was recorded.' : 'Recording exceeds the 10 MB limit.');
-      };
+      })(); };
       recorder.start(250);
       this.testRecording.set(true);
       this.testRecState.set('recording');
@@ -684,6 +700,7 @@ export class OnboardingWizard {
     const url = this.testAudioUrl();
     if (url !== null) URL.revokeObjectURL(url);
     this.testAudioUrl.set(null);
+    this.testAudioPath.set(null);
     this.testAudioBytes.set(0);
     this.testBlob = null;
     this.testPlayback.set(false);

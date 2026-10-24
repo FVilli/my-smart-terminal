@@ -1,6 +1,20 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.11
+
+STT debug audio release.
+
+### Added
+
+- STT test recordings are saved automatically during the debugging phase to `userData/stt-debug/` and the exact path is shown under the controls.
+- The debug file has 0600 permissions and is written through a validated main-process IPC endpoint.
+
+### Fixed
+
+- PLAY uses the CSP-allowed blob audio and a native audio player.
+- Debug panel reports service reachability/status and recording details.
+
 ## v1.3.10
 
 STT playback hotfix.

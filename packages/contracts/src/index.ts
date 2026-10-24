@@ -35,6 +35,7 @@ export const IPC_CHANNELS = {
   aiCorrect: 'ai:correct',
   sttStatus: 'stt:status',
   sttTranscribe: 'stt:transcribe',
+  sttSaveDebugAudio: 'stt:save-debug-audio',
 } as const;
 
 /** Main -> renderer events (not invocable from the renderer). */
@@ -386,6 +387,17 @@ export interface SttDiagnostics {
   error?: string;
 }
 
+export interface SttSaveDebugAudioRequest {
+  audio: Uint8Array;
+  mimeType: string;
+  durationMs?: number;
+}
+
+export interface SttSaveDebugAudioResult {
+  path: string;
+  bytes: number;
+}
+
 export type SttSkipReason =
   | 'unconfigured'
   | 'missing-token'
@@ -444,6 +456,7 @@ export interface SmartTerminalApi {
   aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
   sttStatus(): Promise<SttStatus>;
   sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;
+  sttSaveDebugAudio(request: SttSaveDebugAudioRequest): Promise<SttSaveDebugAudioResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;

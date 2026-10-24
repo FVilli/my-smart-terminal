@@ -21,7 +21,7 @@ The base URL and token are taken from the AI tab, so configure and test AI first
 
 ## TEST
 
-Select **REC**, speak, then **STOP**. The recording time is shown. Use **PLAY** to listen to the in-memory sample, then **TRANSCRIBE** to save the current values and send the audio to the provider. The result or detailed error appears below the controls. The audio is discarded and the result is not sent to the terminal.
+Select **REC**, speak, then **STOP**. The recording time is shown. Use **PLAY** to listen to the in-memory sample, then **TRANSCRIBE** to save the current values and send the audio to the provider. The result or detailed error appears below the controls. During the current debugging phase the sample is saved to `userData/stt-debug/` and its path is shown under the controls, so you can verify that audio was captured. It is not sent to the terminal; remove the debug folder when finished.
 
 The first time, grant microphone permission if the operating system asks. REC works even before the AI provider is configured; TRANSCRIBE needs the provider. If the microphone is denied, missing, busy or unsupported, the UI names the specific failure and the terminal remains usable.
 

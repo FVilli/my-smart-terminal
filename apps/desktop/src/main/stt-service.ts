@@ -1,4 +1,6 @@
-import type { SttStatus, SttTranscribeRequest, SttTranscribeResult } from '@smart-terminal/contracts';
+import fs from 'node:fs';
+import path from 'node:path';
+import type { SttSaveDebugAudioRequest, SttSaveDebugAudioResult, SttStatus, SttTranscribeRequest, SttTranscribeResult } from '@smart-terminal/contracts';
 import { isAudioMimeType, isValidSttAudio, transcribeAudio, type SttProcessRunner } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
@@ -9,6 +11,8 @@ export interface SttServiceOptions {
   fetch?: typeof fetch;
   run?: SttProcessRunner;
   timeoutMs?: number;
+  /** Debug-only directory for explicit STT test audio; never used by normal dictation. */
+  debugDirectory?: string;
   /** Test seam: deterministic transcription, no adapter/network/file. Active only with SMART_TERMINAL_STT_TEST_MODE=1. */
   testMode?: boolean;
 }
@@ -30,9 +34,21 @@ const skipped = (reason: NonNullable<SttTranscribeResult['reason']>): SttTranscr
  */
 export class SttService {
   private readonly testMode: boolean;
+  private readonly debugDirectory: string | undefined;
 
   constructor(private readonly options: SttServiceOptions) {
     this.testMode = options.testMode === true;
+    this.debugDirectory = options.debugDirectory;
+  }
+
+  saveDebugAudio(request: SttSaveDebugAudioRequest): SttSaveDebugAudioResult {
+    if (this.debugDirectory === undefined) throw new Error('STT debug directory is unavailable');
+    if (!isValidSttAudio(request.audio) || !isAudioMimeType(request.mimeType)) throw new Error('Invalid debug audio');
+    const extension = request.mimeType === 'audio/wav' ? '.wav' : request.mimeType === 'audio/ogg' ? '.ogg' : '.webm';
+    fs.mkdirSync(this.debugDirectory, { recursive: true, mode: 0o700 });
+    const target = path.join(this.debugDirectory, `stt-${new Date().toISOString().replace(/[:.]/g, '-')}${extension}`);
+    fs.writeFileSync(target, request.audio, { mode: 0o600 });
+    return { path: target, bytes: request.audio.byteLength };
   }
 
   status(): SttStatus {

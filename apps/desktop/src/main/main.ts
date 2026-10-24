@@ -347,6 +347,7 @@ app.whenReady().then(async () => {
     configStore,
     secrets,
     testMode: process.env['SMART_TERMINAL_STT_TEST_MODE'] === '1',
+    debugDirectory: path.join(userDataPath, 'stt-debug'),
   });
   registerAppProtocol();
   registerIpcHandlers(
