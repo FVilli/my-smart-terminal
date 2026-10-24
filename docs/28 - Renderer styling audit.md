@@ -4,6 +4,7 @@ type: audit
 project: smart-terminal
 created: 2026-10-24
 ---
+<!-- gsynchro:v1 id=96cbc5c8-92a8-458f-b7b8-0c67d7de6b26 registered=2026-10-24T22:29:07.241Z -->
 
 # Renderer styling audit
 
