@@ -63,6 +63,7 @@ const services: IpcServices = {
   },
   stt: {
     status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),
+    models: vi.fn(() => []),
     transcribe: vi.fn(() => ({ text: 'test transcript', skipped: false })),
     saveDebugAudio: vi.fn(() => ({ path: '/tmp/stt-debug/test.webm', bytes: 32 })),
   },

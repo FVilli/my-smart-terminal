@@ -76,6 +76,7 @@ const EXPECTED_KEYS = [
   'setupTestAi',
   'setupTestRemote',
   'sshAliases',
+  'sttModels',
   'sttSaveDebugAudio',
   'sttStatus',
   'sttTranscribe',

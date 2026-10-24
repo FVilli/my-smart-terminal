@@ -34,6 +34,7 @@ export const IPC_CHANNELS = {
   aiStatus: 'ai:status',
   aiCorrect: 'ai:correct',
   sttStatus: 'stt:status',
+  sttModels: 'stt:models',
   sttTranscribe: 'stt:transcribe',
   sttSaveDebugAudio: 'stt:save-debug-audio',
 } as const;
@@ -388,6 +389,11 @@ export interface SttDiagnostics {
   providerMessage?: string;
 }
 
+export interface SttModelInfo {
+  id: string;
+  label?: string;
+}
+
 export interface SttSaveDebugAudioRequest {
   audio: Uint8Array;
   mimeType: string;
@@ -456,6 +462,7 @@ export interface SmartTerminalApi {
   aiStatus(): Promise<AiStatus>;
   aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
   sttStatus(): Promise<SttStatus>;
+  sttModels(): Promise<SttModelInfo[]>;
   sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;
   sttSaveDebugAudio(request: SttSaveDebugAudioRequest): Promise<SttSaveDebugAudioResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;

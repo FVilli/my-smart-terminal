@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, type ElementRef, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, type ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import {
   AI_PROVIDERS,
   STT_PROVIDERS,
@@ -15,6 +15,7 @@ import {
   type SttProvider,
   type SttResponseFormat,
   type SttDiagnostics,
+  type SttModelInfo,
 } from '@smart-terminal/contracts';
 import { SttStore, normalizeAudioMime, sttNotice } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
@@ -170,9 +171,13 @@ const STT_MODEL_OPTIONS = [
                   }
                   <label>Model
                     <select data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
-                      @for (model of sttModelOptions; track model.value) { <option [value]="model.value">{{ model.label }}</option> }
+                      @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
                     </select>
                   </label>
+                  <div class="test-row">
+                    <button type="button" data-testid="onboarding-stt-refresh-models" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">{{ sttModelsLoading() ? 'Loading models…' : 'Refresh models' }}</button>
+                    @if (sttModelsError(); as modelsError) { <span class="hint" data-testid="onboarding-stt-models-error">{{ modelsError }}</span> }
+                  </div>
                   <label>Language
                     <select data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
                       <option value="en">EN (English)</option>
@@ -394,7 +399,7 @@ export class OnboardingWizard {
       this.visible.set(true);
       this.restartNotice.set(false);
       this.confirmDiscard.set(false);
-      if (this.step() === 3) this.enableSharedStt();
+      if (this.step() === 3) { this.enableSharedStt(); void this.loadSttModels(); }
       this.initialSnapshot = JSON.stringify(this.payload());
     } catch {
       this.settings.close();
@@ -459,12 +464,21 @@ export class OnboardingWizard {
   protected selectTab(step: Step): void {
     this.errors.set({});
     this.step.set(step);
-    if (step === 3) this.enableSharedStt();
+    if (step === 3) { this.enableSharedStt(); void this.loadSttModels(); }
   }
 
   protected checked(event: Event): boolean { return (event.target as HTMLInputElement).checked; }
 
-  protected readonly sttModelOptions = STT_MODEL_OPTIONS;
+  protected readonly discoveredSttModels = signal<SttModelInfo[]>([]);
+  protected readonly sttModelsLoading = signal(false);
+  protected readonly sttModelsError = signal<string | null>(null);
+  protected readonly sttModelOptions = computed(() => {
+    const options = [...STT_MODEL_OPTIONS];
+    for (const model of this.discoveredSttModels()) {
+      if (!options.some((option) => option.value === model.id)) options.push({ value: model.id, label: model.label ?? model.id });
+    }
+    return options;
+  });
 
   protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible'; }
 
@@ -529,6 +543,26 @@ export class OnboardingWizard {
 
   protected testDurationSeconds(): number {
     return Math.floor(this.testDurationMs() / 1000);
+  }
+
+  protected async loadSttModels(): Promise<void> {
+    if (!this.canUseAiProvider()) {
+      this.discoveredSttModels.set([]);
+      this.sttModelsError.set('Configure OpenAI or OpenAI-compatible in the AI tab first.');
+      return;
+    }
+    this.sttModelsLoading.set(true);
+    this.sttModelsError.set(null);
+    try {
+      const models = await this.api.sttModels();
+      this.discoveredSttModels.set(models);
+      this.sttModelsError.set(models.length === 0 ? 'No audio transcription models were returned; use Server default or a known model.' : null);
+    } catch {
+      this.discoveredSttModels.set([]);
+      this.sttModelsError.set('Could not load models. Check the AI base URL/token and retry.');
+    } finally {
+      this.sttModelsLoading.set(false);
+    }
   }
 
   protected debugSummary(): string {
@@ -768,7 +802,7 @@ export class OnboardingWizard {
       this.errors.set(errors);
       if (Object.keys(errors).length === 0 && current < 3) {
         this.step.set((current + 1) as Step);
-        if (current === 2) this.enableSharedStt();
+        if (current === 2) { this.enableSharedStt(); void this.loadSttModels(); }
       }
     } catch {
       this.errors.set({ config: 'Validation failed.' });

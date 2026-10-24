@@ -42,6 +42,7 @@ import {
   type SetupTestAiRequest,
   type SetupTestAiResult,
   type SttStatus,
+  type SttModelInfo,
   type SttSaveDebugAudioRequest,
   type SttSaveDebugAudioResult,
   type SttTranscribeRequest,
@@ -147,6 +148,7 @@ export interface AiGateway {
 
 export interface SttGateway {
   status(): SttStatus | Promise<SttStatus>;
+  models(): SttModelInfo[] | Promise<SttModelInfo[]>;
   transcribe(request: SttTranscribeRequest): SttTranscribeResult | Promise<SttTranscribeResult>;
   saveDebugAudio(request: SttSaveDebugAudioRequest): SttSaveDebugAudioResult | Promise<SttSaveDebugAudioResult>;
 }
@@ -374,6 +376,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
+  [IPC_CHANNELS.sttModels]: ChannelDefinition<[], SttModelInfo[]>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
   [IPC_CHANNELS.sttSaveDebugAudio]: ChannelDefinition<[SttSaveDebugAudioRequest], SttSaveDebugAudioResult>;
 }
@@ -507,6 +510,10 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.sttStatus]: {
       validate: noArguments,
       handle: () => services.stt.status(),
+    },
+    [IPC_CHANNELS.sttModels]: {
+      validate: noArguments,
+      handle: () => services.stt.models(),
     },
     // Audio travels as Uint8Array (structured clone): the limit increases to 10 MiB plus overhead for the JSON wrapper.
     [IPC_CHANNELS.sttSaveDebugAudio]: {

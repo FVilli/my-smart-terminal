@@ -81,6 +81,20 @@ describe('SttService', () => {
     expect(secrets.secrets.has).not.toHaveBeenCalledWith('stt:cloud');
   });
 
+  it('lists only models that advertise the transcribe workflow', async () => {
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://llm.example/v1/models');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer cloud-token');
+      return new Response(JSON.stringify({ data: [
+        { id: 'qwen3-asr-0.6b', audio_workflows: ['transcribe'] },
+        { id: 'qwen3-asr-1.7b', audio_workflows: ['transcribe'] },
+        { id: 'chat-model', audio_workflows: ['chat'] },
+      ] }), { status: 200 });
+    });
+    const service = new SttService({ ...stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttCommand: undefined })), fetch: fetcher as typeof fetch });
+    await expect(service.models()).resolves.toEqual([{ id: 'qwen3-asr-0.6b' }, { id: 'qwen3-asr-1.7b' }]);
+  });
+
   it('rejects shared STT for unsupported AI providers', async () => {
     const service = new SttService(stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'anthropic', sttCommand: undefined })) as never);
     expect(service.status()).toMatchObject({ configured: false, warning: expect.stringContaining('OpenAI-compatible') });

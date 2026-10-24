@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { SttSaveDebugAudioRequest, SttSaveDebugAudioResult, SttStatus, SttTranscribeRequest, SttTranscribeResult } from '@smart-terminal/contracts';
+import type { SttModelInfo, SttSaveDebugAudioRequest, SttSaveDebugAudioResult, SttStatus, SttTranscribeRequest, SttTranscribeResult } from '@smart-terminal/contracts';
 import { isAudioMimeType, isValidSttAudio, transcribeAudio, type SttProcessRunner } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
@@ -39,6 +39,32 @@ export class SttService {
   constructor(private readonly options: SttServiceOptions) {
     this.testMode = options.testMode === true;
     this.debugDirectory = options.debugDirectory;
+  }
+
+  async models(): Promise<SttModelInfo[]> {
+    const config = this.currentConfig();
+    if (config === undefined || config.sttProvider !== 'cloud') return [];
+    const shared = config.sttUseAiProvider === true;
+    if (shared && config.aiProvider !== 'openai' && config.aiProvider !== 'openai-compatible') return [];
+    const tokenKey = shared ? aiTokenKey(config.aiProvider) : CLOUD_TOKEN_KEY;
+    const token = this.options.secrets.get(tokenKey);
+    if (token === undefined) throw new Error('STT token is not configured.');
+    const baseUrl = ((shared ? config.aiBaseUrl : config.sttBaseUrl) ?? 'https://api.openai.com/v1').replace(/\/$/, '');
+    const call = this.options.fetch ?? fetch;
+    const response = await call(`${baseUrl}/models`, {
+      headers: { authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(this.options.timeoutMs ?? 8000),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data: unknown = await response.json();
+    const entries = Array.isArray((data as { data?: unknown }).data) ? (data as { data: unknown[] }).data : [];
+    return entries.flatMap((entry) => {
+      if (typeof entry !== 'object' || entry === null) return [];
+      const item = entry as { id?: unknown; audio_workflows?: unknown };
+      if (typeof item.id !== 'string') return [];
+      const workflows = Array.isArray(item.audio_workflows) ? item.audio_workflows : [];
+      return workflows.some((workflow) => workflow === 'transcribe') ? [{ id: item.id }] : [];
+    });
   }
 
   saveDebugAudio(request: SttSaveDebugAudioRequest): SttSaveDebugAudioResult {
