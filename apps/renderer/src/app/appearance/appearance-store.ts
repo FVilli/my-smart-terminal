@@ -18,7 +18,7 @@ export class AppearanceStore {
 
   private applyFont(): void {
     if (typeof document !== 'undefined') {
-      document.documentElement.style.setProperty('--font-mono', this.fontStack());
+      document.documentElement.style.setProperty('--font-code', this.fontStack());
     }
   }
 }

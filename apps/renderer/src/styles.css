@@ -7,7 +7,11 @@
 @source "./app";
 @source "./index.html";
 
+/* Design tokens: the single authoritative palette, typography and measured geometry.
+   Raw values live only here; components consume the generated utilities
+   (bg-terminal, text-muted, border-line, h-header, ...). */
 :root {
+  /* Surfaces */
   --bg: #0a0d10;
   --terminal-bg: #171e25;
   --tab-bg: #212b38;
@@ -17,14 +21,98 @@
   --card-bg: var(--input-bg);
   --surface: #212b38;
   --surface-raised: #222e3c;
+  /* Separators */
   --border: #161d26;
+  --border-soft: #26313f;
+  /* Text */
   --text: #e6edf3;
   --text-muted: #8b9bab;
+  /* States */
   --accent: #4cc2a5;
   --danger: #f07067;
+  --danger-strong: #c42b1c;
+  --warning: #e0b050;
+  --syncing: #e3b341;
+  --record: #e5484d;
+  --record-strong: #ff6b6b;
+  --focus-ring: rgb(76 194 165 / 18%);
+  --backdrop: rgb(5 8 11 / 70%);
+  /* Typography */
   --font-ui: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace;
+  --font-code: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace;
   color-scheme: dark;
+}
+
+@theme inline {
+  --color-app: var(--bg);
+  --color-terminal: var(--terminal-bg);
+  --color-tab: var(--tab-bg);
+  --color-tab-active: var(--tab-active);
+  --color-input: var(--input-bg);
+  --color-sidebar: var(--sidebar-bg);
+  --color-card: var(--card-bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-line: var(--border);
+  --color-line-soft: var(--border-soft);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-warning: var(--warning);
+  --color-syncing: var(--syncing);
+  --color-record: var(--record);
+  --color-record-strong: var(--record-strong);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  /* Measured chrome geometry from docs/15 - Visual baseline.md */
+  --spacing-header: 35px;
+  --spacing-tabbar: 38px;
+  --spacing-footer: 28px;
+  --spacing-composer: 120px;
+  --spacing-tab: 220px;
+}
+
+/* Shared controls. Only genuinely repeated patterns live here; layout and
+   one-off styling stay as utilities in the component templates. */
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-line bg-card px-2.5 py-1.5 text-fg;
+  }
+  .btn:hover:not(:disabled) {
+    @apply border-accent;
+  }
+  .btn:disabled {
+    @apply cursor-default border-line text-muted;
+  }
+  .btn:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  .icon-btn {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-sm border border-transparent text-muted;
+  }
+  .icon-btn:hover:not(:disabled) {
+    @apply bg-line text-fg;
+  }
+  .icon-btn:disabled {
+    @apply cursor-default opacity-45;
+  }
+  .icon-btn:focus-visible {
+    @apply outline-2 outline-accent;
+  }
+
+  .field {
+    @apply w-full min-w-0 rounded-md border border-line bg-card px-2.5 py-2 text-fg;
+  }
+  .field:focus-visible {
+    @apply border-accent outline-none;
+  }
+
+  .card {
+    @apply mb-2 min-w-0 rounded-md border border-line bg-card px-2.5 py-2;
+  }
 }
 
 * {

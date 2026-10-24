@@ -67,3 +67,39 @@ Ctrl/Cmd+- and Ctrl/Cmd+Plus (including Ctrl+=, Ctrl+Shift+=, and numpad add/sub
 ## Out of scope
 
 The mock's top black strip may include the operating-system window chrome; do not reproduce title-bar controls inside the app. Preserve all functional English copy, accessibility labels and the 75/25 contract.
+
+## M20 token and utility mapping
+
+Single source of truth: `apps/renderer/src/styles.css`. Raw values are declared once in `:root`; the `@theme inline` block exposes them to Tailwind 4, so components use utilities instead of literals. Tailwind preflight is intentionally not imported: the renderer keeps the small `styles.css` reset as its only base layer, which is why the approved geometry did not move when Tailwind was added.
+
+| Raw token | Value | Utility | Used for |
+| --- | --- | --- | --- |
+| `--bg` | `#0a0d10` | `bg-app` | document background behind the shell |
+| `--terminal-bg` | `#171e25` | `bg-terminal` | terminal, header, composer surroundings, footer |
+| `--tab-bg` | `#212b38` | `bg-tab` | inactive tab bar, menus |
+| `--tab-active` | `#384a5d` | `bg-tab-active` | active session tab |
+| `--input-bg` | `#222e3c` | `bg-input` | composer interior |
+| `--sidebar-bg` | `var(--terminal-bg)` | `bg-sidebar` | right panel |
+| `--card-bg` | `var(--input-bg)` | `bg-card` | history/clipboard cards, form controls |
+| `--surface` / `--surface-raised` | `#212b38` / `#222e3c` | `bg-surface` / `bg-raised` | raised panels |
+| `--border` | `#161d26` | `border-line`, `divide-line`, `bg-line` | separators, hover fills |
+| `--border-soft` | `#26313f` | `border-line-soft` | composer rest border (replaces the undefined token from the audit) |
+| `--text` / `--text-muted` | `#e6edf3` / `#8b9bab` | `text-fg` / `text-muted` | body copy / secondary copy |
+| `--accent` | `#4cc2a5` | `text-accent`, `bg-accent`, `border-accent`, `outline-accent` | primary accent, focus, active states |
+| `--danger` / `--danger-strong` | `#f07067` / `#c42b1c` | `text-danger` / `bg-danger-strong` | errors / window-close hover |
+| `--warning` / `--syncing` | `#e0b050` / `#e3b341` | `text-warning` / `bg-syncing` | warning copy / syncing dot |
+| `--record` / `--record-strong` | `#e5484d` / `#ff6b6b` | `bg-record` / `text-record-strong` | recording dot and mic pulse |
+| `--focus-ring` | `rgb(76 194 165 / 18%)` | `var(--focus-ring)` in the composer focus shadow (one-off rule) | composer focus halo |
+| `--backdrop` | `rgb(5 8 11 / 70%)` | `bg-backdrop` | settings/onboarding backdrop |
+| `--font-ui` | Inter, Segoe UI, system | `font-sans` | UI chrome |
+| `--font-code` | JetBrains Mono stack | `font-mono` | terminal, composer, tab labels, previews |
+
+Measured geometry exposed as spacing utilities: `h-header` (35px), `h-tabbar` (38px), `h-footer` (28px), `h-composer` (120px), `max-w-tab` (220px). These numbers are the approved measurements, not arbitrary values.
+
+Shared controls (Tailwind `@layer components`): `.btn`, `.icon-btn`, `.field`, `.card`, plus the built-in `sr-only`. Everything else is composed from utilities in the component template.
+
+Ownership and exceptions:
+- Token values and shared controls: `apps/renderer/src/styles.css` only.
+- Component CSS is limited to genuinely complex or platform-specific rules (window drag regions, keyframes, the animated mic pulse) and must not redefine palette colors.
+- xterm keeps its own stylesheet (`@xterm/xterm/css/xterm.css`) and the `TERMINAL_THEME` object in `terminal-panel.ts`, which needs literal colors for the canvas renderer; those literals mirror the tokens above and are the only justified exception.
+- Runtime terminal-font changes set `--font-code` on `:root` (`appearance-store.ts`); `font-mono` reads it, so no component needs a font literal.

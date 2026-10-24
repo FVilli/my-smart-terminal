@@ -151,7 +151,7 @@ export function shortTimestamp(timestamp: string): string {
     .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--text-muted); overflow-wrap: anywhere; }
     .machine { color: var(--accent); }
     .source { text-transform: uppercase; letter-spacing: 0.04em; }
-    .preview { margin: 6px 0; font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; word-break: break-word; }
+    .preview { margin: 6px 0; font-family: var(--font-code); font-size: 12px; overflow-wrap: anywhere; word-break: break-word; }
     .entry-actions { display: flex; gap: 8px; }
     .entry-actions button { padding: 4px 10px; font-size: 12px; }
   `,
