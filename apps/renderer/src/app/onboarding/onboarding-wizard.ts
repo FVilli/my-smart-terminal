@@ -36,6 +36,8 @@ const DEFAULT_STT_MODEL = 'audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF';
 const STT_MODEL_OPTIONS = [
   { value: '', label: 'Server default (do not send model)' },
   { value: DEFAULT_STT_MODEL, label: 'Parakeet TDT 0.6B v3 (GGUF)' },
+  { value: 'qwen3-asr-0.6b', label: 'Qwen3 ASR 0.6B' },
+  { value: 'qwen3-asr-1.7b', label: 'Qwen3 ASR 1.7B' },
 ];
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
