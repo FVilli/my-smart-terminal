@@ -24,7 +24,7 @@ VS Code's current source sets a custom title bar of **35 px with a Command Cente
 | Element | Proposed value | Notes |
 | --- | --- | --- |
 | App title bar | **35 px**, full window width | Replaces the current 48 px header; spans main column and sidebar |
-| Left app icon | 18×18 px inside 35×35 px hit area | Current Smart Terminal icon |
+| Left app icon | 18×18 px inside 35×35 px hit area | Transparent-background Smart Terminal icon (M16B-T02) |
 | Centre title | `Smart Terminal - Version <runtime version>` | Dynamically supplied by app metadata; mockup uses 1.2.2 |
 | Header control buttons | 22×22 px, 4 px gaps | Gear and layout toggles |
 | Window controls | 46×35 px each | Minimize, maximize/restore, close |
@@ -105,5 +105,7 @@ Use existing app palette: `#171e25` titlebar/terminal, `#212b38` tabs, `#384a5d`
 - [ ] Linux/Windows `_ □ ×` and macOS traffic-light split is accepted.
 - [ ] Custom-frame consequences are accepted for M16B.
 - [ ] Palette and tab density are approved.
+
+M16B also replaces the opaque square icon background with a transparent RGBA asset.
 
 No application code is changed by M16A.

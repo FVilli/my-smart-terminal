@@ -18,3 +18,7 @@ deliverables: "Input composer mockup HTML/PNG and annotated design specification
 
 ## Acceptance
 Mockup shows one thin rounded border with AI/mic/send inside bottom-right; interaction contract and states are explicit; user approves.
+
+## Approval
+- User approved the M17A mockup/spec on 2026-10-24.
+- M17B may proceed from docs/27.

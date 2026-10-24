@@ -21,3 +21,7 @@ Define the definitive full-window title bar, panel toggles, window controls and 
 
 ## Acceptance
 Mockup is legible at 1440×900 and 1024×700 considerations; controls/states are explicit; user approves the target. M16A remains open until approval.
+
+## Approval
+- User approved the M16A mockup/spec on 2026-10-24 and requested transparent-background app icon work in M16B.
+- M16B may proceed from docs/26.
