@@ -28,3 +28,7 @@ Return prioritized file/line findings and a concrete repair list; no edits.
 
 ## Do not
 Do not change files in this task.
+
+## Outcome
+- Audit found: uninstall URLs wrongly pinned to v1.3.0; docs/11 IPC table/STT section obsolete and partly Italian; docs/26/25 historical version context unclear; docs/13 missing current setupTestAi/STT contract checks; pinned-vs-latest wording in OS guides; AppImage placeholder command; no current-version consistency gate.
+- Uninstall from `main` is safe with the current version-independent script; install remains pinned to v1.3.0.
