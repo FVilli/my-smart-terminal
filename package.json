@@ -78,13 +78,14 @@
     "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
+    "gsynchro": "0.3.7",
     "jsdom": "30.0.0",
+    "openai": "^7.43.0",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0",
     "vitest": "5.0.5",
-    "wait-on": "9.5.1",
-    "gsynchro": "0.3.7"
+    "wait-on": "9.5.1"
   },
   "allowScripts": {
     "node-pty@1.1.0": true,
