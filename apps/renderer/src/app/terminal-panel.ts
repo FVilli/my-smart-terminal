@@ -59,6 +59,8 @@ export class TerminalPanel implements OnDestroy {
   };
 
   constructor() {
+    // Window-level focus request: header actions and shortcuts focus the active panel without
+    // holding a reference to it. Removed in ngOnDestroy with the terminal-owned disposers.
     window.addEventListener('smart-terminal-focus-terminal', this.focusTerminal);
     afterNextRender(() => this.start());
 
@@ -112,6 +114,8 @@ export class TerminalPanel implements OnDestroy {
     terminal.open(this.host().nativeElement);
     this.terminal = terminal;
     this.fitAddon = fitAddon;
+    // Only the copy shortcut is intercepted, and only when it can act on a selection; every
+    // other key must reach the PTY unchanged (docs/23 - ADR assisted input and terminal keyboard behavior).
     terminal.attachCustomKeyEventHandler((event) => {
       if (!isTerminalCopyShortcut(event)) return true;
       const selection = terminal.getSelection();
@@ -121,6 +125,8 @@ export class TerminalPanel implements OnDestroy {
       return false;
     });
 
+    // Subscriptions owned by this terminal live in `disposers`, drained in ngOnDestroy, so a
+    // panel can never receive PTY output after its terminal is disposed.
     this.disposers.push(this.store.attachOutput(id, (data) => terminal.write(data)));
 
     const input = terminal.onData((data) => {
@@ -131,6 +137,8 @@ export class TerminalPanel implements OnDestroy {
     });
     this.disposers.push(() => input.dispose());
 
+    // Resize callbacks only schedule a fit; running them outside Angular avoids change-detection
+    // churn while the shell is being resized or the window is zoomed.
     this.zone.runOutsideAngular(() => {
       this.resizeObserver = new ResizeObserver(() => this.fitAndResize());
       this.resizeObserver.observe(this.host().nativeElement);

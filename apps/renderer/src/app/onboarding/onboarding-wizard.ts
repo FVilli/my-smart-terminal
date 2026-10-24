@@ -23,16 +23,6 @@ import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
 
 type Step = 1 | 2 | 3 | 4;
-type MicState = 'idle' | 'checking' | 'ok' | 'denied' | 'unavailable';
-
-const MIC_MESSAGES: Record<MicState, string> = {
-  idle: '',
-  checking: 'Requesting microphone permission…',
-  ok: 'Microphone available. No recording is saved.',
-  denied: 'Microphone permission denied. You can continue without it.',
-  unavailable: 'No microphone available. You can continue without it.',
-};
-
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
@@ -55,17 +45,17 @@ const MIC_MESSAGES: Record<MicState, string> = {
                 <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-warning">{{ warning }}</p>
               }
               <footer class="mt-4 flex items-center justify-end gap-2">
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-close" (click)="dismiss()">Later</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-close" (click)="dismiss()">Later</button>
               </footer>
             </div>
           } @else {
             @if (editMode()) {
               <div role="tablist" aria-label="Settings sections" class="settings-tabs mt-2 mb-3 flex gap-1.5">
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 1" [class.text-accent]="step() === 1" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 2" [class.text-accent]="step() === 2" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 3" [class.text-accent]="step() === 3" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 4" [class.text-accent]="step() === 4" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
+                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 1" [class.text-accent]="step() === 1" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
+                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 2" [class.text-accent]="step() === 2" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
+                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 3" [class.text-accent]="step() === 3" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
+                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 4" [class.text-accent]="step() === 4" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
               </div>
             }
             <div class="dialog-body">
@@ -88,7 +78,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                   </label>
                   @if (errors()['dataRepoRemote']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-remote">{{ message }}</p> }
                   <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
-                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
+                    <button type="button" [class]="dialogButtonClass" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
                       {{ testingRemote() ? 'Testing…' : 'Test repository' }}
                     </button>
                     <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Verifies a real commit and push by registering this installation.</span>
@@ -135,7 +125,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
                     <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
-                      <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
+                      <button type="button" [class]="dialogButtonClass" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
                         {{ testingAi() ? 'Testing…' : 'Test AI' }}
                       </button>
                       <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Sends a minimal request to verify provider, model and token.</span>
@@ -227,28 +217,28 @@ const MIC_MESSAGES: Record<MicState, string> = {
                 </button>
               }
               @if (!editMode() && step() === 1) {
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
               }
               @if (editMode()) {
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
               }
-              @if (!editMode()) { <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
+              @if (!editMode()) { <button type="button" [class]="dialogButtonClass" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
               @if (!editMode() && step() > 1) {
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
               }
               @if (!editMode() && step() < 3) {
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
               } @else if (!editMode()) {
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
               }
             </footer>
             @if (confirmDiscard()) {
               <div class="confirm mt-2.5 flex items-center gap-2 rounded-md border border-line px-2 py-2 text-xs leading-[normal] text-fg" data-testid="onboarding-discard-confirm" role="alertdialog" aria-label="Discard changes">
                 <span class="min-w-0 flex-1">Discard unsaved changes?</span>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-discard" (click)="discardChanges()">Discard</button>
-                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-keep-editing" (click)="keepEditing()">Keep editing</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-discard" (click)="discardChanges()">Discard</button>
+                <button type="button" [class]="dialogButtonClass" data-testid="onboarding-keep-editing" (click)="keepEditing()">Keep editing</button>
               </div>
             }
           }
@@ -279,7 +269,6 @@ export class OnboardingWizard {
   private readonly messages = inject(MessageStore);
   protected readonly terminalFonts = TERMINAL_FONTS;
   protected readonly aiProviders = AI_PROVIDERS;
-  protected readonly sttProviders = STT_PROVIDERS;
   protected readonly visible = signal(false);
   protected readonly step = signal<Step>(1);
   protected readonly state = signal<OnboardingState | null>(null);
@@ -290,16 +279,15 @@ export class OnboardingWizard {
   protected readonly restartNotice = signal(false);
   protected readonly aiToken = signal('');
   protected readonly sttToken = signal('');
-  protected readonly micState = signal<MicState>('idle');
   protected readonly editMode = signal(false);
   protected readonly confirmDiscard = signal(false);
   protected readonly testingRemote = signal(false);
   protected readonly remoteResult = signal<RemoteSetupResult | null>(null);
   protected readonly testingAi = signal(false);
   protected readonly aiTestResult = signal<SetupTestAiResult | null>(null);
-  protected readonly testingStt = signal(false);
   protected readonly sttTestResult = signal<string | null>(null);
   protected readonly testRecording = signal(false);
+  protected readonly dialogButtonClass = 'cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50';
   protected readonly testTranscribing = signal(false);
   protected readonly testDurationMs = signal(0);
   protected readonly testAudioUrl = signal<string | null>(null);
@@ -406,10 +394,6 @@ export class OnboardingWizard {
 
   private isDirty(): boolean {
     return JSON.stringify(this.payload()) !== this.initialSnapshot || this.aiToken() !== '' || this.sttToken() !== '';
-  }
-
-  protected micMessage(): string {
-    return MIC_MESSAGES[this.micState()];
   }
 
   protected value(event: Event): string {
@@ -534,10 +518,29 @@ export class OnboardingWizard {
     }
   }
 
-  protected debugSummary(): string {
-    const debug = this.sttDebug();
-    if (debug === null) return 'Debug details';
-    return `${debug.serviceReached ? 'Service responded' : 'Service not reached'}${debug.httpStatus !== undefined ? ' · HTTP ' + debug.httpStatus : ''} · ${debug.error ?? debug.stage}`;
+  private releaseRecordingStream(stream: MediaStream): void { for (const track of stream.getTracks()) track.stop(); }
+
+  private supportedRecorderMimeType(Recorder: typeof MediaRecorder): string | undefined {
+    return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find((type) => Recorder.isTypeSupported(type));
+  }
+
+  private async saveDebugAudio(blob: Blob, mimeType: string): Promise<void> {
+    try {
+      const saved = await this.api.sttSaveDebugAudio({ audio: new Uint8Array(await blob.arrayBuffer()), mimeType: normalizeAudioMime(mimeType), durationMs: this.testDurationMs() });
+      this.testAudioPath.set(saved.path);
+    } catch { this.testAudioPath.set(null); }
+  }
+
+  private microphoneErrorMessage(name: unknown): string {
+    return name === 'NotAllowedError' || name === 'SecurityError'
+      ? 'Microphone permission denied. Grant it in the OS settings and retry.'
+      : name === 'NotFoundError' || name === 'DevicesNotFoundError'
+        ? 'No microphone was found. Connect an input device and retry.'
+        : name === 'NotReadableError' || name === 'TrackStartError'
+          ? 'The microphone is busy or unreadable. Close other applications and retry.'
+          : name === 'OverconstrainedError'
+            ? 'The microphone does not support the requested audio constraints.'
+            : 'Microphone capture is unavailable on this system.';
   }
 
   protected async startSttRecording(): Promise<void> {
@@ -551,14 +554,14 @@ export class OnboardingWizard {
       const stream = await devices.getUserMedia({ audio: true });
       const Recorder = globalThis.MediaRecorder;
       if (typeof Recorder === 'undefined') {
-        for (const track of stream.getTracks()) track.stop();
+        this.releaseRecordingStream(stream);
         this.testRecState.set('error');
         this.sttTestResult.set('MediaRecorder is not available on this system.');
         return;
       }
-      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find((type) => Recorder.isTypeSupported(type));
+      const mimeType = this.supportedRecorderMimeType(Recorder);
       if (mimeType === undefined) {
-        for (const track of stream.getTracks()) track.stop();
+        this.releaseRecordingStream(stream);
         this.testRecState.set('error');
         this.sttTestResult.set('No supported audio recording format was found.');
         return;
@@ -570,7 +573,7 @@ export class OnboardingWizard {
       recorder.ondataavailable = (event) => { if (event.data.size > 0) this.testChunks.push(event.data); };
       recorder.onerror = () => { this.testRecState.set('error'); this.testRecording.set(false); this.stopSttTimer(); this.sttTestResult.set('Audio recorder failed while recording.'); };
       recorder.onstop = () => { void (async () => {
-        for (const track of stream.getTracks()) track.stop();
+        this.releaseRecordingStream(stream);
         this.testStream = null;
         this.testRecorder = null;
         this.testRecording.set(false);
@@ -578,26 +581,21 @@ export class OnboardingWizard {
         const blob = new Blob(this.testChunks, { type: normalizeAudioMime(mimeType) });
         this.testBlob = blob.size > 0 && blob.size <= 10 * 1024 * 1024 ? blob : null;
         this.testAudioBytes.set(blob.size);
+        // The object URL is the playback source; clearSttAudio revokes it.
         this.testAudioUrl.set(this.testBlob !== null ? URL.createObjectURL(blob) : null);
         this.testRecState.set(this.testBlob !== null ? 'ready' : 'error');
         if (this.testBlob !== null) {
-          try {
-            const saved = await this.api.sttSaveDebugAudio({
-              audio: new Uint8Array(await this.testBlob.arrayBuffer()),
-              mimeType: normalizeAudioMime(mimeType),
-              durationMs: this.testDurationMs(),
-            });
-            this.testAudioPath.set(saved.path);
-          } catch {
-            this.testAudioPath.set(null);
-          }
+          // Debug-file persistence is best-effort; playback remains available if saving fails.
+          await this.saveDebugAudio(this.testBlob, mimeType);
         }
         if (this.testBlob === null) this.sttTestResult.set(blob.size === 0 ? 'No audio data was recorded.' : 'Recording exceeds the 10 MB limit.');
       })(); };
+      // start() is the commit point: only after it resolves do we publish recording state.
       recorder.start(250);
       this.testRecording.set(true);
       this.testRecState.set('recording');
       this.testDurationMs.set(0);
+      // This component owns the 60 s timer and clears it on every recorder stop/error path.
       this.testTimer = setInterval(() => {
         this.testDurationMs.update((value) => value + 250);
         if (this.testDurationMs() >= 60_000) this.stopSttRecording();
@@ -605,15 +603,7 @@ export class OnboardingWizard {
     } catch (error) {
       this.testRecState.set('error');
       const name = (error as { name?: unknown }).name;
-      const message = name === 'NotAllowedError' || name === 'SecurityError'
-        ? 'Microphone permission denied. Grant it in the OS settings and retry.'
-        : name === 'NotFoundError' || name === 'DevicesNotFoundError'
-          ? 'No microphone was found. Connect an input device and retry.'
-          : name === 'NotReadableError' || name === 'TrackStartError'
-            ? 'The microphone is busy or unreadable. Close other applications and retry.'
-            : name === 'OverconstrainedError'
-              ? 'The microphone does not support the requested audio constraints.'
-              : 'Microphone capture is unavailable on this system.';
+      const message = this.microphoneErrorMessage(name);
       this.sttTestResult.set(message);
     }
   }
@@ -650,6 +640,7 @@ export class OnboardingWizard {
     this.sttTestResult.set('Audio playback failed' + (code !== undefined ? ' (media error ' + code + ')' : '') + '. Check the system audio output.');
   }
 
+  // The test flow validates audio only; it must not submit the onboarding draft.
   protected async transcribeSttAudio(): Promise<void> {
     const blob = this.testBlob;
     if (blob === null) {
@@ -801,20 +792,6 @@ export class OnboardingWizard {
       this.patch({ sttProvider: 'none' });
       this.sttToken.set('');
       void this.save();
-    }
-  }
-
-  protected async checkMicrophone(): Promise<void> {
-    this.micState.set('checking');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      for (const track of stream.getTracks()) {
-        track.stop();
-      }
-      this.micState.set('ok');
-    } catch (error) {
-      const name = error instanceof DOMException ? error.name : '';
-      this.micState.set(name === 'NotAllowedError' || name === 'SecurityError' ? 'denied' : 'unavailable');
     }
   }
 

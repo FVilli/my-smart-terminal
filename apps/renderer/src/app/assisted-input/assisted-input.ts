@@ -126,18 +126,8 @@ export class AssistedInput implements OnDestroy {
     }
   }
 
-  /** Push-to-talk: pressing the button records; releasing it (or leaving) transcribes into the draft. */
-  protected startRecording(): void {
-    if (!this.canRecord()) { this.settings.openSettings('stt'); return; }
-    void this.voice.start();
-  }
-
   protected openSttSettings(): void {
     this.settings.openSettings('stt');
-  }
-
-  protected stopRecording(): void {
-    void this.voice.stop();
   }
 
   /** Click toggles dictation: first click records, second click stops and transcribes. */
