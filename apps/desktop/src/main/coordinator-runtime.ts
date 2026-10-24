@@ -12,6 +12,8 @@ import type {
   SearchQueryRequest,
   SearchQueryResult,
   SearchRefreshedEvent,
+  SearchRemoveRequest,
+  SearchRemoveResult,
   SyncStatusEvent,
 } from '@smart-terminal/contracts';
 import {
@@ -261,6 +263,19 @@ export class CoordinatorRuntime implements ClipboardBackend {
     return this.coordinator.request<SearchQueryResult>('search.query', { ...request });
   }
 
+  /** Deletes one entry: local file+index when primary, otherwise forwarded to the primary. */
+  async removeEntry(request: SearchRemoveRequest): Promise<SearchRemoveResult> {
+    const resources = this.resources;
+    if (this.coordinator.isPrimary && resources !== undefined) {
+      const result = resources.search.remove(request);
+      if (result.removed) {
+        resources.git.markDirty();
+      }
+      return result;
+    }
+    return this.coordinator.request<SearchRemoveResult>('search.remove', { ...request });
+  }
+
   /** After this instance writes history/clipboard or ends a session: update the index and notify the primary that sync is dirty. */
   notifyWrite(sessionDirectory: string): void {
     const resources = this.resources;
@@ -350,6 +365,13 @@ export class CoordinatorRuntime implements ClipboardBackend {
         searchUpsert: (dir) => search.upsertSession(dir),
         searchRefresh: () => search.refresh(),
         searchFacets: () => search.facets(),
+        searchRemove: (request) => {
+          const result = search.remove(request);
+          if (result.removed) {
+            git.markDirty();
+          }
+          return result;
+        },
         clipboardState: () => clipboard.state(),
         clipboardConfigure: (config) => clipboard.configure(config),
         clipboardSetActive: (sessionDirectory) => clipboard.setActive(sessionDirectory),

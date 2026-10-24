@@ -6,6 +6,7 @@ import { SYNC_STATUS_POLL_MS, SyncStatusStore } from '../apps/renderer/src/app/s
 import { previewText, shortTimestamp } from '../apps/renderer/src/app/sidebar-panel/sidebar-panel';
 
 const entry = (text: string, machine = 'alpha'): SearchResultEntry => ({
+  id: `e-${text}`,
   machine,
   sessionId: 'S1',
   sessionDirectory: `sessions/${machine}/2026-01-01_00.00_S1_local`,
@@ -19,6 +20,7 @@ describe('SearchStore', () => {
   const search = vi.fn<(request: SearchQueryRequest) => Promise<SearchQueryResult>>();
   const searchFacets = vi.fn();
   const clipboardWrite = vi.fn();
+  const searchRemove = vi.fn();
   let refreshed: () => void = () => undefined;
 
   beforeEach(() => {
@@ -26,10 +28,12 @@ describe('SearchStore', () => {
     search.mockReset().mockResolvedValue({ entries: [] });
     searchFacets.mockReset().mockResolvedValue({ machines: ['alpha', 'beta'] });
     clipboardWrite.mockReset().mockResolvedValue(undefined);
+    searchRemove.mockReset().mockResolvedValue({ removed: true });
     vi.stubGlobal('smartTerminal', {
       search,
       searchFacets,
       clipboardWrite,
+      searchRemove,
       onSearchRefreshed: (listener: () => void) => {
         refreshed = listener;
         return () => undefined;
@@ -135,6 +139,23 @@ describe('SearchStore', () => {
     await store.copy('x');
     expect(store.notice()).toBe('Copy failed');
   });
+  it('removes an entry locally after a successful delete and reports failures', async () => {
+    const keep = entry('keep');
+    const target = entry('delete me');
+    search.mockResolvedValue({ entries: [target, keep] });
+    const store = new SearchStore();
+    store.refresh();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.entries()).toHaveLength(2);
+    await store.remove(target);
+    expect(searchRemove).toHaveBeenCalledWith({ kind: 'history', sessionDirectory: target.sessionDirectory, id: target.id });
+    expect(store.entries().map((candidate) => candidate.text)).toEqual(['keep']);
+    expect(store.notice()).toBe('Entry deleted');
+    searchRemove.mockRejectedValueOnce(new Error('boom'));
+    await store.remove(keep);
+    expect(store.entries()).toHaveLength(1);
+    expect(store.notice()).toBe('Delete failed');
+  });
 });
 
 describe('SyncStatusStore', () => {
@@ -194,4 +215,5 @@ describe('sidebar/footer helpers', () => {
     expect(previewText('x'.repeat(200))).toHaveLength(161);
     expect(shortTimestamp('2026-01-01T10:00:00+02:00')).toBe('2026-01-01 10:00:00');
   });
+
 });

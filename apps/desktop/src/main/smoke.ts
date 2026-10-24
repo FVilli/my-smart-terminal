@@ -863,6 +863,7 @@ const SEARCH_SCRIPT = `(async () => {
   const hit = entries.find((e) => e.kind === 'history');
   result.entryShape = !!hit && hit.source === 'assisted' && hit.machine === session.machine && hit.sessionId === session.sessionId &&
     hit.sessionDirectory === session.sessionDirectory && typeof hit.timestamp === 'string' && typeof hit.cwd === 'string';
+  result.entryHasId = !!hit && typeof hit.id === 'string' && hit.id.length > 0;
   result.filtersWork =
     (await api.search({ query: 'EDITOR_OK', machine: session.machine, sessionId: session.sessionId, kind: 'history' })).entries.length > 0 &&
     (await api.search({ query: 'EDITOR_OK', kind: 'clipboard' })).entries.length === 0 &&
@@ -873,6 +874,15 @@ const SEARCH_SCRIPT = `(async () => {
   await sleep(800);
   result.sensitiveNotIndexed = (await api.search({ query: 'search_secret_value' })).entries.length === 0;
   result.invalidRejected = await rejects(() => api.search({ query: 'x', kind: 'shell' }));
+  setText('echo DELETE_ME');
+  await sleep(50);
+  q('assisted-send').click();
+  result.deleteEntryFound = await waitFor(async () => (await api.search({ query: 'DELETE_ME', kind: 'history' })).entries.length > 0, 8000);
+  const removable = (await api.search({ query: 'DELETE_ME', kind: 'history' })).entries[0];
+  result.deleteWorked = !!removable && (await api.searchRemove({ kind: 'history', sessionDirectory: removable.sessionDirectory, id: removable.id })).removed;
+  result.deleteGoneFromIndex = (await api.search({ query: 'DELETE_ME', kind: 'history' })).entries.length === 0;
+  result.deleteIdempotent = !!removable && (await api.searchRemove({ kind: 'history', sessionDirectory: removable.sessionDirectory, id: removable.id })).removed === false;
+  result.deleteRejectsTraversal = await rejects(() => api.searchRemove({ kind: 'history', sessionDirectory: '../etc', id: 'x' }));
   return result;
 })()`;
 
@@ -885,6 +895,7 @@ export function runSearchSmoke(window: BrowserWindow): void {
     return Promise.resolve({
       rebuiltIndexFindsEvent: rebuilt.query({ query: 'editor_ok', kind: 'history' }).some((entry) => entry.source === 'assisted'),
       rebuiltIndexSkipsSensitive: rebuilt.query({ query: 'search_secret_value' }).length === 0,
+      rebuiltIndexSkipsDeleted: rebuilt.query({ query: 'delete_me', kind: 'history' }).length === 0,
     });
   });
 }
@@ -1019,6 +1030,9 @@ const SYNC_UI_CLIPBOARD_SCRIPT = `(async () => {
   const sidebar = q('sidebar');
   const list = q('sidebar-list');
   result.noSidebarOverflow = sidebar.scrollWidth <= sidebar.clientWidth && list.scrollWidth <= list.clientWidth;
+  const beforeDelete = entries().length;
+  clip.el.querySelector('[data-testid="entry-delete"]').click();
+  result.entryDeletedFromList = await waitFor(() => entries().length === beforeDelete - 1 && !hasText('SYNC_UI_CLIP_TEXT'), 4000);
   return result;
 })()`;
 
@@ -1038,6 +1052,7 @@ export function runSyncUiSmoke(window: BrowserWindow): void {
         result['clipboardEventRecorded'] = await pollUntil(() => readAllClipboardEvents().some((event) => event.text === text), 5000);
         Object.assign(result, await run(SYNC_UI_CLIPBOARD_SCRIPT));
         result['clipboardCopyWritesElectronClipboard'] = await pollUntilAsync(async () => (await clipboard.readText()) === text, 3000);
+        result['entryDeletedFromDisk'] = await pollUntil(() => !readAllClipboardEvents().some((event) => event.text === text), 4000);
         result['sensitiveNotRecorded'] = !readAllClipboardEvents().some((event) => event.text.includes('smoke_secret_'));
         const ok = Object.values(result).every((value) => value === true);
         console.log('SMART_TERMINAL_SYNC_UI_SMOKE_RESULT', JSON.stringify({ ...result, ok }));

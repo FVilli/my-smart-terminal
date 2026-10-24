@@ -66,6 +66,7 @@
       (refresh)="search.refresh()"
       (copyText)="search.copy($event)"
       (insertText)="insertText($event)"
+      (removeEntry)="search.remove($event)"
       (configureClipboard)="clipboardCapture.configure($event)"
       (clearClipboard)="clipboardCapture.clearDedupe()"
     />

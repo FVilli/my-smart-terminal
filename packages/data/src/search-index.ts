@@ -9,6 +9,8 @@ export const SEARCH_MAX_RESULTS = 100;
 export type SearchEntryKind = 'history' | 'clipboard';
 
 export interface SearchEntry {
+  /** Stable event id from the Markdown file. */
+  id: string;
   machine: string;
   sessionId: string;
   /** Session directory relative to the data repository: `sessions/<machine>/<dir>`. */
@@ -227,6 +229,7 @@ export class MarkdownSearchIndex {
         const entries: SearchEntry[] =
           kind === 'history'
             ? parseHistoryDocument(content).events.map((event) => ({
+                id: event.id,
                 machine: session.machine,
                 sessionId,
                 sessionDirectory: session.relativeDir,
@@ -237,6 +240,7 @@ export class MarkdownSearchIndex {
                 ...(event.cwd !== undefined ? { cwd: event.cwd } : {}),
               }))
             : parseClipboardDocument(content).events.map((event) => ({
+                id: event.id,
                 machine: session.machine,
                 sessionId,
                 sessionDirectory: session.relativeDir,

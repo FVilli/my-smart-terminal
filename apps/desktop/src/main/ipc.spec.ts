@@ -34,7 +34,7 @@ const gateway = {
   list: vi.fn(() => []),
 };
 const services: IpcServices = {
-  search: { query: vi.fn(() => ({ entries: [] })), facets: vi.fn(() => ({ machines: ['host'] })) }, history: { record: vi.fn(() => ({ recorded: true })) },
+  search: { query: vi.fn(() => ({ entries: [] })), facets: vi.fn(() => ({ machines: ['host'] })), remove: vi.fn(() => ({ removed: true })) }, history: { record: vi.fn(() => ({ recorded: true })) },
   clipboard: {
     state: vi.fn(() => Promise.resolve({ enabled: false, paused: false, lastEventAt: null })),
     configure: vi.fn(() => Promise.resolve({ enabled: true, paused: false, lastEventAt: null })),
@@ -69,6 +69,25 @@ const services: IpcServices = {
   },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
+
+describe('search:remove validation', () => {
+  const run = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.searchRemove], sender, policy, args);
+  const valid = { kind: 'history', sessionDirectory: 'sessions/host/2026-01-01_10.00_S1_local', id: 'e1' };
+
+  it('accepts a valid removal request and delegates to the gateway', async () => {
+    await expect(run(valid)).resolves.toEqual({ removed: true });
+    expect(services.search.remove).toHaveBeenCalledWith(valid);
+  });
+
+  it('rejects unknown fields, bad kinds, unsafe directories and malformed ids', async () => {
+    await expect(run({ ...valid, extra: 1 })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run({ ...valid, kind: 'shell' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run({ ...valid, sessionDirectory: '../../etc/passwd' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run({ ...valid, sessionDirectory: 'sessions/host/not-a-session' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(run({ ...valid, id: '../x' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    expect(services.search.remove).not.toHaveBeenCalled();
+  });
+});
 
 describe('channel map completeness', () => {
   it('exposes exactly the declared IPC channels, each with a validator and handler', () => {

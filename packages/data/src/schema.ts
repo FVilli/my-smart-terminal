@@ -439,6 +439,43 @@ export function appendHistoryEvent(content: string, event: HistoryEvent): string
   return appendSection(content, section);
 }
 
+/**
+ * Removes one event section by id, preserving the frontmatter, title and every other
+ * event verbatim. Returns `null` when the id is not present (callers must not rewrite
+ * the file in that case).
+ */
+export function removeHistoryEvent(content: string, id: string): string | null {
+  const document = parseHistoryDocument(content);
+  if (!document.events.some((event) => event.id === id)) {
+    return null;
+  }
+  const remaining = document.events.filter((event) => event.id !== id);
+  const sections = remaining.map((event) =>
+    renderEvent(event.id, event.timestamp, [['source', event.source], ['agent', event.agent], ['cwd', event.cwd]], event.text),
+  );
+  return rebuildEventLog(content, document.header, document.extraFields, sections);
+}
+
+/** Clipboard counterpart of `removeHistoryEvent`; same preservation rules. */
+export function removeClipboardEvent(content: string, id: string): string | null {
+  const document = parseClipboardDocument(content);
+  if (!document.events.some((event) => event.id === id)) {
+    return null;
+  }
+  const remaining = document.events.filter((event) => event.id !== id);
+  const sections = remaining.map((event) =>
+    renderEvent(event.id, event.timestamp, [['type', event.type], ['source', event.source], ['hash', event.hash]], event.text),
+  );
+  return rebuildEventLog(content, document.header, document.extraFields, sections);
+}
+
+function rebuildEventLog(content: string, header: EventLogHeader, extraFields: FrontmatterData, sections: string[]): string {
+  const { body } = parseFrontmatterDocument(content);
+  const preamble = body.slice(0, eventSectionStart(body));
+  const nextBody = sections.length === 0 ? `${preamble.trimEnd()}\n` : `${preamble}${sections.join('\n')}`;
+  return serializeLogHeader(header, extraFields, nextBody);
+}
+
 export function hashClipboardText(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex');
 }

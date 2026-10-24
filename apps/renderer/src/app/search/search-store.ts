@@ -91,6 +91,24 @@ export class SearchStore {
     }
   }
 
+  /** Deletes one entry from its Markdown file and removes it locally. */
+  async remove(entry: SearchResultEntry): Promise<void> {
+    try {
+      const result = await this.api.searchRemove({ kind: entry.kind, sessionDirectory: entry.sessionDirectory, id: entry.id });
+      if (!result.removed) {
+        this.showNotice('Entry no longer exists');
+        this.refresh();
+        return;
+      }
+      this.entriesState.update((entries) =>
+        entries.filter((candidate) => !(candidate.id === entry.id && candidate.sessionDirectory === entry.sessionDirectory)),
+      );
+      this.showNotice('Entry deleted');
+    } catch {
+      this.showNotice('Delete failed');
+    }
+  }
+
   private showNotice(message: string): void {
     this.noticeState.set(message);
     clearTimeout(this.noticeTimer);

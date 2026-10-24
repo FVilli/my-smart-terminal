@@ -38,6 +38,7 @@ This document describes the current main/preload/renderer contract. The shared n
 | `clipboard:write` | clipboard entry request | `void` |
 | `search:query` | query and optional machine/session/date/kind filters | capped search results |
 | `search:facets` | none | search facets |
+| `search:remove` | `{ kind: 'history'\|'clipboard', sessionDirectory: 'sessions/<machine>/<dir>', id }` | `{ removed: boolean }` |
 | `sync:get-status` | none | sync status |
 | `ssh:aliases` | none | parsed SSH aliases |
 | `onboarding:state` | none | config, reason, secure-storage and secret status |

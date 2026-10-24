@@ -37,6 +37,8 @@ import {
   type SecretsStatus,
   type SearchFacetsResult,
   type SearchQueryRequest,
+  type SearchRemoveRequest,
+  type SearchRemoveResult,
   type SearchQueryResult,
   type HelpTopic,
   type SetupTestAiRequest,
@@ -134,6 +136,7 @@ export interface ClipboardGateway {
 export interface SearchGateway {
   query(request: SearchQueryRequest): SearchQueryResult | Promise<SearchQueryResult>;
   facets(): SearchFacetsResult | Promise<SearchFacetsResult>;
+  remove(request: SearchRemoveRequest): SearchRemoveResult | Promise<SearchRemoveResult>;
 }
 
 export interface SyncGateway {
@@ -333,6 +336,31 @@ export const validateSearchQuery = singleRequest<SearchQueryRequest>(
     (v['kind'] === undefined || v['kind'] === 'history' || v['kind'] === 'clipboard'),
 );
 
+const isSessionDirectoryPath = (value: unknown): value is string => {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 300) {
+    return false;
+  }
+  const segments = value.split('/');
+  const [root, machine, directory] = segments;
+  return (
+    segments.length === 3 &&
+    root === 'sessions' &&
+    machine !== undefined &&
+    isValidMachine(machine) &&
+    directory !== undefined &&
+    /^[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}\.[0-9]{2}_S[1-9][0-9]*_[A-Za-z0-9._-]+$/.test(directory)
+  );
+};
+
+export const validateSearchRemove = singleRequest<SearchRemoveRequest>(
+  (v) =>
+    hasExactKeys(v, ['kind', 'sessionDirectory', 'id']) &&
+    (v['kind'] === 'history' || v['kind'] === 'clipboard') &&
+    isSessionDirectoryPath(v['sessionDirectory']) &&
+    typeof v['id'] === 'string' &&
+    /^[A-Za-z0-9_.-]{1,64}$/.test(v['id']),
+);
+
 export const validateOnboardingValidate = singleRequest<OnboardingValidateRequest>((v) => hasExactKeys(v, ['config']) && isPlainRecord(v['config']));
 
 export const validateOnboardingSave = singleRequest<OnboardingSaveRequest>(
@@ -361,6 +389,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.clipboardWrite]: ChannelDefinition<[ClipboardWriteRequest], void>;
   [IPC_CHANNELS.searchQuery]: ChannelDefinition<[SearchQueryRequest], SearchQueryResult>;
   [IPC_CHANNELS.searchFacets]: ChannelDefinition<[], SearchFacetsResult>;
+  [IPC_CHANNELS.searchRemove]: ChannelDefinition<[SearchRemoveRequest], SearchRemoveResult>;
   [IPC_CHANNELS.syncStatus]: ChannelDefinition<[], SyncStatusEvent>;
   [IPC_CHANNELS.sshAliases]: ChannelDefinition<[], string[]>;
   [IPC_CHANNELS.onboardingState]: ChannelDefinition<[], OnboardingState>;
@@ -461,7 +490,7 @@ function buildCaptureChannels(services: IpcServices): Pick<IpcChannelMap, typeof
   };
 }
 
-function buildIndexChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.searchQuery | typeof IPC_CHANNELS.searchFacets | typeof IPC_CHANNELS.syncStatus | typeof IPC_CHANNELS.sshAliases> {
+function buildIndexChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.searchQuery | typeof IPC_CHANNELS.searchFacets | typeof IPC_CHANNELS.searchRemove | typeof IPC_CHANNELS.syncStatus | typeof IPC_CHANNELS.sshAliases> {
   return {
     [IPC_CHANNELS.searchQuery]: {
       validate: validateSearchQuery,
@@ -470,6 +499,10 @@ function buildIndexChannels(services: IpcServices): Pick<IpcChannelMap, typeof I
     [IPC_CHANNELS.searchFacets]: {
       validate: noArguments,
       handle: () => services.search.facets(),
+    },
+    [IPC_CHANNELS.searchRemove]: {
+      validate: validateSearchRemove,
+      handle: (_sender, request) => services.search.remove(request),
     },
     [IPC_CHANNELS.syncStatus]: {
       validate: noArguments,

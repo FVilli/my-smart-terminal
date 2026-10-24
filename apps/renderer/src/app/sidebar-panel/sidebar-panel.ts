@@ -120,6 +120,9 @@ export function shortTimestamp(timestamp: string): string {
             <button type="button" class="icon-btn h-6 w-6" data-testid="entry-insert" aria-label="Insert entry" title="Insert" (click)="insertText.emit(entry.text)">
               <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v8m0 0-3-3m3 3 3-3M4 15h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <button type="button" class="icon-btn h-6 w-6 hover:text-danger" data-testid="entry-delete" aria-label="Delete entry" title="Delete" (click)="removeEntry.emit(entry)">
+              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6 0 .7 9.1A1.5 1.5 0 0 0 8.2 16.5h3.6a1.5 1.5 0 0 0 1.5-1.4L14 6M8.5 9v4.5m3-4.5v4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
         </article>
       } @empty {
@@ -155,6 +158,7 @@ export class SidebarPanel {
   readonly refresh = output<void>();
   readonly copyText = output<string>();
   readonly insertText = output<string>();
+  readonly removeEntry = output<SearchResultEntry>();
   readonly configureClipboard = output<ClipboardConfigureRequest>();
   readonly clearClipboard = output<void>();
 

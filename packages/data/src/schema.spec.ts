@@ -10,6 +10,8 @@ import {
   parseClipboardDocument,
   parseHistoryDocument,
   parseSessionDocument,
+  removeClipboardEvent,
+  removeHistoryEvent,
   serializeSessionDocument,
   writeFileAtomic,
   type ClipboardEvent,
@@ -127,6 +129,30 @@ describe('history.md', () => {
     expect(() => parseHistoryDocument(initial + '\n## 2026-10-22T10:06:00+02:00 · e1\n\n- source: shell\n')).toThrow();
   });
 
+  it('removes one event and preserves the rest, frontmatter and title', () => {
+    const events: HistoryEvent[] = [
+      { id: 'e1', timestamp: T, source: 'assisted', text: 'one' },
+      { id: 'e2', timestamp: T, source: 'shell', text: 'two\n```fenced```' },
+      { id: 'e3', timestamp: T, source: 'assisted', agent: 'claude', text: 'three' },
+    ];
+    let content = initial.replace('created_at', 'future: 1\ncreated_at');
+    for (const event of events) {
+      content = appendHistoryEvent(content, event);
+    }
+    const withoutMiddle = removeHistoryEvent(content, 'e2');
+    expect(withoutMiddle).not.toBeNull();
+    expect(parseHistoryDocument(withoutMiddle ?? '').events).toEqual([events[0], events[2]]);
+    expect(parseHistoryDocument(withoutMiddle ?? '').extraFields).toEqual({ future: 1 });
+    expect(withoutMiddle).toContain('# History S3');
+    expect(withoutMiddle).not.toContain('two');
+    // Removing the last event keeps a valid document with the title only.
+    const empty = removeHistoryEvent(removeHistoryEvent(withoutMiddle ?? '', 'e1') ?? '', 'e3');
+    expect(empty).not.toBeNull();
+    expect(parseHistoryDocument(empty ?? '').events).toEqual([]);
+    // Unknown id: no rewrite signal.
+    expect(removeHistoryEvent(content, 'missing')).toBeNull();
+  });
+
   it('preserves unknown frontmatter fields', () => {
     const withExtra = initial.replace('created_at', 'future: 1\ncreated_at');
     expect(parseHistoryDocument(withExtra).extraFields).toEqual({ future: 1 });
@@ -154,6 +180,18 @@ describe('clipboard.md', () => {
     expect(appendClipboardEvent(content, make('c3', 'other'))).toBe(content);
     expect(appendClipboardEvent(content, { ...make('c1', 'new text') })).toBe(content);
     expect(content).toContain('- type: text\n- source: terminal\n- hash: ' + a.hash);
+  });
+
+  it('removes one clipboard event and keeps the others valid', () => {
+    const a = make('c1', 'one');
+    const b = make('c2', 'two');
+    let content = appendClipboardEvent(initial, a);
+    content = appendClipboardEvent(content, b);
+    const next = removeClipboardEvent(content, 'c1');
+    expect(next).not.toBeNull();
+    expect(parseClipboardDocument(next ?? '').events).toEqual([b]);
+    expect(parseClipboardDocument(next ?? '').events[0]?.hash).toBe(hashClipboardText('two'));
+    expect(removeClipboardEvent(content, 'nope')).toBeNull();
   });
 
   it('rejects invalid hash', () => {

@@ -24,6 +24,7 @@ const coordinator = new Coordinator({
       searchRefresh: () => undefined,
       syncStatus: () => ({ state: 'synced', remoteConfigured: false }),
     searchFacets: () => [],
+    searchRemove: () => ({ removed: false }),
     clipboardState: () => ({ enabled: false, paused: false, lastEventAt: null }),
     clipboardConfigure: () => ({ enabled: false, paused: false, lastEventAt: null }),
     clipboardSetActive: () => ({ enabled: false, paused: false, lastEventAt: null }),

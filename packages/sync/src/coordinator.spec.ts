@@ -48,6 +48,7 @@ function makeServices(userData: string, overrides: Partial<CoordinatorServices> 
     searchRefresh: () => undefined,
     syncStatus: () => ({ state: 'synced', remoteConfigured: false }),
     searchFacets: () => [],
+    searchRemove: () => ({ removed: false }),
     clipboardState: () => ({ enabled: false, paused: false, lastEventAt: null }),
     clipboardConfigure: () => ({ enabled: false, paused: false, lastEventAt: null }),
     clipboardSetActive: () => ({ enabled: false, paused: false, lastEventAt: null }),
@@ -256,7 +257,7 @@ describe('RPC server', () => {
 
   it('serves search/sync methods and handles pipelined requests in order', async () => {
     const upserts: string[] = [];
-    const server = await startServer({ searchUpsert: (d) => void upserts.push(d), searchQuery: () => [{ machine: 'm', sessionId: 'S1', sessionDirectory: 'sessions/m/x', kind: 'history', timestamp: 't', text: 'hi' }] });
+    const server = await startServer({ searchUpsert: (d) => void upserts.push(d), searchQuery: () => [{ id: 'e1', machine: 'm', sessionId: 'S1', sessionDirectory: 'sessions/m/x', kind: 'history', timestamp: 't', text: 'hi' }] });
     const client = new CoordinatorClient({ userDataPath: root });
     expect(await client.request('search.upsert', { sessionDirectory: 'sessions/m/x' })).toEqual({ ok: true });
     expect(upserts).toEqual(['sessions/m/x']);

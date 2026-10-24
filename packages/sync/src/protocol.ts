@@ -7,6 +7,7 @@ import {
   type SearchEntry,
   type SearchQuery,
 } from '@smart-terminal/data';
+import type { SearchRemoveRequest, SearchRemoveResult } from '@smart-terminal/contracts';
 
 export const PROTOCOL_VERSION = 1;
 export const MAX_LINE_BYTES = 1024 * 1024;
@@ -48,6 +49,8 @@ export interface CoordinatorServices {
   searchRefresh(): void;
   /** Machines present in the index, sorted. */
   searchFacets(): string[];
+  /** Deletes one event from its history/clipboard file; `false` when it was already gone. */
+  searchRemove(request: SearchRemoveRequest): SearchRemoveResult;
   clipboardState(): ClipboardRpcState;
   clipboardConfigure(config: { enabled: boolean; paused: boolean }): ClipboardRpcState;
   /** `sessionDirectory` is already validated as `sessions/<machine>/<dir>`; `null` stops active capture. */
@@ -90,6 +93,7 @@ export const RPC_METHODS = [
   'search.upsert',
   'search.refresh',
   'search.facets',
+  'search.remove',
   'clipboard.state',
   'clipboard.configure',
   'clipboard.setActive',
@@ -236,6 +240,14 @@ export async function dispatchRpc(
     case 'search.facets':
       checkKeys(params, []);
       return { machines: services.searchFacets() };
+    case 'search.remove': {
+      checkKeys(params, ['kind', 'sessionDirectory', 'id']);
+      const { kind, sessionDirectory, id } = params;
+      if ((kind !== 'history' && kind !== 'clipboard') || !isSessionDirectory(sessionDirectory) || typeof id !== 'string' || !/^[A-Za-z0-9_.-]{1,64}$/.test(id)) {
+        throw new RpcFailure('INVALID_PARAMS');
+      }
+      return services.searchRemove({ kind, sessionDirectory, id });
+    }
     case 'clipboard.state':
       checkKeys(params, []);
       return services.clipboardState();

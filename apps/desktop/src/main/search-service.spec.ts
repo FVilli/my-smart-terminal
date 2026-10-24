@@ -32,6 +32,29 @@ describe('SearchService', () => {
     expect(new SearchService(runtime.dataRepoPath).query({ query: 'NEEDLE' }).entries).toHaveLength(1);
   });
 
+  it('removes one entry from the Markdown file and reindexes', async () => {
+    const runtime = new DataRuntime({ userDataPath: path.join(root, 'ud'), env: { SMART_TERMINAL_DATA_REPO: path.join(root, 'repo'), SMART_TERMINAL_MACHINE: 'host' } });
+    const search = new SearchService(runtime.dataRepoPath);
+    const { allocation } = await runtime.createSession('w', { kind: 'local', cwd: '/tmp' });
+    const history = new HistoryService({
+      dataRepoPath: runtime.dataRepoPath,
+      resolveSession: () => ({ sessionDirectory: allocation.relativeDir }),
+      onRecorded: (dir) => search.upsertSession(dir),
+    });
+    history.record(1, { sessionId: 'S1', text: 'keep me' });
+    history.record(1, { sessionId: 'S1', text: 'delete me' });
+    const entries = search.query({ query: '' }).entries;
+    expect(entries).toHaveLength(2);
+    const target = entries.find((entry) => entry.text === 'delete me');
+    expect(target).toBeDefined();
+    const result = search.remove({ kind: 'history', sessionDirectory: allocation.relativeDir, id: target?.id ?? '' });
+    expect(result).toEqual({ removed: true });
+    expect(search.query({ query: '' }).entries.map((entry) => entry.text)).toEqual(['keep me']);
+    expect(new SearchService(runtime.dataRepoPath).query({ query: '' }).entries.map((entry) => entry.text)).toEqual(['keep me']);
+    expect(search.remove({ kind: 'history', sessionDirectory: allocation.relativeDir, id: target?.id ?? '' })).toEqual({ removed: false });
+    expect(() => search.remove({ kind: 'history', sessionDirectory: '../escape', id: 'x' })).toThrow();
+  });
+
   it('does not throw on invalid upsert and exposes refresh', () => {
     fs.mkdirSync(path.join(root, 'repo', 'sessions'), { recursive: true });
     const search = new SearchService(path.join(root, 'repo'));

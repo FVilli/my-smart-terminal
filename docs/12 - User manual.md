@@ -65,8 +65,8 @@ Hold the push-to-talk control. States are `Voice ready`, `Listening…`, `Transc
 
 The sidebar alternates between **History** and **Clipboard**.
 
-- History: search text, filter by machine, copy, or insert into the draft. V1 records explicit assisted-editor submissions; native shell history is not recorded generally.
-- Clipboard: capture is opt-in. It can be paused, cleared, searched, copied, or inserted into the draft. Insertion never sends automatically.
+- History: search text, filter by machine, copy, insert into the draft, or delete an entry with the trash icon at the bottom-right of its card. V1 records explicit assisted-editor submissions; native shell history is not recorded generally.
+- Clipboard: capture is opt-in. It can be paused, cleared, searched, copied, inserted into the draft, or deleted per entry with the trash icon. Insertion never sends automatically.
 
 The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role. Application zoom is **Ctrl/Cmd-minus**, **Ctrl/Cmd-plus** (including `Ctrl+=`), and **Ctrl/Cmd-0**; the narrow terminal shortcut limitation is documented in the [keyboard behavior ADR](23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md).
 

@@ -18,6 +18,7 @@ export const IPC_CHANNELS = {
   clipboardWrite: 'clipboard:write',
   searchQuery: 'search:query',
   searchFacets: 'search:facets',
+  searchRemove: 'search:remove',
   syncStatus: 'sync:get-status',
   sshAliases: 'ssh:aliases',
   onboardingState: 'onboarding:state',
@@ -198,6 +199,8 @@ export interface SearchQueryRequest {
 }
 
 export interface SearchResultEntry {
+  /** Stable event id inside the session's history.md/clipboard.md. */
+  id: string;
   machine: string;
   sessionId: string;
   sessionDirectory: string;
@@ -216,6 +219,20 @@ export interface SearchQueryResult {
 export interface SearchFacetsResult {
   /** Macchine presenti nell'indice, in ordine alfabetico. */
   machines: string[];
+}
+
+/** Deletes one history/clipboard event from its Markdown file. */
+export interface SearchRemoveRequest {
+  kind: 'history' | 'clipboard';
+  /** Session directory of the result entry: `sessions/<machine>/<dir>`. */
+  sessionDirectory: string;
+  /** Event id (`SearchResultEntry.id`). */
+  id: string;
+}
+
+export interface SearchRemoveResult {
+  /** False when the event was already gone; the caller may just refresh. */
+  removed: boolean;
 }
 
 /** Text to copy to the system clipboard (Copy button). */
@@ -456,6 +473,8 @@ export interface SmartTerminalApi {
   clipboardWrite(request: ClipboardWriteRequest): Promise<void>;
   search(request: SearchQueryRequest): Promise<SearchQueryResult>;
   searchFacets(): Promise<SearchFacetsResult>;
+  /** Removes one history/clipboard entry; the Markdown file is rewritten atomically. */
+  searchRemove(request: SearchRemoveRequest): Promise<SearchRemoveResult>;
   /** Current sync state: from the local primary or via RPC when this instance is secondary. */
   syncStatus(): Promise<SyncStatusEvent>;
   /** Alias `Host` da `~/.ssh/config` (read-only). */

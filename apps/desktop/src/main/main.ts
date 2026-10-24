@@ -3,7 +3,7 @@ import path from 'node:path';
 import { formatWindowTitle, resolveWindowIcon } from './window-branding';
 import { resetZoomFactor, stepZoomFactor } from './zoom';
 import { pathToFileURL } from 'node:url';
-import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest } from '@smart-terminal/contracts';
+import { IPC_EVENTS, TEST_IPC_ARGUMENT, type SearchQueryRequest, type SearchRemoveRequest } from '@smart-terminal/contracts';
 import { registerIpcHandlers, trackIpcWindow } from './ipc-electron';
 import { NodePtyAdapter } from '@smart-terminal/terminal/node-pty';
 import { listSshAliases } from '@smart-terminal/terminal';
@@ -312,6 +312,7 @@ void app.whenReady().then(async () => {
   const search = {
     query: (request: SearchQueryRequest) => runtime.query(request),
     facets: () => runtime.searchFacets(),
+    remove: (request: SearchRemoveRequest) => runtime.removeEntry(request),
   };
   dataRuntime.onSessionEnded((sessionDirectory) => runtime.endSession(sessionDirectory));
   const history = new HistoryService({
