@@ -8,6 +8,7 @@ milestone: "M19"
 depends_on: "M19-T02"
 deliverables: "REC/STOP/PLAY/TRANSCRIBE UI with concise summary and expandable sanitized debug details"
 ---
+<!-- gsynchro:v1 id=0e38c554-9a9d-4dec-a071-678499580975 registered=2026-10-24T17:17:12.610Z -->
 
 # M19 - T03 - Debug UI and end-to-end test
 

@@ -5,6 +5,7 @@ project: smart-terminal
 version: 2
 created: 2026-10-23
 ---
+<!-- gsynchro:v1 id=6278f564-cf1a-4944-8fe7-de453a95c782 registered=2026-10-24T17:17:12.600Z -->
 
 # IPC contracts and runtime verification
 

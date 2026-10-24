@@ -5,6 +5,7 @@ project: smart-terminal
 created: 2026-10-24
 status: accepted
 ---
+<!-- gsynchro:v1 id=a5fdbccb-d191-42ed-ab87-6684478423f6 registered=2026-10-24T17:17:12.602Z -->
 
 # M17A input composer design proposal
 

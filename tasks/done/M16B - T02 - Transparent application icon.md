@@ -8,6 +8,7 @@ milestone: "M16B"
 depends_on: "M16A-T01"
 deliverables: "Transparent-background app icon used by header, runtime window, packaging and README-adjacent assets"
 ---
+<!-- gsynchro:v1 id=074977a2-6155-41da-894a-b7a19886c2d6 registered=2026-10-24T17:17:12.609Z -->
 
 # M16B - T02 - Transparent application icon
 

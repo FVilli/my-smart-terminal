@@ -7,6 +7,7 @@ id: "M17A"
 goal: "Produce and approve a single-container VS Code-style assisted composer; no app code changes in this phase."
 depends_on: "M15"
 ---
+<!-- gsynchro:v1 id=db5a0a5b-4ebd-40b3-ae57-658c8c924577 registered=2026-10-24T17:17:12.604Z -->
 
 # M17A - Input section design
 

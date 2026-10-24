@@ -8,6 +8,7 @@ milestone: "M17A"
 depends_on: "M15"
 deliverables: "Input composer mockup HTML/PNG and annotated design specification for approval"
 ---
+<!-- gsynchro:v1 id=558bbea6-78cc-45ef-bd40-f34c7ad6baba registered=2026-10-24T17:17:12.609Z -->
 
 # M17A - T01 - Input mockup and spec
 

@@ -5,6 +5,7 @@ project: smart-terminal
 created: 2026-10-24
 status: accepted
 ---
+<!-- gsynchro:v1 id=b86ebe6b-cce2-4068-ac4c-862a3ddb0211 registered=2026-10-24T17:17:12.602Z -->
 
 # M16A header design proposal
 

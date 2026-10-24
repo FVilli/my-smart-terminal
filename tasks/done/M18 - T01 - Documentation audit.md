@@ -8,6 +8,7 @@ milestone: "M18"
 depends_on: "M17B"
 deliverables: "Evidence-based audit of documentation coherence, version references and install/uninstall commands"
 ---
+<!-- gsynchro:v1 id=6504d4c9-acb3-4049-a155-4940138a0201 registered=2026-10-24T17:17:12.610Z -->
 
 # M18 - T01 - Documentation audit
 

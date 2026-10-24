@@ -7,6 +7,7 @@ id: "M16B"
 goal: "Implement the approved M16A header, panel toggles, custom window controls, transparent icon and 38px tabs with tests."
 depends_on: "M16A"
 ---
+<!-- gsynchro:v1 id=7ade8673-d26e-4870-93a0-24403d2e4e3d registered=2026-10-24T17:17:12.604Z -->
 
 # M16B - Header redesign implementation
 

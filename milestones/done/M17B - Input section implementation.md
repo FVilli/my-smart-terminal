@@ -7,6 +7,7 @@ id: "M17B"
 goal: "Implement the approved M17A composer with unchanged keyboard/AI/STT behavior and tests."
 depends_on: "M17A"
 ---
+<!-- gsynchro:v1 id=5e3a19e2-f26b-4b0f-8f67-3ea8ff7c29de registered=2026-10-24T17:17:12.604Z -->
 
 # M17B - Input section implementation
 

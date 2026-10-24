@@ -8,6 +8,7 @@ milestone: "M17B"
 depends_on: "M17A-T01"
 deliverables: "Approved single-border composer implemented with unchanged keyboard/AI/STT behavior"
 ---
+<!-- gsynchro:v1 id=e6045b09-341f-4009-895e-22c775f6a0cd registered=2026-10-24T17:17:12.610Z -->
 
 # M17B - T01 - Implement approved composer
 

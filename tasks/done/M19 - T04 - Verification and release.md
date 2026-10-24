@@ -8,6 +8,7 @@ milestone: "M19"
 depends_on: "M19-T03"
 deliverables: "Focused Linux tests, docs/security updates, packaged build and release verification"
 ---
+<!-- gsynchro:v1 id=4893dac9-a77e-4be8-9ac4-fde1daede5c1 registered=2026-10-24T17:17:12.610Z -->
 
 # M19 - T04 - Verification and release
 

@@ -8,6 +8,7 @@ milestone: "M19"
 depends_on: "M19-T01"
 deliverables: "Sanitized STT diagnostics across adapter/service/IPC with reachability, HTTP status and error stage"
 ---
+<!-- gsynchro:v1 id=644ff470-fe4b-4edf-b5c8-f8655a1eaf5c registered=2026-10-24T17:17:12.610Z -->
 
 # M19 - T02 - Provider diagnostics contract
 

@@ -8,6 +8,7 @@ milestone: "M16A"
 depends_on: "M15"
 deliverables: "Header mockup HTML/PNG and annotated design specification for approval"
 ---
+<!-- gsynchro:v1 id=76684db5-4621-4220-8b7f-b3fb2df2aeb7 registered=2026-10-24T17:17:12.609Z -->
 
 # M16A - T01 - Header mockup and spec
 

@@ -7,6 +7,7 @@ id: "M18"
 goal: "Audit and repair documentation after the 1.3.0 header/composer release, with a stable version-independent uninstall command and automated consistency checks. Documentation only."
 depends_on: "M17B"
 ---
+<!-- gsynchro:v1 id=7b98708d-b674-4023-aec8-3a2496991458 registered=2026-10-24T17:17:12.604Z -->
 
 # M18 - Documentation coherence audit
 

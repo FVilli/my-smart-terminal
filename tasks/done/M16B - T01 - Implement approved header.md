@@ -8,6 +8,7 @@ milestone: "M16B"
 depends_on: "M16A-T01"
 deliverables: "Approved header mockup implemented with panel toggle state, window controls and 38px tabs"
 ---
+<!-- gsynchro:v1 id=8c35b3b7-c9c1-4d36-8e51-73f435aa849f registered=2026-10-24T17:17:12.609Z -->
 
 # M16B - T01 - Implement approved header
 

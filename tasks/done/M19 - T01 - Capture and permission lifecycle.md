@@ -8,6 +8,7 @@ milestone: "M19"
 depends_on: "M18"
 deliverables: "Robust microphone permission and MediaRecorder state machine with actionable errors and cleanup"
 ---
+<!-- gsynchro:v1 id=148dcfbe-45e1-42e1-9e3c-1122ed29d173 registered=2026-10-24T17:17:12.610Z -->
 
 # M19 - T01 - Capture and permission lifecycle
 

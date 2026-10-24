@@ -7,6 +7,7 @@ id: "M19"
 goal: "Make the STT test flow work independently of AI configuration, expose actionable microphone/MediaRecorder states, and return safe deep diagnostics about whether the transcription provider was reached and what it returned."
 depends_on: "M18"
 ---
+<!-- gsynchro:v1 id=5e4cd6c2-7fee-4061-a56c-63dbbaf2ede8 registered=2026-10-24T17:17:12.605Z -->
 
 # M19 - STT recording and provider diagnostics
 

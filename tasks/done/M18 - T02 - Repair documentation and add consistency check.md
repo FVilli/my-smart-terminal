@@ -8,6 +8,7 @@ milestone: "M18"
 depends_on: "M18-T01"
 deliverables: "Corrected docs, stable uninstall command, consistency checker and passing checks"
 ---
+<!-- gsynchro:v1 id=556530d9-9efa-4445-9a58-48899ec24a0e registered=2026-10-24T17:17:12.610Z -->
 
 # M18 - T02 - Repair documentation and add consistency check
 

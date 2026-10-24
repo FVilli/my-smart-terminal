@@ -7,6 +7,7 @@ id: "M16A"
 goal: "Produce and approve a VS Code-inspired full-window header and 38px session tab strip; no app code changes in this phase."
 depends_on: "M15"
 ---
+<!-- gsynchro:v1 id=eaf05af8-381e-4b23-8817-a9535dd43dd7 registered=2026-10-24T17:17:12.604Z -->
 
 # M16A - Header redesign design
 
