@@ -6,23 +6,12 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
   selector: 'app-assisted-input',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="row">
-      <button
-        type="button"
-        class="icon ai"
-        data-testid="ai-correction"
-        aria-label="AI correction"
-        [disabled]="!canCorrect()"
-        [attr.title]="ai.status().warning ?? 'Fix typos with AI'"
-        (click)="correctWithAi()"
-      >
-        {{ ai.busy() ? '…' : 'AI' }}
-      </button>
+    <div class="composer">
       <textarea
         class="editor"
         data-testid="assisted-textarea"
         #textarea
-        rows="3"
+        rows="2"
         spellcheck="false"
         placeholder="Enter sends · Shift+Enter inserts a newline"
         aria-label="Assisted input"
@@ -32,7 +21,20 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         (input)="draftChange.emit($any($event.target).value)"
         (keydown)="onKeydown($event)"
       ></textarea>
-      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()">⏎</button>
+      <div class="bottom">
+        <span class="hint">Enter sends · Shift+Enter newline</span>
+        <div class="actions">
+      <button
+        type="button"
+        class="icon ai"
+        data-testid="ai-correction"
+        aria-label="AI correction"
+        [disabled]="!canCorrect()"
+        [attr.title]="ai.status().warning ?? 'Fix typos with AI'"
+        (click)="correctWithAi()"
+      >
+        {{ ai.busy() ? '…' : '✦ AI' }}
+      </button>
       <div class="voice">
         <button
           type="button"
@@ -53,6 +55,9 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         </button>
         <span class="voice-label" data-testid="voice-label" role="status">{{ micLabel() }}</span>
       </div>
+      <button type="button" class="icon send" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()">↑</button>
+        </div>
+      </div>
     </div>
     @if (notice(); as message) {
       <p class="notice" data-testid="ai-notice">{{ message }}</p>
@@ -62,21 +67,23 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     }
   `,
   styles: `
-    :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 12px 16px; }
-    .row { display: flex; align-items: stretch; gap: 10px; min-width: 0; }
-    .editor {
-      flex: 1 1 0; min-width: 0; min-height: 76px; resize: none; background: var(--input-bg); border: 1px solid var(--border);
-      border-radius: 6px; padding: 10px 12px; font-family: var(--font-mono); font-size: 14px; overflow: auto;
-    }
-    .editor:focus { outline: 1px solid var(--accent); }
-    .icon { background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; width: 44px; cursor: pointer; }
-    .icon:disabled { color: var(--text-muted); cursor: default; }
-    .icon:not(:disabled):hover { border-color: var(--accent); }
+    :host { display: block; flex: none; background: var(--tab-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
+    .composer { border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 8px; }
+    .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
+    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-size: 14px; overflow: auto; }
+    .editor:disabled { opacity: .65; }
+    .bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+    .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
+    .actions { display: flex; flex: none; align-items: center; gap: 4px; }
+    .icon { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
+    .icon:disabled { opacity: .45; cursor: default; }
+    .icon:not(:disabled):hover { background: var(--border); color: var(--text); }
     .ai { color: var(--accent); font-weight: 700; }
-    .voice { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4px; max-width: 96px; }
-    .voice .icon { flex: 1; min-height: 32px; }
-    .mic.listening { border-color: var(--accent); color: var(--accent); }
-    .voice-label { font-size: 11px; line-height: 1.2; color: var(--text-muted); text-align: center; overflow-wrap: anywhere; }
+    .send { width: 26px; padding: 0; border-radius: 50%; background: var(--accent); color: var(--terminal-bg); font-size: 15px; font-weight: 700; }
+    .send:not(:disabled):hover { background: var(--accent); color: var(--terminal-bg); }
+    .voice { display: flex; flex-direction: row-reverse; align-items: center; gap: 2px; }
+    .mic.listening { color: var(--accent); }
+    .voice-label { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 10px; line-height: 1; }
     .notice { margin: 8px 0 0; min-height: 16px; color: var(--text-muted); font-size: 12px; }
   `,
 })

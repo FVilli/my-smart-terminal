@@ -30,6 +30,7 @@ export const IPC_CHANNELS = {
   secretsStatus: 'secrets:status',
   secretsLogout: 'secrets:logout',
   appRelaunch: 'app:relaunch',
+  windowControl: 'window:control',
   aiStatus: 'ai:status',
   aiCorrect: 'ai:correct',
   sttStatus: 'stt:status',
@@ -43,6 +44,7 @@ export const IPC_EVENTS = {
   roleChanged: 'app:role-changed',
   syncStatus: 'sync:status',
   searchRefreshed: 'search:refreshed',
+  windowMaximized: 'window:maximized',
 } as const;
 
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
@@ -83,6 +85,9 @@ export interface SyncStatusEvent {
 export interface SearchRefreshedEvent {
   refreshedAt: string;
 }
+
+export type WindowControlAction = 'minimize' | 'toggle-maximize' | 'close';
+export interface WindowMaximizedEvent { maximized: boolean; }
 
 export interface RoleChangedEvent {
   isPrimary: boolean;
@@ -412,6 +417,8 @@ export interface SmartTerminalApi {
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;
   /** Riavvia l'app (relaunch + exit). */
   appRelaunch(): Promise<void>;
+  windowControl(action: WindowControlAction): Promise<void>;
+  onWindowMaximized(listener: (event: WindowMaximizedEvent) => void): Unsubscribe;
   aiStatus(): Promise<AiStatus>;
   aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
   sttStatus(): Promise<SttStatus>;

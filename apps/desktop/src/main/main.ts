@@ -100,6 +100,8 @@ function createWindow(): BrowserWindow {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#171e25',
+    frame: process.platform === 'darwin',
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
     show: false,
     title: formatWindowTitle(app.getVersion()),
     webPreferences: {
@@ -155,6 +157,10 @@ function createWindow(): BrowserWindow {
     throw new Error('Terminal host not initialised');
   }
   trackIpcWindow(window, ipcSenderIds, terminalHost);
+  const publishMaximized = (): void => window.webContents.send(IPC_EVENTS.windowMaximized, { maximized: window.isMaximized() });
+  window.on('maximize', publishMaximized);
+  window.on('unmaximize', publishMaximized);
+  window.webContents.once('did-finish-load', publishMaximized);
 
   if (capturePath) {
     runCapture(window, capturePath);
@@ -355,6 +361,14 @@ app.whenReady().then(async () => {
       ai,
       help: { open: async (topic) => { await shell.openExternal(HELP_URLS[topic]); } },
       stt,
+      window: { control: (senderId, action) => {
+        const target = BrowserWindow.getAllWindows().find((candidate) => candidate.webContents.id === senderId);
+        if (!target) return;
+        if (action === 'minimize') target.minimize();
+        else if (action === 'close') target.close();
+        else if (target.isMaximized()) target.unmaximize();
+        else target.maximize();
+      } },
       app: {
         relaunch: () => {
           terminalHost?.closeAll();

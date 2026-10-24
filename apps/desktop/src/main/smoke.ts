@@ -60,6 +60,7 @@ const EXPECTED_KEYS = [
   'onSyncStatus',
   'onTerminalData',
   'onTerminalExit',
+  'onWindowMaximized',
   'onboardingSave',
   'onboardingSkip',
   'onboardingState',
@@ -78,6 +79,7 @@ const EXPECTED_KEYS = [
   'sttStatus',
   'sttTranscribe',
   'syncStatus',
+  'windowControl',
   'writeTerminal',
 ].join(',');
 
@@ -272,6 +274,8 @@ const EDITOR_SCRIPT = `(async () => {
     textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     result.escapeReturnsToTerminalAndKeepsDraft = await waitFor(() => document.activeElement !== textarea(), 1000) && textarea().value === 'escape-draft';
     result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter inserts a newline';
+    const composer = textarea().closest('.composer');
+    result.singleComposerStructure = !!composer && document.querySelectorAll('app-assisted-input .composer').length === 1 && ['ai-correction', 'assisted-mic', 'assisted-send'].every((id) => composer.querySelector('[data-testid="' + id + '"]')) && !!composer.querySelector('[data-testid="voice-label"]');
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
     setText("printf 'EDITOR_%s\\\\n' OK");
     await sleep(100);
@@ -619,6 +623,12 @@ const SETTINGS_SCRIPT = `(async () => {
   const click = (id) => { const el = q(id); if (el) el.click(); return !!el; };
   const result = {};
   result.settingsButton = await waitFor(() => !!q('settings-open'));
+  result.headerVersion = (q('header-version')?.textContent ?? '').includes('Smart Terminal - Version');
+  click('header-history'); result.historyPanelOpens = await waitFor(() => !!q('sidebar'));
+  click('header-history'); result.historyPanelHides = await waitFor(() => !q('sidebar'));
+  click('header-clipboard'); result.clipboardPanelOpens = await waitFor(() => !!q('sidebar'));
+  click('sidebar-tab-history'); result.internalTabSyncsHeader = await waitFor(() => q('header-history')?.getAttribute('aria-pressed') === 'true');
+  result.windowControlsPresent = !!q('window-minimize') && !!q('window-maximize') && !!q('window-close');
   click('settings-open'); result.opened = await waitFor(() => !!q('onboarding-overlay'));
   result.noProgress = !q('onboarding-progress');
   result.tabs = ['repository','ai','stt','appearance'].every((tab) => !!q('settings-tab-' + tab));

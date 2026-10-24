@@ -30,6 +30,8 @@ import {
   type TerminalExitEvent,
   type TerminalSessionInfo,
   type Unsubscribe,
+  type WindowControlAction,
+  type WindowMaximizedEvent,
   type SmartTerminalApi,
 } from '@smart-terminal/contracts';
 
@@ -67,6 +69,8 @@ const api: SmartTerminalApi = {
   secretsStatus: () => ipcRenderer.invoke(IPC_CHANNELS.secretsStatus) as Promise<SecretsStatus>,
   secretsLogout: (request) => ipcRenderer.invoke(IPC_CHANNELS.secretsLogout, request) as Promise<SecretsStatus>,
   appRelaunch: () => ipcRenderer.invoke(IPC_CHANNELS.appRelaunch) as Promise<void>,
+  windowControl: (action: WindowControlAction) => ipcRenderer.invoke(IPC_CHANNELS.windowControl, { action }) as Promise<void>,
+  onWindowMaximized: (listener) => subscribe<WindowMaximizedEvent>(IPC_EVENTS.windowMaximized, listener),
   aiStatus: () => ipcRenderer.invoke(IPC_CHANNELS.aiStatus) as Promise<AiStatus>,
   aiCorrect: (request: AiCorrectRequest) => ipcRenderer.invoke(IPC_CHANNELS.aiCorrect, request) as Promise<CorrectionResult>,
   setupTestAi: (request: SetupTestAiRequest) => ipcRenderer.invoke(IPC_CHANNELS.setupTestAi, request) as Promise<SetupTestAiResult>,

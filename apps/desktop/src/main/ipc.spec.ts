@@ -54,6 +54,7 @@ const services: IpcServices = {
     logout: vi.fn(() => ({ secureStorage: true, storedSecrets: [] })),
   },
   app: { relaunch: vi.fn() },
+  window: { control: vi.fn() },
   help: { open: vi.fn(() => Promise.resolve()) },
   ai: {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
@@ -212,6 +213,22 @@ describe('terminal channels', () => {
     await expect(
       dispatchIpc(write, sender, policy, [{ sessionId: 's1', data: 'a'.repeat(64 * 1024 + 1) }]),
     ).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+});
+
+describe('window controls', () => {
+  const run = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.windowControl], sender, policy, args);
+
+  it('accepts only the three supported actions', async () => {
+    await run({ action: 'minimize' });
+    await run({ action: 'toggle-maximize' });
+    await run({ action: 'close' });
+    expect(services.window.control).toHaveBeenNthCalledWith(1, 7, 'minimize');
+    expect(services.window.control).toHaveBeenNthCalledWith(2, 7, 'toggle-maximize');
+    expect(services.window.control).toHaveBeenNthCalledWith(3, 7, 'close');
+    for (const payload of [{}, { action: 'maximize' }, { action: 'close', extra: true }, { action: 1 }]) {
+      await expect(run(payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
   });
 });
 

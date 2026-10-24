@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked }
 import { AiStore } from './ai/ai-store';
 import { AppearanceStore } from './appearance/appearance-store';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
+import type { SidebarTab } from './session.model';
 import { AssistedInput } from './assisted-input/assisted-input';
 import { OnboardingWizard } from './onboarding/onboarding-wizard';
 import { AppHeader } from './header/app-header';
 import { SessionTabs } from './session-tabs/session-tabs';
 import { SearchStore } from './search/search-store';
 import { SessionsStore } from './sessions-store';
+import { LayoutStore } from './layout-store';
 import { SttStore } from './stt/stt-store';
 import { SidebarPanel } from './sidebar-panel/sidebar-panel';
 import { StatusFooter } from './status-footer/status-footer';
@@ -24,6 +26,12 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 })
 export class App {
   protected readonly store = inject(SessionsStore);
+  protected readonly layout = inject(LayoutStore);
+
+  protected setPanel(tab: SidebarTab | null): void {
+    this.layout.set(tab);
+    if (tab !== null) this.search.setTab(tab);
+  }
   /** Active tab awaiting close confirmation (non-blocking inline dialog). */
   protected readonly pendingCloseId = signal<string | null>(null);
 
@@ -41,6 +49,10 @@ export class App {
     void this.store.createLocal();
     this.loadSshAliases();
     effect(() => this.clipboardCapture.syncActive(this.store.activeId()));
+    effect(() => {
+      const tab = this.search.tab();
+      if (this.layout.panel() !== null && this.layout.panel() !== tab) this.layout.set(tab);
+    });
     // Tab change: an ongoing recording is interrupted instead of ending up in the wrong draft.
     effect(() => {
       const activeId = this.store.activeId();

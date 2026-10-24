@@ -27,10 +27,10 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 
 | Region | Current |
 | --- | --- |
-| Header | 43 px (`#0a0d10`) |
-| Tab bar | 40 px (active tab `#171e25`) |
+| Header/title bar | 35 px (`#171e25`) |
+| Tab bar | 38 px (active tab `#384a5d`) |
 | Terminal | ~672 px (`#171e25`) |
-| Assisted input | ~86 px (`#222e3c`) |
+| Assisted input | ~103 px (`#222e3c`) |
 | Footer | 28 px (`#212b38`) |
 | Sidebar | 360 px at 1440 (25%), `#171e25` |
 | Main accent | `#4cc2a5` |
@@ -39,6 +39,7 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 
 | Token | Target | Notes |
 | --- | --- | --- |
+| Title bar | 35 px | full-window, M16A |
 | `--terminal-bg` | `#171e25` | matches mock |
 | `--tab-bg` | `#212b38` | inactive tab bar |
 | `--tab-active` | `#384a5d` | active tab, full-height fill |

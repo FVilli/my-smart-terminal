@@ -22,3 +22,7 @@ Remove the opaque square background from the Smart Terminal icon while preservin
 
 ## Acceptance
 Icon is RGBA with transparent corners and a clean alpha edge; no black square; Linux package uses it; header displays it without a background plate.
+
+## Outcome
+- Flood-fill/color-key removed the edge-connected opaque background while preserving enclosed artwork.
+- 512x512 RGBA icon written to docs/assets/icon.png, apps/desktop/build/icon-linux.png and apps/renderer/public/icon.png; corners alpha 0 and center opaque.

@@ -3,12 +3,12 @@ title: "M16A header design proposal"
 type: design
 project: smart-terminal
 created: 2026-10-24
-status: proposed
+status: accepted
 ---
 
 # M16A header design proposal
 
-**Status:** Proposed — awaiting user approval before M16B implementation.  
+**Status:** Accepted — user approved on 2026-10-24.  
 **Mockup:** [`mockups/M16A - Header.png`](../mockups/M16A%20-%20Header.png) · source [`mockups/M16A - Header.html`](../mockups/M16A%20-%20Header.html)
 
 ## Objective

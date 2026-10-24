@@ -50,6 +50,7 @@ import {
   type TerminalResizeRequest,
   type TerminalSessionInfo,
   type TerminalWriteRequest,
+  type WindowControlAction,
 } from '@smart-terminal/contracts';
 import { TerminalError, isValidSshAlias } from '@smart-terminal/terminal';
 import { isAudioMimeType } from '@smart-terminal/ai';
@@ -175,7 +176,12 @@ export interface HelpGateway {
   open(topic: HelpTopic): Promise<void>;
 }
 
+export interface WindowGateway {
+  control(senderId: number, action: WindowControlAction): void;
+}
+
 export interface IpcServices {
+  window: WindowGateway;
   help: HelpGateway;
   ssh: SshGateway;
   onboarding: OnboardingGateway;
@@ -216,6 +222,10 @@ function singleRequest<T>(check: (value: Record<string, unknown>) => boolean) {
 }
 
 const isSshAlias = (value: unknown): boolean => isValidSshAlias(value);
+
+export const validateWindowControl = singleRequest<{ action: WindowControlAction }>((v) =>
+  hasExactKeys(v, ['action']) && ['minimize', 'toggle-maximize', 'close'].includes(String(v['action'])),
+);
 
 export const validateTerminalCreate = singleRequest<TerminalCreateRequest>(
   (v) =>
@@ -350,6 +360,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.secretsStatus]: ChannelDefinition<[], SecretsStatus>;
   [IPC_CHANNELS.secretsLogout]: ChannelDefinition<[SecretsLogoutRequest], SecretsStatus>;
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
+  [IPC_CHANNELS.windowControl]: ChannelDefinition<[{ action: WindowControlAction }], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
@@ -455,6 +466,10 @@ export function createChannelMap(env: RuntimeEnvironment, terminals: TerminalGat
     [IPC_CHANNELS.secretsLogout]: {
       validate: validateSecretsLogout,
       handle: (_sender, { key }) => services.onboarding.logout(key),
+    },
+    [IPC_CHANNELS.windowControl]: {
+      validate: validateWindowControl,
+      handle: (sender, { action }) => services.window.control(sender.senderId, action),
     },
     [IPC_CHANNELS.appRelaunch]: {
       validate: noArguments,

@@ -3,12 +3,12 @@ title: "M17A input composer design proposal"
 type: design
 project: smart-terminal
 created: 2026-10-24
-status: proposed
+status: accepted
 ---
 
 # M17A input composer design proposal
 
-**Status:** Proposed — awaiting user approval before M17B implementation.  
+**Status:** Accepted — user approved on 2026-10-24.  
 **Mockup:** [`mockups/M17A - Input.png`](../mockups/M17A%20-%20Input.png) · source [`mockups/M17A - Input.html`](../mockups/M17A%20-%20Input.html)
 
 ## Objective

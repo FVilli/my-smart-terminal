@@ -1,6 +1,6 @@
-<main class="shell" aria-label="Smart Terminal">
+<app-header />
+<main class="shell" [class.sidebar-hidden]="layout.panel() === null" aria-label="Smart Terminal">
   <section class="main-column">
-    <app-header />
     <app-session-tabs
       [sessions]="store.sessions()"
       [activeId]="store.activeId()"
@@ -47,6 +47,7 @@
       [primary]="isPrimary()"
     />
   </section>
+  @if (layout.panel() !== null) {
   <aside class="sidebar" data-testid="sidebar">
     <app-sidebar-panel
       [activeTab]="search.tab()"
@@ -69,5 +70,6 @@
       (clearClipboard)="clipboardCapture.clearDedupe()"
     />
   </aside>
+  }
 </main>
 <app-onboarding-wizard />
