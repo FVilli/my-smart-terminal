@@ -163,3 +163,10 @@ Enforcement strategy: rules are global and clean at the baseline; new violations
 - Chromium persists per-host zoom; zoom evidence uses a throw-away `SMART_TERMINAL_USER_DATA`.
 - M20 updated the capture `onboarding-stt` scenario to the current STT controls.
 - M20 smoke/layout/zoom/packaging results are reported as provided by M20, not re-run in this T04 pass.
+
+## M21 outcomes (updated during the refactor)
+
+- T05 removed verified-dead renderer members (`debugSummary`, `micMessage`, `checkMicrophone`, `micState`/`MIC_MESSAGES`, `sttProviders`, `testingStt`, unused push-to-talk helpers), extracted four STT-test helpers from a 77-line method, deduplicated 18 dialog-button class strings and added recording/xterm lifecycle invariants. Layout, screenshot and smoke evidence stayed green.
+- T06 split `createChannelMap` into six service-owned builders typed with `Pick<IpcChannelMap, ...>` (34 channels, unchanged validators/payloads), documented exported contract limits and removed 46 tautological comments that restated identifiers, and recorded PTY/schema/STT invariants.
+- T07 replaced the duplicated config/secrets doubles with `apps/desktop/src/main/testing/stores.ts` and added a channel-map completeness test (exactly the declared channels, each with validator and handler). Suite grew from 408 to 409 tests and ran twice with identical results; no dead or duplicate test was found to remove.
+- Process note: the T07 test changes were committed while T06 was still the active task (same working session); no scope overlapped and the independent audit records it.
