@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
-import { STT_MAX_AUDIO_BYTES, type SttProvider, type SttSkipReason } from '@smart-terminal/contracts';
+import { STT_MAX_AUDIO_BYTES, type SttDiagnostics, type SttProvider, type SttSkipReason } from '@smart-terminal/contracts';
 
 export interface SttRequest {
   audio: Uint8Array;
@@ -13,10 +13,36 @@ export interface SttResult {
   text: string;
   skipped: boolean;
   reason?: SttSkipReason;
+  diagnostics?: SttDiagnostics;
 }
 
+export class SttHttpError extends Error {
+  constructor(readonly httpStatus: number, readonly contentType?: string) { super(`HTTP ${httpStatus}`); this.name = 'SttHttpError'; }
+}
+
+export class SttJsonError extends Error {
+  constructor(readonly httpStatus: number, readonly contentType?: string) { super('invalid JSON'); this.name = 'SttJsonError'; }
+}
+
+function endpointForDiagnostics(baseUrl?: string): string | undefined {
+  if (baseUrl === undefined) return undefined;
+  try {
+    const url = new URL(baseUrl);
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/$/, '')}/audio/transcriptions`;
+  } catch { return undefined; }
+}
+
+function networkCategory(error: unknown): string {
+  const code = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined;
+  if (code === 'ECONNREFUSED') return 'connection refused';
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'DNS failure';
+  if (typeof code === 'string' && /CERT|TLS|SSL/.test(code)) return 'TLS failure';
+  return 'network error';
+}
+
+export interface SttAdapterResult { text: string; httpStatus?: number; contentType?: string; jsonValid?: boolean; }
 export interface SttAdapter {
-  transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<string>;
+  transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<SttAdapterResult>;
 }
 
 /** Runs a process with audio on stdin (never a shell, never an audio file on disk). */
@@ -75,12 +101,12 @@ export class LocalSttAdapter implements SttAdapter {
     private readonly run: SttProcessRunner = execFileSttRunner,
   ) {}
 
-  async transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<string> {
+  async transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<SttAdapterResult> {
     if (!path.isAbsolute(this.command)) {
       throw new Error('unsupported');
     }
     const { stdout } = await this.run(this.command, this.args, request.audio, options.timeoutMs);
-    return stdout.trim();
+    return { text: stdout.trim() };
   }
 }
 
@@ -100,7 +126,7 @@ function transcriptionEndpoint(baseUrl?: string): string {
 export class OpenAiSttAdapter implements SttAdapter {
   constructor(private readonly options: OpenAiSttOptions) {}
 
-  async transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<string> {
+  async transcribe(request: SttRequest, options: { timeoutMs: number }): Promise<SttAdapterResult> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), options.timeoutMs);
     try {
@@ -118,12 +144,16 @@ export class OpenAiSttAdapter implements SttAdapter {
         body: form,
         signal: controller.signal,
       });
+      const contentType = response.headers.get('content-type') ?? undefined;
       if (!response.ok) {
-        throw new Error('provider-error');
+        throw new SttHttpError(response.status, contentType);
       }
-      const data: unknown = await response.json();
-      const text = (data as { text?: unknown }).text;
-      return typeof text === 'string' ? text.trim() : '';
+      let data: unknown;
+      try { data = await response.json(); } catch {
+        throw new SttJsonError(response.status, contentType);
+      }
+      const text = (data as { text?: unknown } | null)?.text;
+      return { text: typeof text === 'string' ? text.trim() : '', httpStatus: response.status, contentType, jsonValid: true };
     } finally {
       clearTimeout(timer);
     }
@@ -139,6 +169,7 @@ export interface TranscribeAudioRequest extends SttRequest {
   baseUrl?: string;
   model?: string;
   responseFormat?: 'json' | 'verbose_json';
+  durationMs?: number;
   timeoutMs?: number;
   fetch?: typeof fetch;
   run?: SttProcessRunner;
@@ -149,25 +180,43 @@ export interface TranscribeAudioRequest extends SttRequest {
  * Errors become `skipped` with a stable reason used by the renderer for the message.
  */
 export async function transcribeAudio(request: TranscribeAudioRequest): Promise<SttResult> {
-  const skipped = (reason: SttSkipReason): SttResult => ({ text: '', skipped: true, reason });
+  const started = Date.now();
+  const baseUrl = request.baseUrl ?? (request.provider === 'cloud' ? 'https://api.openai.com/v1' : undefined);
+  const common: SttDiagnostics = {
+    stage: 'config',
+    serviceReached: false,
+    provider: request.provider,
+    ...(endpointForDiagnostics(baseUrl) !== undefined ? { endpoint: endpointForDiagnostics(baseUrl) } : {}),
+    ...(request.model !== undefined ? { model: request.model } : {}),
+    ...(request.language !== undefined ? { language: request.language } : {}),
+    audioBytes: request.audio.byteLength,
+    mimeType: request.mimeType,
+    ...(request.durationMs !== undefined ? { durationMs: request.durationMs } : {}),
+  };
+  const skipped = (reason: SttSkipReason, stage: SttDiagnostics['stage'], extra: Partial<SttDiagnostics> = {}): SttResult => ({
+    text: '',
+    skipped: true,
+    reason,
+    diagnostics: { ...common, stage, serviceReached: false, elapsedMs: Date.now() - started, ...extra },
+  });
   if (!isValidSttAudio(request.audio) || !isAudioMimeType(request.mimeType)) {
-    return skipped('invalid-audio');
+    return skipped('invalid-audio', 'config', { error: 'invalid audio' });
   }
   if (request.provider === 'none') {
-    return skipped('unconfigured');
+    return skipped('unconfigured', 'config', { error: 'unconfigured' });
   }
   let adapter: SttAdapter;
   if (request.provider === 'local') {
     if (request.command === undefined || request.command.trim().length === 0) {
-      return skipped('unconfigured');
+      return skipped('unconfigured', 'config', { error: 'unconfigured' });
     }
     if (!path.isAbsolute(request.command)) {
-      return skipped('unsupported');
+      return skipped('unsupported', 'unsupported', { error: 'unsupported command' });
     }
     adapter = new LocalSttAdapter(request.command, [], request.run);
   } else if (request.provider === 'cloud') {
     if (request.token === undefined || request.token.length === 0) {
-      return skipped('missing-token');
+      return skipped('missing-token', 'config', { error: 'missing token' });
     }
     adapter = new OpenAiSttAdapter({
       token: request.token,
@@ -177,7 +226,7 @@ export async function transcribeAudio(request: TranscribeAudioRequest): Promise<
       ...(request.fetch !== undefined ? { fetch: request.fetch } : {}),
     });
   } else {
-    return skipped('unsupported');
+    return skipped('unsupported', 'unsupported', { error: 'unsupported provider' });
   }
   try {
     const sttRequest: SttRequest = {
@@ -185,9 +234,43 @@ export async function transcribeAudio(request: TranscribeAudioRequest): Promise<
       mimeType: request.mimeType,
       ...(request.language !== undefined ? { language: request.language } : {}),
     };
-    const text = (await adapter.transcribe(sttRequest, { timeoutMs: request.timeoutMs ?? STT_DEFAULT_TIMEOUT_MS })).trim();
-    return text.length === 0 ? skipped('empty') : { text, skipped: false };
+    const result = await adapter.transcribe(sttRequest, { timeoutMs: request.timeoutMs ?? STT_DEFAULT_TIMEOUT_MS });
+    const text = result.text.trim();
+    const successDiagnostics: SttDiagnostics = {
+      ...common,
+      stage: 'success',
+      serviceReached: request.provider === 'cloud',
+      elapsedMs: Date.now() - started,
+      textLength: text.length,
+      ...(result.httpStatus !== undefined ? { httpStatus: result.httpStatus } : {}),
+      ...(result.contentType !== undefined ? { contentType: result.contentType } : {}),
+      ...(result.jsonValid !== undefined ? { jsonValid: result.jsonValid } : {}),
+    };
+    return text.length === 0
+      ? { ...skipped('empty', 'empty', { ...successDiagnostics, error: 'empty transcript' }), diagnostics: { ...successDiagnostics, stage: 'empty', error: 'empty transcript' } }
+      : { text, skipped: false, diagnostics: successDiagnostics };
   } catch (error) {
-    return skipped(isTimeoutError(error) ? 'timeout' : 'provider-error');
+    const elapsedMs = Date.now() - started;
+    if (isTimeoutError(error)) return skipped('timeout', 'timeout', { elapsedMs, error: 'timeout' });
+    if (error instanceof SttHttpError) {
+      return skipped('provider-error', 'http', {
+        serviceReached: true,
+        httpStatus: error.httpStatus,
+        ...(error.contentType !== undefined ? { contentType: error.contentType } : {}),
+        elapsedMs,
+        error: `HTTP ${error.httpStatus}`,
+      });
+    }
+    if (error instanceof SttJsonError) {
+      return skipped('provider-error', 'json', {
+        serviceReached: true,
+        httpStatus: error.httpStatus,
+        ...(error.contentType !== undefined ? { contentType: error.contentType } : {}),
+        jsonValid: false,
+        elapsedMs,
+        error: 'invalid JSON',
+      });
+    }
+    return skipped('provider-error', 'network', { elapsedMs, error: networkCategory(error) });
   }
 }

@@ -45,8 +45,8 @@ describe('LocalSttAdapter', () => {
     const command = fakeSttScript('local-stt', '#!/bin/sh\nwc -c | tr -d " "\n');
     const before = fs.readdirSync(tempRoot).sort();
     const adapter = new LocalSttAdapter(command);
-    const text = await adapter.transcribe({ audio: audio(32), mimeType: 'audio/webm' }, { timeoutMs: 5000 });
-    expect(text).toBe('32');
+    const result = await adapter.transcribe({ audio: audio(32), mimeType: 'audio/webm' }, { timeoutMs: 5000 });
+    expect(result.text).toBe('32');
     // No temporary audio file: the script directory remains unchanged.
     expect(fs.readdirSync(tempRoot).sort()).toEqual(before);
   });
@@ -58,7 +58,7 @@ describe('LocalSttAdapter', () => {
       return { stdout: '  dictated  \n' };
     };
     const adapter = new LocalSttAdapter('/opt/stt/transcribe', ['--model', 'small; rm -rf /'], run);
-    await expect(adapter.transcribe({ audio: audio(8), mimeType: 'audio/wav' }, { timeoutMs: 1000 })).resolves.toBe('dictated');
+    await expect(adapter.transcribe({ audio: audio(8), mimeType: 'audio/wav' }, { timeoutMs: 1000 })).resolves.toMatchObject({ text: 'dictated' });
     expect(received[0]?.file).toBe('/opt/stt/transcribe');
     expect(received[0]?.args).toEqual(['--model', 'small; rm -rf /']);
     expect(received[0]?.input.byteLength).toBe(8);
@@ -100,7 +100,7 @@ describe('OpenAiSttAdapter', () => {
       return new Response(JSON.stringify({ text: '  ciao mondo  ' }), { status: 200 });
     });
     const adapter = new OpenAiSttAdapter({ token: 'cloud-token', fetch: fetcher as typeof fetch });
-    await expect(adapter.transcribe({ audio: audio(16), mimeType: 'audio/webm' }, { timeoutMs: 5000 })).resolves.toBe('ciao mondo');
+    await expect(adapter.transcribe({ audio: audio(16), mimeType: 'audio/webm' }, { timeoutMs: 5000 })).resolves.toMatchObject({ text: 'ciao mondo', httpStatus: 200 });
   });
 
   it('honours a custom base URL, model and language', async () => {
@@ -112,7 +112,7 @@ describe('OpenAiSttAdapter', () => {
       return new Response(JSON.stringify({ text: 'ok' }), { status: 200 });
     });
     const adapter = new OpenAiSttAdapter({ token: 't', baseUrl: 'https://stt.test/v1/', model: 'whisper-test', fetch: fetcher as typeof fetch });
-    await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'it' }, { timeoutMs: 5000 })).resolves.toBe('ok');
+    await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'it' }, { timeoutMs: 5000 })).resolves.toMatchObject({ text: 'ok', httpStatus: 200 });
   });
 
   it('supports a Unsloth-style base URL, custom model, language and verbose_json', async () => {
@@ -131,7 +131,7 @@ describe('OpenAiSttAdapter', () => {
       responseFormat: 'verbose_json',
       fetch: fetcher as typeof fetch,
     });
-    await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'en' }, { timeoutMs: 5000 })).resolves.toBe('hello world');
+    await expect(adapter.transcribe({ audio: audio(4), mimeType: 'audio/wav', language: 'en' }, { timeoutMs: 5000 })).resolves.toMatchObject({ text: 'hello world', httpStatus: 200, jsonValid: true });
   });
 
   it('maps provider failures, empty transcripts and timeouts without leaking the token', async () => {
@@ -142,8 +142,34 @@ describe('OpenAiSttAdapter', () => {
       mimeType: 'audio/webm',
       fetch: (async () => new Response('no', { status: 401 })) as unknown as typeof fetch,
     });
-    expect(failing).toMatchObject({ skipped: true, reason: 'provider-error' });
+    expect(failing).toMatchObject({ skipped: true, reason: 'provider-error', diagnostics: { stage: 'http', serviceReached: true, httpStatus: 401, error: 'HTTP 401' } });
     expect(JSON.stringify(failing)).not.toContain('secret-token');
+    const serverError = await transcribeAudio({
+      provider: 'cloud',
+      token: 'secret-token',
+      audio: audio(),
+      mimeType: 'audio/webm',
+      fetch: (async () => new Response('server exploded', { status: 500 })) as unknown as typeof fetch,
+    });
+    expect(serverError).toMatchObject({ diagnostics: { stage: 'http', serviceReached: true, httpStatus: 500, error: 'HTTP 500' } });
+    expect(JSON.stringify(serverError)).not.toContain('server exploded');
+    const invalidJson = await transcribeAudio({
+      provider: 'cloud',
+      token: 'secret-token',
+      audio: audio(),
+      mimeType: 'audio/webm',
+      fetch: (async () => new Response('not json', { status: 200, headers: { 'content-type': 'application/json' } })) as unknown as typeof fetch,
+    });
+    expect(invalidJson).toMatchObject({ diagnostics: { stage: 'json', serviceReached: true, httpStatus: 200, jsonValid: false, error: 'invalid JSON' } });
+    const network = await transcribeAudio({
+      provider: 'cloud',
+      token: 'secret-token',
+      audio: audio(),
+      mimeType: 'audio/webm',
+      fetch: (async () => { throw Object.assign(new Error('refused'), { code: 'ECONNREFUSED' }); }) as unknown as typeof fetch,
+    });
+    expect(network).toMatchObject({ diagnostics: { stage: 'network', serviceReached: false, error: 'connection refused' } });
+    expect(JSON.stringify(network)).not.toContain('secret-token');
     const empty = await transcribeAudio({
       provider: 'cloud',
       token: 'secret-token',
@@ -151,7 +177,7 @@ describe('OpenAiSttAdapter', () => {
       mimeType: 'audio/webm',
       fetch: (async () => new Response(JSON.stringify({ text: '   ' }))) as unknown as typeof fetch,
     });
-    expect(empty).toMatchObject({ skipped: true, reason: 'empty' });
+    expect(empty).toMatchObject({ skipped: true, reason: 'empty', diagnostics: { stage: 'empty', serviceReached: true, error: 'empty transcript' } });
     const timeout = await transcribeAudio({
       provider: 'cloud',
       token: 'secret-token',
@@ -167,7 +193,7 @@ describe('OpenAiSttAdapter', () => {
           });
         })) as unknown as typeof fetch,
     });
-    expect(timeout).toMatchObject({ skipped: true, reason: 'timeout' });
+    expect(timeout).toMatchObject({ skipped: true, reason: 'timeout', diagnostics: { stage: 'timeout', serviceReached: false, error: 'timeout' } });
     expect(JSON.stringify(timeout)).not.toContain('secret-token');
   });
 });
@@ -199,6 +225,6 @@ describe('transcribeAudio orchestrator', () => {
       mimeType: 'audio/webm',
       run: async () => ({ stdout: '  local text \n' }),
     });
-    expect(result).toEqual({ text: 'local text', skipped: false });
+    expect(result).toMatchObject({ text: 'local text', skipped: false });
   });
 });

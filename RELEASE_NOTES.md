@@ -1,6 +1,22 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.9
+
+STT diagnostics and recording repair release.
+
+### Added
+
+- REC/STOP/PLAY with duration/bytes and TRANSCRIBE in the STT test area.
+- Sanitized debug details: service reachability, HTTP status, content type, JSON validity, error stage, elapsed time, endpoint/model/language and audio metadata.
+- Distinct microphone permission/device/recorder failures and cleanup of tracks/audio URLs.
+
+### Fixed
+
+- REC no longer requires the AI provider to be configured; TRANSCRIBE still does.
+- Electron media permission checks are restricted to the trusted window and audio.
+- STT failures now distinguish network, HTTP, invalid JSON, timeout and empty transcript.
+
 ## v1.3.8
 
 Footer message placement hotfix.

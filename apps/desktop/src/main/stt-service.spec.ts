@@ -76,7 +76,7 @@ describe('SttService', () => {
     });
     const service = new SttService({ ...secrets, fetch: fetcher as typeof fetch });
     expect(service.status()).toMatchObject({ configured: true, hasToken: true });
-    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toEqual({ text: 'shared', skipped: false });
+    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: 'shared', skipped: false, diagnostics: { stage: 'success', serviceReached: true, httpStatus: 200 } });
     expect(secrets.secrets.has).toHaveBeenCalledWith('ai:openai-compatible');
     expect(secrets.secrets.has).not.toHaveBeenCalledWith('stt:cloud');
   });
@@ -92,10 +92,7 @@ describe('SttService', () => {
     const fetcher = vi.fn();
     const service = new SttService({ ...stores(config()), testMode: true, run, fetch: fetcher as never });
     expect(service.status()).toMatchObject({ configured: true, warning: 'STT test mode active.' });
-    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toEqual({
-      text: STT_TEST_TEXT,
-      skipped: false,
-    });
+    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: STT_TEST_TEXT, skipped: false, diagnostics: { stage: 'test', serviceReached: false } });
     expect(run).not.toHaveBeenCalled();
     expect(fetcher).not.toHaveBeenCalled();
     expect(fs.readdirSync(tempRoot)).toEqual([]);
@@ -127,7 +124,7 @@ describe('SttService', () => {
     }));
     const service = new SttService({ ...stores(config()), run });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
-    expect(result).toEqual({ text: 'local dictation', skipped: false });
+    expect(result).toMatchObject({ text: 'local dictation', skipped: false });
     expect(run).toHaveBeenCalledTimes(1);
     expect(run.mock.calls[0]?.[0]).toBe('/opt/stt/transcribe');
     expect(JSON.stringify(result)).not.toContain('/opt/stt');
@@ -144,7 +141,7 @@ describe('SttService', () => {
       fetch: fetcher as typeof fetch,
     });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
-    expect(result).toEqual({ text: 'cloud dictation', skipped: false });
+    expect(result).toMatchObject({ text: 'cloud dictation', skipped: false });
     expect(JSON.stringify(result)).not.toContain('cloud-token');
   });
 

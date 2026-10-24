@@ -23,7 +23,18 @@ The base URL and token are taken from the AI tab, so configure and test AI first
 
 Select **REC**, speak, then **STOP**. The recording time is shown. Use **PLAY** to listen to the in-memory sample, then **TRANSCRIBE** to save the current values and send the audio to the provider. The result or detailed error appears below the controls. The audio is discarded and the result is not sent to the terminal.
 
-The first time, grant microphone permission if the operating system asks. If the microphone is denied or unavailable, the terminal remains usable. If the AI provider/token is not configured, fix the AI tab first.
+The first time, grant microphone permission if the operating system asks. REC works even before the AI provider is configured; TRANSCRIBE needs the provider. If the microphone is denied, missing, busy or unsupported, the UI names the specific failure and the terminal remains usable.
+
+### Debug details
+
+After TRANSCRIBE, expand **Debug details** under the controls. The sanitized panel shows:
+
+- whether the provider service was reached (`serviceReached` is true only after an HTTP response);
+- HTTP status, content type, JSON validity, elapsed time, safe endpoint host/path, model and language;
+- audio bytes/MIME/duration and transcript length;
+- an allowlisted error stage such as `network`, `http`, `json`, `timeout` or `empty`.
+
+Tokens, audio, raw provider bodies and exception stacks are never shown. A 401 means the service responded but rejected authentication; a network stage means no HTTP response was received.
 
 ## Language
 

@@ -751,6 +751,8 @@ const STT_SETUP_SCRIPT = `(async () => {
   click('onboarding-stt-transcribe');
   result.resultVisible = await waitFor(() => !!q('onboarding-stt-result'), 20000);
   result.recognized = await waitFor(() => (q('onboarding-stt-result')?.textContent ?? '').includes('test transcript'), 20000);
+  result.debugVisible = !!q('onboarding-stt-debug');
+  result.debugSummary = (q('onboarding-stt-debug')?.querySelector('summary')?.textContent ?? '').length > 0;
   result.notSent = (await window.smartTerminal.search({ query: 'test transcript' })).entries.length === 0;
   try { oscillator.stop(); void context.close(); } catch {}
   return result;

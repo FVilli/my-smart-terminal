@@ -14,6 +14,7 @@ import {
   type SmartTerminalApi,
   type SttProvider,
   type SttResponseFormat,
+  type SttDiagnostics,
 } from '@smart-terminal/contracts';
 import { SttStore, normalizeAudioMime, sttNotice } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
@@ -176,16 +177,35 @@ const STT_MODEL_OPTIONS = [
                     </select>
                   </label>
                   <div class="stt-test-controls">
-                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || busy() || !canUseAiProvider()" (click)="startSttRecording()">REC</button>
+                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()">REC</button>
                     <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()">STOP</button>
-                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null" (click)="playSttAudio()">PLAY</button>
-                    <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s</span>
+                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()">PLAY</button>
+                    <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
                   </div>
                   <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()">
                     {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}
                   </button>
                   @if (sttTestResult(); as result) {
                     <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
+                  }
+                  @if (sttDebug(); as debug) {
+                    <details class="stt-debug" data-testid="onboarding-stt-debug">
+                      <summary>{{ debugSummary() }}</summary>
+                      <dl>
+                        <dt>stage</dt><dd>{{ debug.stage }}</dd>
+                        <dt>service reached</dt><dd>{{ debug.serviceReached ? 'yes' : 'no' }}</dd>
+                        <dt>HTTP status</dt><dd>{{ debug.httpStatus ?? '—' }}</dd>
+                        <dt>error</dt><dd>{{ debug.error ?? '—' }}</dd>
+                        <dt>endpoint</dt><dd>{{ debug.endpoint ?? '—' }}</dd>
+                        <dt>model</dt><dd>{{ debug.model ?? '—' }}</dd>
+                        <dt>language</dt><dd>{{ debug.language ?? '—' }}</dd>
+                        <dt>elapsed</dt><dd>{{ debug.elapsedMs ?? 0 }} ms</dd>
+                        <dt>audio</dt><dd>{{ debug.audioBytes ?? 0 }} bytes · {{ debug.mimeType ?? '—' }} · {{ debug.durationMs ?? 0 }} ms</dd>
+                        <dt>content type</dt><dd>{{ debug.contentType ?? '—' }}</dd>
+                        <dt>JSON valid</dt><dd>{{ debug.jsonValid ?? '—' }}</dd>
+                        <dt>text length</dt><dd>{{ debug.textLength ?? 0 }}</dd>
+                      </dl>
+                    </details>
                   }
                 </div>
               }
@@ -305,6 +325,10 @@ export class OnboardingWizard {
   protected readonly testTranscribing = signal(false);
   protected readonly testDurationMs = signal(0);
   protected readonly testAudioUrl = signal<string | null>(null);
+  protected readonly testAudioBytes = signal(0);
+  protected readonly testPlayback = signal(false);
+  protected readonly testRecState = signal<'idle' | 'requesting' | 'recording' | 'stopping' | 'ready' | 'playing' | 'error'>('idle');
+  protected readonly sttDebug = signal<SttDiagnostics | null>(null);
   private testRecorder: MediaRecorder | null = null;
   private testStream: MediaStream | null = null;
   private testChunks: Blob[] = [];
@@ -389,6 +413,7 @@ export class OnboardingWizard {
   }
 
   private dismiss(): void {
+    this.clearSttAudio();
     this.visible.set(false);
     this.editMode.set(false);
     this.settings.close();
@@ -494,23 +519,41 @@ export class OnboardingWizard {
     return Math.floor(this.testDurationMs() / 1000);
   }
 
+  protected debugSummary(): string {
+    const debug = this.sttDebug();
+    if (debug === null) return 'Debug details';
+    return `${debug.serviceReached ? 'Service responded' : 'Service not reached'}${debug.httpStatus !== undefined ? ' · HTTP ' + debug.httpStatus : ''} · ${debug.error ?? debug.stage}`;
+  }
+
   protected async startSttRecording(): Promise<void> {
     this.clearSttAudio();
     this.sttTestResult.set(null);
+    this.sttDebug.set(null);
+    this.testRecState.set('requesting');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const devices = navigator.mediaDevices;
+      if (devices === undefined) throw Object.assign(new Error('unsupported'), { name: 'NotSupportedError' });
+      const stream = await devices.getUserMedia({ audio: true });
       const Recorder = globalThis.MediaRecorder;
       if (typeof Recorder === 'undefined') {
         for (const track of stream.getTracks()) track.stop();
-        this.sttTestResult.set('Audio recording is not available on this system.');
+        this.testRecState.set('error');
+        this.sttTestResult.set('MediaRecorder is not available on this system.');
+        return;
+      }
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'].find((type) => Recorder.isTypeSupported(type));
+      if (mimeType === undefined) {
+        for (const track of stream.getTracks()) track.stop();
+        this.testRecState.set('error');
+        this.sttTestResult.set('No supported audio recording format was found.');
         return;
       }
       this.testStream = stream;
       this.testChunks = [];
-      const mimeType = Recorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
       const recorder = new Recorder(stream, { mimeType });
       this.testRecorder = recorder;
       recorder.ondataavailable = (event) => { if (event.data.size > 0) this.testChunks.push(event.data); };
+      recorder.onerror = () => { this.testRecState.set('error'); this.testRecording.set(false); this.stopSttTimer(); this.sttTestResult.set('Audio recorder failed while recording.'); };
       recorder.onstop = () => {
         for (const track of stream.getTracks()) track.stop();
         this.testStream = null;
@@ -518,27 +561,50 @@ export class OnboardingWizard {
         this.testRecording.set(false);
         this.stopSttTimer();
         const blob = new Blob(this.testChunks, { type: normalizeAudioMime(mimeType) });
-        this.testBlob = blob.size > 0 ? blob : null;
-        this.testAudioUrl.set(blob.size > 0 ? URL.createObjectURL(blob) : null);
+        this.testBlob = blob.size > 0 && blob.size <= 10 * 1024 * 1024 ? blob : null;
+        this.testAudioBytes.set(blob.size);
+        this.testAudioUrl.set(this.testBlob !== null ? URL.createObjectURL(blob) : null);
+        this.testRecState.set(this.testBlob !== null ? 'ready' : 'error');
+        if (this.testBlob === null) this.sttTestResult.set(blob.size === 0 ? 'No audio data was recorded.' : 'Recording exceeds the 10 MB limit.');
       };
       recorder.start(250);
       this.testRecording.set(true);
+      this.testRecState.set('recording');
       this.testDurationMs.set(0);
-      this.testTimer = setInterval(() => this.testDurationMs.update((value) => value + 250), 250);
-    } catch {
-      this.sttTestResult.set('Microphone permission denied or unavailable.');
+      this.testTimer = setInterval(() => {
+        this.testDurationMs.update((value) => value + 250);
+        if (this.testDurationMs() >= 60_000) this.stopSttRecording();
+      }, 250);
+    } catch (error) {
+      this.testRecState.set('error');
+      const name = (error as { name?: unknown }).name;
+      const message = name === 'NotAllowedError' || name === 'SecurityError'
+        ? 'Microphone permission denied. Grant it in the OS settings and retry.'
+        : name === 'NotFoundError' || name === 'DevicesNotFoundError'
+          ? 'No microphone was found. Connect an input device and retry.'
+          : name === 'NotReadableError' || name === 'TrackStartError'
+            ? 'The microphone is busy or unreadable. Close other applications and retry.'
+            : name === 'OverconstrainedError'
+              ? 'The microphone does not support the requested audio constraints.'
+              : 'Microphone capture is unavailable on this system.';
+      this.sttTestResult.set(message);
     }
   }
 
   protected stopSttRecording(): void {
-    try { this.testRecorder?.stop(); } catch { this.testRecording.set(false); this.stopSttTimer(); }
+    if (this.testRecorder === null) return;
+    this.testRecState.set('stopping');
+    try { this.testRecorder.stop(); } catch { this.testRecording.set(false); this.testRecState.set('error'); this.stopSttTimer(); this.sttTestResult.set('Could not stop the audio recorder.'); }
   }
 
   protected playSttAudio(): void {
     const url = this.testAudioUrl();
     if (url === null) return;
     const audio = new Audio(url);
-    void audio.play().catch(() => this.sttTestResult.set('Audio playback is unavailable.'));
+    this.testPlayback.set(true);
+    this.testRecState.set('playing');
+    audio.onended = () => { this.testPlayback.set(false); this.testRecState.set('ready'); };
+    void audio.play().catch(() => { this.testPlayback.set(false); this.testRecState.set('error'); this.sttTestResult.set('Audio playback is unavailable.'); });
   }
 
   protected async transcribeSttAudio(): Promise<void> {
@@ -568,8 +634,12 @@ export class OnboardingWizard {
       const result = await this.api.sttTranscribe({
         audio: new Uint8Array(await blob.arrayBuffer()),
         mimeType: normalizeAudioMime(blob.type),
+        durationMs: this.testDurationMs(),
       });
-      this.sttTestResult.set(result.skipped ? sttNotice(result.reason) : `Transcription: “${result.text.trim()}”`);
+      this.sttDebug.set(result.diagnostics ?? null);
+      const debug = result.diagnostics;
+      const service = debug === undefined ? '' : debug.serviceReached ? ` Service responded${debug.httpStatus !== undefined ? ' (HTTP ' + debug.httpStatus + ')' : ''}.` : ' Service was not reached.';
+      this.sttTestResult.set(result.skipped ? `${sttNotice(result.reason)}${service}${debug?.error ? ' ' + debug.error : ''}` : `Transcription: “${result.text.trim()}”${service}`);
     } catch {
       this.sttTestResult.set('Could not transcribe the recorded audio.');
     } finally {
@@ -592,6 +662,11 @@ export class OnboardingWizard {
     const url = this.testAudioUrl();
     if (url !== null) URL.revokeObjectURL(url);
     this.testAudioUrl.set(null);
+    this.testAudioBytes.set(0);
+    this.testBlob = null;
+    this.testPlayback.set(false);
+    this.testRecState.set('idle');
+    this.sttDebug.set(null);
     this.testRecording.set(false);
     this.testDurationMs.set(0);
   }

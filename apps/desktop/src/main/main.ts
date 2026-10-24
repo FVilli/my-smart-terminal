@@ -250,11 +250,15 @@ app.whenReady().then(async () => {
   }
   const userDataPath = app.getPath('userData');
   // The microphone is the only permitted permission (checked in the wizard); everything else is denied.
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
     const mediaTypes = (details as { mediaTypes?: string[] }).mediaTypes ?? [];
-    callback(permission === 'media' && mediaTypes.length > 0 && mediaTypes.every((type) => type === 'audio'));
+    const trusted = ipcSenderIds.has(webContents.id);
+    callback(trusted && permission === 'media' && mediaTypes.length > 0 && mediaTypes.every((type) => type === 'audio'));
   });
-  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => permission === 'media');
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, _origin, details) => {
+    const mediaType = (details as { mediaType?: string }).mediaType;
+    return webContents !== null && ipcSenderIds.has(webContents.id) && permission === 'media' && (mediaType === undefined || mediaType === 'audio');
+  });
 
   const configStore = new AppConfigStore(resolveConfigPath(userDataPath));
   const configLoad = configStore.load();

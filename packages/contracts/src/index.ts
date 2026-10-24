@@ -365,6 +365,25 @@ export interface SttStatus {
 export interface SttTranscribeRequest {
   audio: Uint8Array;
   mimeType: string;
+  durationMs?: number;
+}
+
+export interface SttDiagnostics {
+  stage: 'success' | 'config' | 'network' | 'http' | 'json' | 'empty' | 'timeout' | 'unsupported' | 'test';
+  serviceReached: boolean;
+  httpStatus?: number;
+  contentType?: string;
+  jsonValid?: boolean;
+  elapsedMs?: number;
+  endpoint?: string;
+  provider?: SttProvider;
+  model?: string;
+  language?: string;
+  audioBytes?: number;
+  mimeType?: string;
+  durationMs?: number;
+  textLength?: number;
+  error?: string;
 }
 
 export type SttSkipReason =
@@ -380,6 +399,7 @@ export interface SttTranscribeResult {
   text: string;
   skipped: boolean;
   reason?: SttSkipReason;
+  diagnostics?: SttDiagnostics;
 }
 
 export type Unsubscribe = () => void;

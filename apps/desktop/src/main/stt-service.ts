@@ -82,7 +82,8 @@ export class SttService {
       return skipped('invalid-audio');
     }
     if (this.testMode) {
-      return { text: STT_TEST_TEXT, skipped: false };
+      const diagnostics = { stage: 'test' as const, serviceReached: false, elapsedMs: 0, audioBytes: audio.byteLength, mimeType, ...(request.durationMs !== undefined ? { durationMs: request.durationMs } : {}) };
+      return { text: STT_TEST_TEXT, skipped: false, diagnostics };
     }
     const config = this.currentConfig();
     if (config === undefined || config.sttProvider === 'none') {
@@ -102,6 +103,7 @@ export class SttService {
       ...((shared ? config.aiBaseUrl : config.sttBaseUrl) !== undefined ? { baseUrl: shared ? config.aiBaseUrl : config.sttBaseUrl } : {}),
       ...(config.sttResponseFormat !== undefined ? { responseFormat: config.sttResponseFormat } : {}),
       ...(config.sttLanguage !== undefined ? { language: config.sttLanguage } : {}),
+      ...(request.durationMs !== undefined ? { durationMs: request.durationMs } : {}),
       ...(this.options.timeoutMs !== undefined ? { timeoutMs: this.options.timeoutMs } : {}),
       ...(this.options.fetch !== undefined ? { fetch: this.options.fetch } : {}),
       ...(this.options.run !== undefined ? { run: this.options.run } : {}),

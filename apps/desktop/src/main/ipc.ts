@@ -303,7 +303,8 @@ const isOptionalIso = (value: unknown): boolean => value === undefined || (typeo
 
 export const validateSttTranscribe = singleRequest<SttTranscribeRequest>(
   (v) =>
-    hasExactKeys(v, ['audio', 'mimeType']) &&
+    hasExactKeys(v, ['audio', 'mimeType'], ['durationMs']) &&
+    (v['durationMs'] === undefined || (typeof v['durationMs'] === 'number' && Number.isFinite(v['durationMs']) && Number.isInteger(v['durationMs']) && v['durationMs'] >= 0 && v['durationMs'] <= 60000)) &&
     v['audio'] instanceof Uint8Array &&
     v['audio'].byteLength > 0 &&
     v['audio'].byteLength <= STT_MAX_AUDIO_BYTES &&

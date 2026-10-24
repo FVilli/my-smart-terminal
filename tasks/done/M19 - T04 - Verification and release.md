@@ -22,3 +22,11 @@ Validate the STT diagnostics without overclaiming real-device/provider behavior.
 
 ## Acceptance
 Tests and package pass; docs match; sanitized diagnostics verified; release assets/checksums verified.
+
+## Outcome
+- REC/STOP/PLAY/TRANSCRIBE flow implemented with duration/bytes, permission/device/recorder-specific errors and cleanup.
+- Sanitized SttDiagnostics propagated through adapter/service/IPC: serviceReached only after HTTP response, status/content type/JSON validity/stage/elapsed/endpoint/model/language/audio metadata.
+- REC works without AI config; TRANSCRIBE requires provider. Electron permission checks restricted to trusted window/audio.
+- Debug details panel under STT controls; footer message area used for operational notices.
+- Focused unit (407), lint, typecheck, build, STT setup/editor/settings/onboarding/layout smokes and Linux package passed.
+- Real device/provider still requires user verification; mocks are not claimed as real Unsloth proof.

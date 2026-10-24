@@ -62,7 +62,7 @@ The typed preload API mirrors these channels: terminal lifecycle and data listen
 
 AI setup uses the current unsaved `OnboardingConfig` and an optional token supplied in the form. `setup:test-ai` validates the configuration in the main process, uses the supplied token or stored token, never returns the token, and returns a sanitized success or failure result. The test is a fixed minimal request and never executes commands.
 
-Cloud STT configuration includes `sttBaseUrl`, `sttResponseFormat` (`json` or `verbose_json`), `sttLanguage`, and `sttUseAiProvider`. When `sttUseAiProvider` is true, the AI base URL and `ai:<provider>` token are used and the separate STT token is unnecessary. The base URL must be an HTTP(S) URL without credentials or query parameters. STT audio is validated in main, is limited to 10 MiB per request, and is never persisted.
+STT results may include a sanitized `SttDiagnostics` object (stage, serviceReached, HTTP status, content type, JSON validity, elapsed time, endpoint, model, language, audio metadata and text length). Cloud STT configuration includes `sttBaseUrl`, `sttResponseFormat` (`json` or `verbose_json`), `sttLanguage`, and `sttUseAiProvider`. When `sttUseAiProvider` is true, the AI base URL and `ai:<provider>` token are used and the separate STT token is unnecessary. The base URL must be an HTTP(S) URL without credentials or query parameters. STT audio is validated in main, is limited to 10 MiB per request, and is never persisted.
 
 Window controls accept only `minimize`, `toggle-maximize`, or `close`. The renderer receives `window:maximized` after maximize-state changes; controls are not implemented as arbitrary window commands.
 
