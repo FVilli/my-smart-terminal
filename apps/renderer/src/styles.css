@@ -53,6 +53,7 @@
   --color-card: var(--card-bg);
   --color-surface: var(--surface);
   --color-raised: var(--surface-raised);
+  --color-backdrop: var(--backdrop);
   --color-line: var(--border);
   --color-line-soft: var(--border-soft);
   --color-fg: var(--text);

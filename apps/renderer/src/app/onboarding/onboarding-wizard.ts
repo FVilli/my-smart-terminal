@@ -41,60 +41,60 @@ const MIC_MESSAGES: Record<MicState, string> = {
   host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
     @if (visible()) {
-      <div class="backdrop" data-testid="onboarding-overlay">
-        <section class="dialog" [class.settings-dialog]="editMode()" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
-          <header>
-            <h2>{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
-            @if (!editMode()) { <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span> }
+      <div class="backdrop fixed inset-0 z-[100] flex items-center justify-center bg-backdrop" data-testid="onboarding-overlay">
+        <section class="dialog w-[min(520px,92vw)] max-h-[90vh] overflow-auto rounded-[10px] border border-line bg-surface p-5 text-fg font-sans" [class.settings-dialog]="editMode()" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
+          <header class="flex items-baseline justify-between">
+            <h2 class="mt-0 mb-3 text-[18px]">{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
+            @if (!editMode()) { <span class="steps text-xs leading-[normal] text-muted" data-testid="onboarding-progress">Step {{ step() }} of 3</span> }
           </header>
 
           @if (restartNotice()) {
             <div class="done" data-testid="onboarding-restart-notice">
               <p>Configuration saved. Restart the app to apply the data repository, machine or remote changes.</p>
               @for (warning of warnings(); track warning) {
-                <p class="warning" data-testid="onboarding-warning">{{ warning }}</p>
+                <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-warning">{{ warning }}</p>
               }
-              <footer>
-                <button type="button" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
-                <button type="button" data-testid="onboarding-close" (click)="dismiss()">Later</button>
+              <footer class="mt-4 flex items-center justify-end gap-2">
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-restart" (click)="relaunch()">Restart app</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-close" (click)="dismiss()">Later</button>
               </footer>
             </div>
           } @else {
             @if (editMode()) {
-              <div role="tablist" aria-label="Settings sections" class="settings-tabs">
-                <button type="button" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
-                <button type="button" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
-                <button type="button" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
-                <button type="button" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
+              <div role="tablist" aria-label="Settings sections" class="settings-tabs mt-2 mb-3 flex gap-1.5">
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 1" [class.text-accent]="step() === 1" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 2" [class.text-accent]="step() === 2" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 3" [class.text-accent]="step() === 3" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" [class.border-accent]="step() === 4" [class.text-accent]="step() === 4" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
               </div>
             }
             <div class="dialog-body">
             @if (state()?.reason === 'corrupt') {
-              <p class="warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
+              <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
             }
             @switch (step()) {
               @case (1) {
                 <div data-testid="onboarding-step-1">
-                  <label>Machine name
-                    <input data-testid="onboarding-machine" [value]="config().machineName" (input)="patch({ machineName: value($event) })" />
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Machine name
+                    <input class="field-sm" data-testid="onboarding-machine" [value]="config().machineName" (input)="patch({ machineName: value($event) })" />
                   </label>
-                  @if (errors()['machineName']; as message) { <p class="error" data-testid="onboarding-error-machine">{{ message }}</p> }
-                  <label>Data repository (absolute path)
-                    <input data-testid="onboarding-repo" [value]="config().dataRepoPath" (input)="patch({ dataRepoPath: value($event) })" />
+                  @if (errors()['machineName']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-machine">{{ message }}</p> }
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Data repository (absolute path)
+                    <input class="field-sm" data-testid="onboarding-repo" [value]="config().dataRepoPath" (input)="patch({ dataRepoPath: value($event) })" />
                   </label>
-                  @if (errors()['dataRepoPath']; as message) { <p class="error" data-testid="onboarding-error-repo">{{ message }}</p> }
-                  <label>Git remote (optional)
-                    <input data-testid="onboarding-remote" [value]="config().dataRepoRemote ?? ''" (input)="patch({ dataRepoRemote: value($event) })" />
+                  @if (errors()['dataRepoPath']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-repo">{{ message }}</p> }
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Git remote (optional)
+                    <input class="field-sm" data-testid="onboarding-remote" [value]="config().dataRepoRemote ?? ''" (input)="patch({ dataRepoRemote: value($event) })" />
                   </label>
-                  @if (errors()['dataRepoRemote']; as message) { <p class="error" data-testid="onboarding-error-remote">{{ message }}</p> }
-                  <div class="test-row">
-                    <button type="button" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
+                  @if (errors()['dataRepoRemote']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-remote">{{ message }}</p> }
+                  <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
+                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
                       {{ testingRemote() ? 'Testing…' : 'Test repository' }}
                     </button>
-                    <span class="hint">Verifies a real commit and push by registering this installation.</span>
+                    <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Verifies a real commit and push by registering this installation.</span>
                   </div>
                   @if (remoteResult(); as result) {
-                    <p class="remote-result" [class.ok]="result.ok" [class.error]="!result.ok" data-testid="onboarding-remote-result" role="status">
+                    <p class="remote-result mt-2 mb-0 text-xs leading-[1.45]" [class.text-accent]="result.ok" [class.text-danger]="!result.ok" data-testid="onboarding-remote-result" role="status">
                       @if (result.ok) {
                         @if (result.localOnly) {
                           Repository verified locally ({{ result.commit?.slice(0, 8) }}); no remote configured. This is a local-only commit.
@@ -110,38 +110,38 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               @case (2) {
                 <div data-testid="onboarding-step-2">
-                  <label>AI provider
-                    <select data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="patch({ aiProvider: aiProvider($event) })">
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">AI provider
+                    <select class="field-sm" data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="patch({ aiProvider: aiProvider($event) })">
                       @for (provider of aiProviders; track provider) {
                         <option [value]="provider" [selected]="provider === config().aiProvider">{{ provider === 'openai-compatible' ? 'OpenAI-compatible (self-hosted)' : provider }}</option>
                       }
                     </select>
                   </label>
                   @if (config().aiProvider !== 'none') {
-                    <label>Base URL (optional)
-                      <span class="hint">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
-                      <input data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
+                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Base URL (optional)
+                      <span class="hint text-xs leading-[normal] text-muted">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
+                      <input class="field-sm" data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
-                    @if (errors()['aiBaseUrl']; as message) { <p class="error" data-testid="onboarding-error-ai-url">{{ message }}</p> }
-                    <label>Model (optional)
-                      <span class="hint">Custom model names may contain / and :.</span>
-                      <input data-testid="onboarding-ai-model" [value]="config().aiModel ?? ''" (input)="patch({ aiModel: value($event) })" />
+                    @if (errors()['aiBaseUrl']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-ai-url">{{ message }}</p> }
+                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Model (optional)
+                      <span class="hint text-xs leading-[normal] text-muted">Custom model names may contain / and :.</span>
+                      <input class="field-sm" data-testid="onboarding-ai-model" [value]="config().aiModel ?? ''" (input)="patch({ aiModel: value($event) })" />
                     </label>
-                    <label>Token (required for cloud/self-hosted; keychain only)
-                      <span class="hint">Stored in the system keychain only.</span>
-                      <input type="password" autocomplete="off" data-testid="onboarding-ai-token" [value]="aiToken()" (input)="aiToken.set(value($event))" />
+                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
+                      <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
+                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
                     @if (!state()?.secureStorage) {
-                      <p class="warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
+                      <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
-                    <div class="test-row">
-                      <button type="button" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
+                    <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
+                      <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
                         {{ testingAi() ? 'Testing…' : 'Test AI' }}
                       </button>
-                      <span class="hint">Sends a minimal request to verify provider, model and token.</span>
+                      <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Sends a minimal request to verify provider, model and token.</span>
                     </div>
                     @if (aiTestResult(); as result) {
-                      <p class="remote-result" [class.ok]="result.ok" [class.error]="!result.ok" data-testid="onboarding-ai-result" role="status">
+                      <p class="remote-result mt-2 mb-0 text-xs leading-[1.45]" [class.text-accent]="result.ok" [class.text-danger]="!result.ok" data-testid="onboarding-ai-result" role="status">
                         @if (result.ok) {
                           AI responded in {{ result.latencyMs }} ms{{ result.model ? ' (' + result.model + ')' : '' }}.
                         } @else {
@@ -154,43 +154,43 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               @case (3) {
                 <div data-testid="onboarding-step-3">
-                  <label>STT provider
-                    <select data-testid="onboarding-stt-provider" [value]="'shared'" (change)="enableSharedStt()">
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">STT provider
+                    <select class="field-sm" data-testid="onboarding-stt-provider" [value]="'shared'" (change)="enableSharedStt()">
                       <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
                     </select>
                   </label>
                   @if (!canUseAiProvider()) {
-                    <p class="warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
+                    <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
                   }
-                  <div class="model-row">
-                    <label>Model
-                      <select data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
+                  <div class="model-row mt-2.5 flex items-end gap-2">
+                    <label class="m-0 flex-1 flex flex-col gap-1 text-[13px]">Model
+                      <select class="field-sm" data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
                         @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
                       </select>
                     </label>
-                    <button type="button" class="refresh-models" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
-                      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <button type="button" class="refresh-models h-[34px] w-[34px] flex-none cursor-pointer rounded-md border border-line bg-raised p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                   </div>
                   @if (sttModelWarning(); as modelWarning) {
-                    <p class="warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
+                    <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
                   }
-                  @if (sttModelsError(); as modelsError) { <p class="hint" data-testid="onboarding-stt-models-error">{{ modelsError }}</p> }
-                  <label>Language
-                    <select data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
+                  @if (sttModelsError(); as modelsError) { <p class="hint text-xs leading-[normal] text-muted" data-testid="onboarding-stt-models-error">{{ modelsError }}</p> }
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Language
+                    <select class="field-sm" data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
                       <option value="en">EN (English)</option>
                       <option value="it">IT (Italiano)</option>
                     </select>
                   </label>
                   <h4>Test mic & trascription</h4>
-                  <div class="stt-test-controls">
-                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()"><span class="rec-dot" aria-hidden="true"></span> REC</button>
-                    <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()"><span class="stop-square" aria-hidden="true"></span> STOP</button>
-                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()"><span class="play-triangle" aria-hidden="true"></span> PLAY</button>
-                    <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()"><span class="transcribe-icon" aria-hidden="true"></span> {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}</button>
+                  <div class="stt-test-controls mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-[5px]" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()"><span class="rec-dot" aria-hidden="true"></span> REC</button>
+                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-[5px]" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()"><span class="stop-square" aria-hidden="true"></span> STOP</button>
+                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-[5px]" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()"><span class="play-triangle" aria-hidden="true"></span> PLAY</button>
+                    <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center gap-[5px]" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()"><span class="transcribe-icon" aria-hidden="true"></span> {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}</button>
                   </div>
                   @if (testAudioUrl() !== null) {
-                    <audio #audioPlayer controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
+                    <audio #audioPlayer class="mt-2 block h-[34px] w-full" controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
                   }
                   <table class="stt-details" data-testid="onboarding-stt-details">
                     <tbody>
@@ -205,50 +205,50 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               @case (4) {
                 <div data-testid="settings-appearance">
-                  <label>Terminal monospace font
-                    <select data-testid="settings-terminal-font" [value]="config().terminalFont ?? 'jetbrains'" (change)="patch({ terminalFont: terminalFont($event) })">
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Terminal monospace font
+                    <select class="field-sm" data-testid="settings-terminal-font" [value]="config().terminalFont ?? 'jetbrains'" (change)="patch({ terminalFont: terminalFont($event) })">
                       @for (font of terminalFonts; track font.id) { <option [value]="font.id">{{ font.label }}</option> }
                     </select>
                   </label>
-                  <p class="hint">Fonts must be installed on your system. If a font is missing, the next font in the stack is used.</p>
+                  <p class="hint text-xs leading-[normal] text-muted">Fonts must be installed on your system. If a font is missing, the next font in the stack is used.</p>
                 </div>
               }
             }
-            @if (errors()['config']; as message) { <p class="error" data-testid="onboarding-error-config">{{ message }}</p> }
+            @if (errors()['config']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-config">{{ message }}</p> }
             @for (warning of warnings(); track warning) {
-              <p class="warning" data-testid="onboarding-warning">{{ warning }}</p>
+              <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-warning">{{ warning }}</p>
             }
             </div>
-            <footer>
+            <footer class="mt-4 flex items-center justify-end gap-2">
               @if (editMode()) {
-                <button type="button" class="footer-help" data-testid="settings-github-help" (click)="openHelp(helpTopic())">
-                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8a7.2 7.2 0 0 0-2.3 14c.36.07.5-.16.5-.35v-1.25c-2 .43-2.43-.85-2.43-.85-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.07-.47.25-.79.46-.97-1.6-.18-3.28-.8-3.28-3.56 0-.79.28-1.43.74-1.93-.07-.18-.32-.91.07-1.9 0 0 .6-.19 1.97.73a6.8 6.8 0 0 1 3.58 0c1.37-.92 1.97-.73 1.97-.73.39.99.14 1.72.07 1.9.46.5.74 1.14.74 1.93 0 2.77-1.69 3.38-3.3 3.56.26.22.49.66.49 1.33v1.97c0 .19.13.42.5.35A7.2 7.2 0 0 0 8 .8Z" fill="currentColor"/></svg>
+                <button type="button" class="footer-help mr-auto inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent px-2 py-1.5 text-xs leading-[normal] text-muted hover:text-fg" data-testid="settings-github-help" (click)="openHelp(helpTopic())">
+                  <svg class="h-4 w-4" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8a7.2 7.2 0 0 0-2.3 14c.36.07.5-.16.5-.35v-1.25c-2 .43-2.43-.85-2.43-.85-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.07-.47.25-.79.46-.97-1.6-.18-3.28-.8-3.28-3.56 0-.79.28-1.43.74-1.93-.07-.18-.32-.91.07-1.9 0 0 .6-.19 1.97.73a6.8 6.8 0 0 1 3.58 0c1.37-.92 1.97-.73 1.97-.73.39.99.14 1.72.07 1.9.46.5.74 1.14.74 1.93 0 2.77-1.69 3.38-3.3 3.56.26.22.49.66.49 1.33v1.97c0 .19.13.42.5.35A7.2 7.2 0 0 0 8 .8Z" fill="currentColor"/></svg>
                   <span>{{ helpLabel() }}</span>
                 </button>
               }
               @if (!editMode() && step() === 1) {
-                <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
               }
               @if (editMode()) {
-                <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
-                <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
               }
-              @if (!editMode()) { <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
+              @if (!editMode()) { <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
               @if (!editMode() && step() > 1) {
-                <button type="button" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-skip-step" [disabled]="busy()" (click)="skipStep()">Skip</button>
               }
               @if (!editMode() && step() < 3) {
-                <button type="button" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
               } @else if (!editMode()) {
-                <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
-                <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
               }
             </footer>
             @if (confirmDiscard()) {
-              <div class="confirm" data-testid="onboarding-discard-confirm" role="alertdialog" aria-label="Discard changes">
-                <span>Discard unsaved changes?</span>
-                <button type="button" data-testid="onboarding-discard" (click)="discardChanges()">Discard</button>
-                <button type="button" data-testid="onboarding-keep-editing" (click)="keepEditing()">Keep editing</button>
+              <div class="confirm mt-2.5 flex items-center gap-2 rounded-md border border-line px-2 py-2 text-xs leading-[normal] text-fg" data-testid="onboarding-discard-confirm" role="alertdialog" aria-label="Discard changes">
+                <span class="min-w-0 flex-1">Discard unsaved changes?</span>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-discard" (click)="discardChanges()">Discard</button>
+                <button type="button" class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-fg disabled:cursor-not-allowed disabled:opacity-50" data-testid="onboarding-keep-editing" (click)="keepEditing()">Keep editing</button>
               </div>
             }
           }
@@ -257,55 +257,17 @@ const MIC_MESSAGES: Record<MicState, string> = {
     }
   `,
   styles: `
-    .backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 11, 0.7); }
-    .dialog { width: min(520px, 92vw); max-height: 90vh; overflow: auto; padding: 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
     .settings-dialog { display: flex; flex-direction: column; height: min(620px, 90vh); overflow: hidden; }
     .settings-dialog .dialog-body { flex: 1; min-height: 0; overflow: auto; }
     .settings-dialog footer { margin-top: auto; }
-    header { display: flex; justify-content: space-between; align-items: baseline; }
-    h2 { margin: 0 0 12px; font-size: 18px; }
-    .steps, .hint { color: var(--text-muted); font-size: 12px; }
-    .settings-tabs { display: flex; gap: 6px; margin: 8px 0 12px; }
-    [role='tab'][aria-selected='true'] { border-color: var(--accent); color: var(--accent); }
-    label { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 2px; font-size: 13px; }
-    input, select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); }
-    .error { margin: 4px 0 0; color: var(--danger); font-size: 12px; }
-    .warning { margin: 8px 0 0; color: #e0b050; font-size: 12px; }
-    footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .footer-help { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; padding: 6px 8px; border: 0; background: transparent; color: var(--text-muted); font-size: 12px; }
-    .footer-help svg { width: 16px; height: 16px; }
-    .footer-help:hover { color: var(--text); }
-    button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .stt-test-controls { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-    .stt-test-controls button { display: inline-flex; align-items: center; gap: 5px; }
-    .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: #e5484d; }
+    .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--record); }
     .stop-square { display: inline-block; flex: none; width: 9px; height: 9px; background: currentColor; }
     .play-triangle { display: inline-block; flex: none; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid currentColor; }
     .transcribe-icon { display: inline-block; flex: none; position: relative; width: 10px; height: 12px; border: 1px solid currentColor; border-radius: 1px; }
     .transcribe-icon::after { content: ''; position: absolute; left: 2px; top: 3px; width: 5px; height: 1px; background: currentColor; box-shadow: 0 3px 0 currentColor; }
-    .stt-debug { margin-top: 8px; color: var(--text-muted); font-size: 11px; }
-    .stt-debug summary { cursor: pointer; color: var(--accent); }
-    .stt-debug dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0 0; }
-    .stt-debug dt { color: var(--text-muted); }
-    .stt-debug dd { margin: 0; overflow-wrap: anywhere; }
     .stt-details { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 11px; }
     .stt-details th { width: 100px; padding: 3px 8px 3px 0; text-align: left; font-weight: 400; color: var(--text-muted); vertical-align: top; }
     .stt-details td { padding: 3px 0; overflow-wrap: anywhere; color: var(--text); }
-    audio[data-testid='onboarding-stt-player'] { display: block; width: 100%; height: 34px; margin-top: 8px; }
-    [data-testid='onboarding-mic-check'] { margin-top: 12px; }
-    .model-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 10px; }
-    .model-row label { flex: 1; margin: 0; }
-    .refresh-models { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: none; padding: 0; }
-    .refresh-models svg { width: 16px; height: 16px; }
-    .refresh-models:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
-    .test-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-    .test-row .hint { flex: 1; min-width: 180px; }
-    .remote-result { margin: 8px 0 0; font-size: 12px; line-height: 1.45; }
-    .remote-result.ok { color: var(--accent); }
-    .remote-result.error { color: var(--danger); }
-    .confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text); }
-    .confirm span { flex: 1; }
   `,
 })
 export class OnboardingWizard {

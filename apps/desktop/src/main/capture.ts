@@ -80,8 +80,8 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             click('onboarding-next');
             await waitFor(() => q('onboarding-progress')?.textContent.includes('Step 3 of 3'));
             const provider = q('onboarding-stt-provider');
-            if (provider) { provider.value = 'local'; provider.dispatchEvent(new Event('change', { bubbles: true })); }
-            await waitFor(() => q('onboarding-stt-command'));
+            if (provider) { provider.value = 'shared'; provider.dispatchEvent(new Event('change', { bubbles: true })); }
+            await waitFor(() => q('onboarding-stt-model'));
           }
           if (${JSON.stringify(scenario)} === 'tabs') {
             await waitFor(() => q('session-tab'));
@@ -122,7 +122,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           const checks = {};
           if (${JSON.stringify(scenario)} === 'onboarding') checks['onboardingVisible'] = !!q('onboarding-overlay');
           if (${JSON.stringify(scenario)} === 'onboarding-ai') checks['onboardingAiStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 2 of 3') && !!q('onboarding-ai-url');
-          if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-command');
+          if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-model');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
           if (${JSON.stringify(scenario)} === 'ssh-menu') checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;
           if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('message-center') && q('message-center').textContent.includes('review');
