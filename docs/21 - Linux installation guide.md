@@ -57,18 +57,21 @@ After installation, start the app from the applications menu. For the AppImage, 
 
 ## Remove Smart Terminal
 
-Run the matching one-command uninstaller as your normal user:
+Run the version-independent uninstaller as your normal user:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.0/uninstall.sh | sh
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/main/uninstall.sh -o /tmp/smart-terminal-uninstall.sh
+sh /tmp/smart-terminal-uninstall.sh
 ```
+
+The uninstaller tracks the installed application and is not pinned to an application release. A tagged uninstaller URL may be used only as an explicitly labelled reproducibility fallback; it is not the normal removal command.
 
 This removes the installed package when a `.deb` is present, or removes the script-installed per-user AppImage, menu entry, and icon. It preserves `~/.config/my-smart-terminal`, your sessions, and any external data repositories.
 
 This also executes a remote script. Inspect it first if you prefer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.0/uninstall.sh -o /tmp/smart-terminal-uninstall.sh
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/main/uninstall.sh -o /tmp/smart-terminal-uninstall.sh
 less /tmp/smart-terminal-uninstall.sh
 sh /tmp/smart-terminal-uninstall.sh
 ```
@@ -87,7 +90,7 @@ There is no automatic updater. After a newer release is published, rerun the ins
 
 ## Manual fallback for troubleshooting
 
-If the script cannot run, use the [release page](https://github.com/FVilli/my-smart-terminal/releases/latest). Download the matching x86_64 `.deb` and `SHA256SUMS`, verify the package's SHA-256 checksum, then install it on Debian or Ubuntu:
+If the script cannot run, use the [Smart Terminal v1.3.0 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.0). Download the matching x86_64 `.deb` and `SHA256SUMS`, verify the package's SHA-256 checksum, then install it on Debian or Ubuntu:
 
 ```bash
 grep -F "  Smart.Terminal-1.3.0-linux-amd64.deb" SHA256SUMS > expected.sha256
@@ -120,10 +123,10 @@ If you use a custom `XDG_CONFIG_HOME`, the folder is under that location instead
 ## Troubleshooting
 
 - **No applications-menu entry:** for the `.deb`, confirm installation completed. For the AppImage, log out and back in to refresh the menu; also check the per-user XDG applications directory and `~/.local/share/icons`.
-- **Permission denied when running an AppImage:** the script normally sets the installed file executable. For a manually downloaded file, run `chmod +x path/to/Smart.Terminal-1.3.0-linux-x86_64.AppImage`.
+- **Permission denied when running an AppImage:** the script normally sets the installed file executable. For the manually downloaded v1.3.0 artifact, run `chmod +x ./Smart.Terminal-1.3.0-linux-x86_64.AppImage` from the directory containing that file.
 - **`apt` reports dependency errors:** run `sudo apt install -y ./Smart.Terminal-1.3.0-linux-amd64.deb` from the folder containing the downloaded package so `apt` can resolve dependencies.
 - **FUSE or AppImage sandbox error:** try `"$HOME/.local/bin/smart-terminal" --appimage-extract-and-run` for the script-installed AppImage, or add `--appimage-extract-and-run` to the manually downloaded file command. Do not disable system security settings to work around it.
-- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [release page](https://github.com/FVilli/my-smart-terminal/releases/latest), and verify again. If it still fails, do not use that download.
+- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [Smart Terminal v1.3.0 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.0), and verify again. If it still fails, do not use that download.
 - **Missing data or settings:** check whether you selected an external data repository during setup. The default data is under `~/.config/my-smart-terminal/data`; external data is at the path you chose.
 - **Remote-script caution:** `curl | sh` runs code received from the network and the artifacts are not signed. Inspect the script first if that trust decision is not acceptable.
 

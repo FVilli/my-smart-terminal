@@ -24,7 +24,7 @@ The base URL must be `http(s)`, without credentials or query parameters. The mod
 
 ## Self-hosted OpenAI-compatible / Unsloth
 
-For a self-hosted OpenAI-compatible service, select **OpenAI-compatible (self-hosted)** and use these fields:
+For a self-hosted OpenAI-compatible service, open the **AI** Settings tab (or the AI onboarding step), select **OpenAI-compatible (self-hosted)**, and use these fields:
 
 - **Base URL:** `https://unsloth.fvsg.mqu.it/v1`
 - **Model:** `unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_XL`

@@ -24,6 +24,9 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - [x] Global 128 KiB limit; STT audio has a 10 MiB per-channel limit + margin and real binary counting.
 - [x] Sanitized errors: stable codes, no stack/path/token to the renderer.
 - [x] AI/STT channels: text/audio also validated in main (defense in depth); token never returned.
+- [x] Setup AI: `setup:test-ai` / `setupTestAi` validates provider/base URL/model/token configuration in main, accepts current unsaved values, and is available only in the main process; token is never returned.
+- [x] STT setup: `sttBaseUrl`, `sttResponseFormat` (`json`/`verbose_json`), and `sttLanguage` are validated in main; URLs reject credentials and queries.
+- [x] Window control: `window:control` accepts only minimize, toggle-maximize, and close; maximize state is emitted through `window:maximized`.
 - [x] Negative tests: invalid payloads, unknown channel, oversize, wrong sender, subframe, foreign origin.
 
 ## Files and paths
@@ -42,7 +45,8 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - [x] History only from explicit editor submissions; no keystrokes/TUI; best-effort secret filter; opt-out.
 - [x] Clipboard opt-in, pause/clear, hash + dedupe, 32 KiB limit, best-effort secret filter.
 - [x] AI: explicit click only, shell detection, timeout/fallback, no automatic execution.
-- [x] STT: push-to-talk, permissions, audio in memory only, no temporary files, absolute local command without shell.
+- [x] STT: push-to-talk, permissions, audio in memory only, no temporary files, absolute local command without shell; base URL, response format, and language are constrained.
+- [x] Current smoke coverage: `npm run test:ipc-smoke`, `npm run test:ai-setup-smoke`, `npm run test:stt-setup-smoke`, `npm run test:stt-smoke`, and `npm run test:settings-smoke`.
 
 ## Coordinator and Git
 - [x] Primary lock with atomic mkdir, nonce, heartbeat, stale recovery; renderer gains no privileges from the role.

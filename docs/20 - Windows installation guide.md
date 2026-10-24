@@ -20,7 +20,7 @@ The v1.3.0 installer is `Smart.Terminal-1.3.0-win-x64.exe`. It is unsigned, so W
 
 ## Download and verify (optional)
 
-Download the installer from the [latest Smart Terminal release](https://github.com/FVilli/my-smart-terminal/releases/latest). On the release page, download `Smart.Terminal-1.3.0-win-x64.exe`. To check its integrity, also download `SHA256SUMS` from that same release and save both files in your Downloads folder.
+Download the installer from the [Smart Terminal v1.3.0 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.0). Download `Smart.Terminal-1.3.0-win-x64.exe` from that page. To check its integrity, also download `SHA256SUMS` from that same release and save both files in your Downloads folder.
 
 You can compare the installer with the published checksum using PowerShell. This block downloads both files from the same release and stops with a clear error if the expected checksum is missing or does not match:
 
@@ -52,7 +52,7 @@ A checksum match verifies that the file matches the checksum file you downloaded
 
 1. Double-click `Smart.Terminal-1.3.0-win-x64.exe` in Downloads.
 2. Follow the setup wizard. It installs for your Windows user, does not require administrator permission, and lets you change the installation folder. A desktop shortcut is offered/created.
-3. If SmartScreen warns that the app is unrecognized, continue only after you have checked that the installer came from the release page above and, if using the optional check, its checksum matches. Then choose **More info** and **Run anyway**. If you cannot verify the source, cancel the warning. Do not disable SmartScreen or other security protections.
+3. If SmartScreen warns that the app is unrecognized, continue only after you have checked that the installer came from the v1.3.0 release page above and, if using the optional check, its checksum matches. Then choose **More info** and **Run anyway**. If you cannot verify the source, cancel the warning. Do not disable SmartScreen or other security protections.
 4. Start **Smart Terminal** from the Start menu or desktop shortcut.
 
 On first launch, setup asks for a data repository location and machine name; AI and voice setup are optional. See the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md), [repository setup guide](18%20-%20Repository%20setup%20guide.md), and [user manual](12%20-%20User%20manual.md). You can use the terminal without configuring AI, voice, Git, or a network connection after installation.

@@ -8,6 +8,8 @@ status: accepted
 
 # M16A header design proposal
 
+> **Historical design snapshot:** this proposal and its mockup predate the current v1.3.0 build. The implemented title is dynamic (`Smart Terminal - Version <runtime version>`); `1.2.2` below is retained only as the mockup's historical sample.
+
 **Status:** Accepted — user approved on 2026-10-24.  
 **Mockup:** [`mockups/M16A - Header.png`](../mockups/M16A%20-%20Header.png) · source [`mockups/M16A - Header.html`](../mockups/M16A%20-%20Header.html)
 
@@ -25,7 +27,7 @@ VS Code's current source sets a custom title bar of **35 px with a Command Cente
 | --- | --- | --- |
 | App title bar | **35 px**, full window width | Replaces the current 48 px header; spans main column and sidebar |
 | Left app icon | 18×18 px inside 35×35 px hit area | Transparent-background Smart Terminal icon (M16B-T02) |
-| Centre title | `Smart Terminal - Version <runtime version>` | Dynamically supplied by app metadata; mockup uses 1.2.2 |
+| Centre title | `Smart Terminal - Version <runtime version>` | Dynamically supplied by app metadata; historical mockup uses 1.2.2 |
 | Header control buttons | 22×22 px, 4 px gaps | Gear and layout toggles |
 | Window controls | 46×35 px each | Minimize, maximize/restore, close |
 | Session tabs | **38 px** | Exactly 30% below the current 54–55 px, rounded to 38 px |
@@ -38,7 +40,7 @@ At 1024 px width the centre title gets priority; right controls remain reachable
 ## Header zones
 
 ```
-[ app icon ]              Smart Terminal - Version 1.2.2              [History] [Clipboard] [gear] | [_] [□] [×]
+[ app icon ]              Smart Terminal - Version <runtime version>              [History] [Clipboard] [gear] | [_] [□] [×]
 ```
 
 - No File/Edit/View/Window menu.

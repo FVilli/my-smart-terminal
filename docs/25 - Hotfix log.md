@@ -23,6 +23,8 @@ Milestones remain for planned work; hotfixes are tracked by issue + this log + p
 
 ## Entries
 
+The entries below are historical release records. Their versions describe the affected releases and are not the current application version; current documentation describes v1.3.0.
+
 | ID | Version | Symptom | Fix | Evidence |
 | --- | --- | --- | --- | --- |
 | HF-20261023-01 | 1.2.1 | Window title showed only `Smart Terminal`; version was not visible. | Prevented `page-title-updated` from replacing the versioned title and reasserted it after load. | `versionedWindowTitle` in settings smoke. |

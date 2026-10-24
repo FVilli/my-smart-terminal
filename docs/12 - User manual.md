@@ -42,6 +42,8 @@ Configuration uses `schema_version: 1`. If it is unreadable or unknown, the app 
 
 ## 4. Daily use
 
+The shell header is a 35 px full-window bar with a transparent icon and dynamic `Smart Terminal - Version <runtime version>` title. Session tabs are 38 px high. **History** and **Clipboard** are header toggles: selecting one shows that sidebar surface, and selecting the active one hides the sidebar. The assisted input is a single-border composer. Settings uses **Repository**, **AI**, **STT**, and **Appearance** tabs.
+
 ### Tabs and sessions
 
 - Press `+` and choose **Local** or an SSH alias read from `~/.ssh/config` (compatible `Include` and globs are also supported).
@@ -66,7 +68,7 @@ The sidebar alternates between **History** and **Clipboard**.
 - History: search text, filter by machine, copy, or insert into the draft. V1 records explicit assisted-editor submissions; native shell history is not recorded generally.
 - Clipboard: capture is opt-in. It can be paused, cleared, searched, copied, or inserted into the draft. Insertion never sends automatically.
 
-The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role. Application zoom is **Ctrl/Cmd-minus**, **Ctrl/Cmd-plus**, and **Ctrl/Cmd-0**; the narrow terminal shortcut limitation is documented in the [keyboard behavior ADR](23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md).
+The footer shows Git status (`synced`, `dirty`, `syncing`, `offline`, `error`) and the `primary`/`secondary` role. Application zoom is **Ctrl/Cmd-minus**, **Ctrl/Cmd-plus** (including `Ctrl+=`), and **Ctrl/Cmd-0**; the narrow terminal shortcut limitation is documented in the [keyboard behavior ADR](23%20-%20ADR%20assisted%20input%20and%20terminal%20keyboard%20behavior.md).
 
 ## 5. Data and synchronization
 

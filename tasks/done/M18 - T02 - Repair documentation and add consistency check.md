@@ -23,3 +23,9 @@ Apply the audit repairs and prevent future version/command drift.
 
 ## Acceptance
 Docs checks and new consistency check pass; uninstall no longer implies a version requirement; reviewer can verify the repair list.
+
+## Outcome
+- All uninstall commands now use `main/uninstall.sh` with explicit version-independent rationale; install commands remain pinned to v1.3.0.
+- docs/11 rewritten to current contracts, including window controls, setupTestAi and STT fields; Italian remnants removed.
+- docs/13 expanded; docs/26/25 framed as historical; Windows/macOS pinned-release wording and Linux fallback fixed.
+- Added `scripts/verify-doc-consistency.mjs` + `test:doc-consistency` + CI; docs links/install docs/consistency checks pass.
