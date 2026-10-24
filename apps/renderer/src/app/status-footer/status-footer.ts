@@ -5,26 +5,18 @@ import { MessageCenter } from '../messages/message-center';
 @Component({
   selector: 'app-status-footer',
   imports: [MessageCenter],
+  host: { class: 'flex h-footer flex-none items-center justify-between border-t border-line bg-terminal px-3 text-xs leading-[normal] text-muted' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span class="badge" data-testid="sync-badge" [attr.data-state]="badge().state">
-      <span class="dot"></span>{{ badge().label }}
+    <span class="badge group inline-flex items-center gap-1.5" data-testid="sync-badge" [attr.data-state]="badge().state">
+      <span class="dot size-2 rounded-full bg-accent group-data-[state=syncing]:bg-syncing group-data-[state=offline]:bg-muted group-data-[state=unconfigured]:bg-muted group-data-[state=error]:bg-danger"></span>{{ badge().label }}
     </span>
     <app-message-center />
     @if (primary()) {
-      <span class="primary" data-testid="primary-indicator" title="Primary instance">★ Primary instance</span>
+      <span class="primary text-accent" data-testid="primary-indicator" title="Primary instance">★ Primary instance</span>
     }
   `,
-  styles: `
-    :host { display: flex; flex: none; align-items: center; justify-content: space-between; height: 28px; padding: 0 12px;
-      background: var(--terminal-bg); border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
-    .badge { display: inline-flex; align-items: center; gap: 6px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-    [data-state='syncing'] .dot { background: #e3b341; }
-    [data-state='offline'] .dot, [data-state='unconfigured'] .dot { background: var(--text-muted); }
-    [data-state='error'] .dot { background: var(--danger); }
-    .primary { color: var(--accent); }
-  `,
+
 })
 export class StatusFooter {
   readonly syncState = input<'synced' | 'dirty' | 'syncing' | 'offline' | 'error'>('synced');

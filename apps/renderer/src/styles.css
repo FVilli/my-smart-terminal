@@ -91,7 +91,7 @@
   }
 
   .icon-btn {
-    @apply inline-flex cursor-pointer items-center justify-center rounded-sm border border-transparent text-muted;
+    @apply inline-flex cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-muted;
   }
   .icon-btn:hover:not(:disabled) {
     @apply bg-line text-fg;
@@ -109,35 +109,44 @@
   .field:focus-visible {
     @apply border-accent outline-none;
   }
+  .field::placeholder {
+    @apply text-muted;
+  }
 
   .card {
     @apply mb-2 min-w-0 rounded-md border border-line bg-card px-2.5 py-2;
   }
 }
 
-* {
-  box-sizing: border-box;
-}
+/* Base reset lives in the base layer so utilities and component styles can
+   override it; keep it minimal (no Tailwind preflight). */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html,
-body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-}
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+  }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 14px;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
 
-button,
-input,
-textarea {
-  font: inherit;
-  color: inherit;
+  button,
+  input,
+  textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
 }

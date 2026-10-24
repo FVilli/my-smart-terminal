@@ -6,39 +6,32 @@ import { SettingsStore } from '../settings/settings-store';
 @Component({
   selector: 'app-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block flex-none' },
   template: `
-    <header class="header" (dblclick)="toggleMaximize()">
-      <img class="icon" src="/icon.png" alt="" />
-      <div class="title" data-testid="header-version">Smart Terminal - Version {{ version() }}</div>
-      <div class="actions">
-        <button type="button" class="toggle" [class.active]="layout.panel() !== null" [attr.aria-pressed]="layout.panel() !== null" data-testid="header-panel-toggle" [attr.title]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" [attr.aria-label]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" (click)="toggle()">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="1.5" fill="none" stroke="currentColor"/><path d="M12.5 3v14" [attr.fill]="layout.panel() !== null ? 'currentColor' : 'none'" [attr.stroke]="layout.panel() !== null ? 'currentColor' : 'none'"/></svg>
+    <header class="header relative flex h-header flex-none items-center justify-between gap-2 border-b border-line bg-terminal px-2" (dblclick)="toggleMaximize()">
+      <img class="icon h-[18px] w-[18px] object-contain" src="/icon.png" alt="" />
+      <div class="title absolute left-1/2 max-w-[45%] -translate-x-1/2 truncate text-xs leading-[normal]" data-testid="header-version">Smart Terminal - Version {{ version() }}</div>
+      <div class="actions inline-flex min-w-0 items-center gap-1">
+        <button type="button" class="toggle inline-flex h-[26px] w-[30px] cursor-pointer items-center justify-center rounded-sm border border-transparent bg-transparent p-1 text-muted focus-visible:outline-2 focus-visible:outline-accent" [class.active]="layout.panel() !== null" [attr.aria-pressed]="layout.panel() !== null" data-testid="header-panel-toggle" [attr.title]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" [attr.aria-label]="layout.panel() === null ? 'Show side panel' : 'Hide side panel'" (click)="toggle()">
+          <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="1.5" fill="none" stroke="currentColor"/><path d="M12.5 3v14" [attr.fill]="layout.panel() !== null ? 'currentColor' : 'none'" [attr.stroke]="layout.panel() !== null ? 'currentColor' : 'none'"/></svg>
         </button>
-        <button type="button" class="settings" data-testid="settings-open" aria-label="Settings" title="Settings" (click)="settings.openSettings()">⚙</button>
+        <button type="button" class="settings h-[30px] w-[30px] cursor-pointer rounded-md border border-transparent bg-transparent text-base leading-[normal] text-muted hover:border-line hover:text-fg focus-visible:border-line focus-visible:text-fg focus-visible:outline-none" data-testid="settings-open" aria-label="Settings" title="Settings" (click)="settings.openSettings()">⚙</button>
         @if (showControls()) {
-          <div class="window-controls">
-            <button type="button" data-testid="window-minimize" aria-label="Minimize" title="Minimize" (click)="windowControl('minimize', $event)">_</button>
-            <button type="button" data-testid="window-maximize" [attr.aria-label]="maximized() ? 'Restore' : 'Maximize'" [title]="maximized() ? 'Restore' : 'Maximize'" (click)="windowControl('toggle-maximize', $event)">{{ maximized() ? '❐' : '□' }}</button>
-            <button type="button" data-testid="window-close" aria-label="Close" title="Close" (click)="windowControl('close', $event)">×</button>
+          <div class="window-controls inline-flex min-w-0 items-center gap-1">
+            <button type="button" class="-my-px h-header w-[38px] cursor-pointer border-0 bg-transparent text-[15px] text-fg focus-visible:outline-2 focus-visible:outline-accent" data-testid="window-minimize" aria-label="Minimize" title="Minimize" (click)="windowControl('minimize', $event)">_</button>
+            <button type="button" class="-my-px h-header w-[38px] cursor-pointer border-0 bg-transparent text-[15px] text-fg focus-visible:outline-2 focus-visible:outline-accent" data-testid="window-maximize" [attr.aria-label]="maximized() ? 'Restore' : 'Maximize'" [title]="maximized() ? 'Restore' : 'Maximize'" (click)="windowControl('toggle-maximize', $event)">{{ maximized() ? '❐' : '□' }}</button>
+            <button type="button" class="-my-px h-header w-[38px] cursor-pointer border-0 bg-transparent text-[15px] text-fg hover:bg-danger-strong hover:text-white focus-visible:outline-2 focus-visible:outline-accent" data-testid="window-close" aria-label="Close" title="Close" (click)="windowControl('close', $event)">×</button>
           </div>
         }
       </div>
     </header>
   `,
   styles: `
-    :host { display: block; flex: none; }
-    .header { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 35px; flex: none; padding: 0 8px; background: var(--terminal-bg); border-bottom: 1px solid var(--border); -webkit-app-region: drag; }
-    .icon { width: 18px; height: 18px; object-fit: contain; }
-    .title { position: absolute; left: 50%; transform: translateX(-50%); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-    .actions, .window-controls { display: inline-flex; align-items: center; gap: 4px; min-width: 0; -webkit-app-region: no-drag; }
-    .toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px; padding: 4px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }
-    .toggle svg { width: 18px; height: 18px; }
+    /* Only what utilities cannot express: native window drag regions and the
+       active-state wash that depends on an Angular class binding. */
+    .header { -webkit-app-region: drag; }
+    .actions, .window-controls { -webkit-app-region: no-drag; }
     .toggle.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-    .toggle:focus-visible, .settings:focus-visible, .window-controls button:focus-visible { outline: 2px solid var(--accent); }
-    .settings { width: 30px; height: 30px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; }
-    .settings:hover, .settings:focus-visible { border-color: var(--border); color: var(--text); outline: none; }
-    .window-controls button { width: 38px; height: 35px; margin: -1px 0; border: 0; background: transparent; color: var(--text); cursor: pointer; font-size: 15px; }
-    .window-controls button:last-child:hover { background: #c42b1c; color: white; }
   `,
 })
 export class AppHeader {

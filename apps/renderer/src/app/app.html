@@ -1,6 +1,6 @@
 <app-header />
-<main class="shell" [class.sidebar-hidden]="layout.panel() === null" aria-label="Smart Terminal">
-  <section class="main-column">
+<main class="shell grid min-h-0 w-full flex-1 grid-cols-[3fr_1fr] overflow-hidden [&.sidebar-hidden]:grid-cols-[minmax(0,1fr)]" [class.sidebar-hidden]="layout.panel() === null" aria-label="Smart Terminal">
+  <section class="main-column flex min-h-0 min-w-0 flex-col">
     <app-session-tabs
       [sessions]="store.sessions()"
       [activeId]="store.activeId()"
@@ -12,16 +12,16 @@
       (menuOpened)="loadSshAliases()"
     />
     @if (pendingCloseId(); as closingId) {
-      <div class="notice" role="alertdialog" aria-label="Conferma chiusura" data-testid="close-confirm">
-        <span>Close the active session? The process will be terminated.</span>
-        <button type="button" data-testid="close-confirm-yes" (click)="confirmClose()">Close session</button>
-        <button type="button" data-testid="close-confirm-no" (click)="cancelClose()">Cancel</button>
+      <div class="notice flex flex-none items-center gap-3 border-b border-line bg-input px-3.5 py-2 text-[13px]" role="alertdialog" aria-label="Conferma chiusura" data-testid="close-confirm">
+        <span class="min-w-0 flex-1">Close the active session? The process will be terminated.</span>
+        <button type="button" class="btn px-3" data-testid="close-confirm-yes" (click)="confirmClose()">Close session</button>
+        <button type="button" class="btn px-3" data-testid="close-confirm-no" (click)="cancelClose()">Cancel</button>
       </div>
     }
     @if (store.createError(); as error) {
-      <div class="notice notice--error" role="alert" data-testid="create-error">
-        <span>{{ error }}</span>
-        <button type="button" data-testid="create-retry" (click)="retryCreate()">Retry</button>
+      <div class="notice notice--error flex flex-none items-center gap-3 border-b border-line bg-input px-3.5 py-2 text-[13px] text-danger" role="alert" data-testid="create-error">
+        <span class="min-w-0 flex-1">{{ error }}</span>
+        <button type="button" class="btn px-3" data-testid="create-retry" (click)="retryCreate()">Retry</button>
       </div>
     }
     <app-terminal-workarea>
@@ -29,9 +29,9 @@
         <app-terminal-panel [sessionId]="session.id" [active]="session.id === store.activeId()" />
       }
       @if (store.sessions().length === 0 && !store.creating()) {
-        <div class="empty-state" data-testid="empty-state">
+        <div class="empty-state flex h-full flex-col items-center justify-center gap-3 text-muted" data-testid="empty-state">
           <p>No open sessions.</p>
-          <button type="button" data-testid="empty-create" (click)="createLocal()">New local session</button>
+          <button type="button" class="btn px-3" data-testid="empty-create" (click)="createLocal()">New local session</button>
         </div>
       }
     </app-terminal-workarea>
@@ -48,7 +48,7 @@
     />
   </section>
   @if (layout.panel() !== null) {
-  <aside class="sidebar" data-testid="sidebar">
+  <aside class="sidebar h-full min-h-0 min-w-0 overflow-hidden border-l border-line" data-testid="sidebar">
     <app-sidebar-panel
       [activeTab]="search.tab()"
       [query]="search.query()"

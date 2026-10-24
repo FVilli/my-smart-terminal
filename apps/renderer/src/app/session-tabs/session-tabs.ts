@@ -3,12 +3,13 @@ import type { TerminalSessionView } from '../session.model';
 
 @Component({
   selector: 'app-session-tabs',
+  host: { class: 'block border-b border-line bg-tab' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs" role="tablist" aria-label="Terminal sessions">
+    <div class="tabs flex h-[37px] min-w-0 items-stretch" role="tablist" aria-label="Terminal sessions">
       @for (session of sessions(); track session.id) {
         <div
-          class="tab"
+          class="tab group flex min-w-0 max-w-tab cursor-pointer items-center gap-2 whitespace-nowrap border-r border-line pl-4 pr-2 text-muted"
           role="tab"
           [class.tab--active]="session.id === activeId()"
           [class.tab--exited]="session.status === 'exited' || session.status === 'error'"
@@ -19,11 +20,11 @@ import type { TerminalSessionView } from '../session.model';
           (click)="selected.emit(session.id)"
           (keydown.enter)="selected.emit(session.id)"
         >
-          <span class="tab-label">{{ session.label }}</span>
-          <span class="tab-target">{{ session.target }}</span>
+          <span class="tab-label font-semibold group-[.tab--exited]:line-through">{{ session.label }}</span>
+          <span class="tab-target truncate text-xs leading-[normal]">{{ session.target }}</span>
           <button
             type="button"
-            class="tab-close"
+            class="tab-close icon-btn h-5 w-5 leading-none"
             data-testid="session-tab-close"
             [attr.data-session-id]="session.id"
             [attr.aria-label]="'Close ' + session.label"
@@ -33,10 +34,10 @@ import type { TerminalSessionView } from '../session.model';
           </button>
         </div>
       }
-      <div class="plus-wrap">
+      <div class="plus-wrap relative flex">
         <button
           type="button"
-          class="plus"
+          class="plus h-[38px] w-[38px] cursor-pointer border-0 bg-transparent text-xl leading-[normal] text-muted hover:text-accent"
           data-testid="session-plus"
           aria-label="New session"
           aria-haspopup="menu"
@@ -46,10 +47,11 @@ import type { TerminalSessionView } from '../session.model';
           +
         </button>
         @if (menuOpen()) {
-          <div class="menu" role="menu">
+          <div class="menu absolute left-0 top-full z-10 flex min-w-[220px] flex-col rounded-md border border-line bg-tab p-1" role="menu">
             <button
               type="button"
               role="menuitem"
+              class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted"
               data-testid="session-new-local"
               (click)="menuOpen.set(false); createLocal.emit()"
             >
@@ -63,11 +65,11 @@ import type { TerminalSessionView } from '../session.model';
                 [attr.data-alias]="alias"
                 (click)="menuOpen.set(false); createSsh.emit(alias)"
               >
-                <span class="menu-kind">SSH</span><small>{{ alias }}</small>
+                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">{{ alias }}</small>
               </button>
             } @empty {
-              <button type="button" role="menuitem" data-testid="session-new-ssh" disabled>
-                <span class="menu-kind">SSH</span><small>No hosts in ~/.ssh/config</small>
+              <button type="button" role="menuitem" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted" data-testid="session-new-ssh" disabled>
+                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">No hosts in ~/.ssh/config</small>
               </button>
             }
           </div>
@@ -76,34 +78,10 @@ import type { TerminalSessionView } from '../session.model';
     </div>
   `,
   styles: `
-    :host { display: block; background: var(--tab-bg); border-bottom: 1px solid var(--border); }
-    .tabs { display: flex; align-items: stretch; height: 37px; min-width: 0; }
-    .tab {
-      display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; padding: 0 8px 0 16px;
-      border-right: 1px solid var(--border); color: var(--text-muted); cursor: pointer; white-space: nowrap;
-    }
+    /* State rules that depend on Angular class bindings; everything else is a utility. */
     .tab--active { background: var(--tab-active); color: var(--text); }
     .tab:hover:not(.tab--active) { background: var(--border); color: var(--text); }
     .tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
-    .tab--exited .tab-label { text-decoration: line-through; }
-    .tab-label { font-weight: 600; }
-    .tab-target { font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
-    button { background: none; border: 0; cursor: pointer; }
-    .tab-close { color: var(--text-muted); border-radius: 4px; width: 20px; height: 20px; line-height: 1; }
-    .tab-close:hover { background: var(--border); color: var(--text); }
-    .plus-wrap { position: relative; display: flex; }
-    .plus { width: 38px; min-height: 38px; font-size: 20px; color: var(--text-muted); }
-    .plus:hover { color: var(--accent); }
-    .menu {
-      position: absolute; top: 100%; left: 0; z-index: 10; min-width: 220px; display: flex; flex-direction: column;
-      background: var(--tab-bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px;
-    }
-    .menu button { text-align: left; padding: 5px 8px; border-radius: 4px; font-size: 11px; }
-    .menu button:hover:not(:disabled) { background: var(--border); }
-    .menu button:disabled { color: var(--text-muted); cursor: not-allowed; }
-    .menu button > small { margin-left: 6px; color: var(--text-muted); font-size: 10px; font-weight: 400; }
-    .menu button:disabled > small { font-size: 10px; }
-    .menu-kind { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; line-height: 1.2; }
   `,
 })
 export class SessionTabs {

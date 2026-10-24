@@ -21,7 +21,7 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
   selector: 'app-root',
   imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  host: { class: 'flex h-full w-full flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {

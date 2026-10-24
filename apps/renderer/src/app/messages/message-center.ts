@@ -9,26 +9,18 @@ const ICONS: Record<MessageKind, string> = {
 
 @Component({
   selector: 'app-message-center',
+  host: { class: 'block min-w-0 grow' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (messages.message(); as message) {
-      <div class="message" [attr.data-kind]="message.kind" data-testid="message-center" role="status" aria-live="polite">
-        <span class="emoji" aria-hidden="true">{{ icon(message.kind) }}</span>
-        <span class="text">{{ message.text }}</span>
-        <button type="button" class="dismiss" aria-label="Dismiss message" (click)="messages.clear()">×</button>
+      <div class="message group flex min-h-footer items-center gap-[7px] bg-transparent px-2 text-xs leading-[1.2] text-muted" [attr.data-kind]="message.kind" data-testid="message-center" role="status" aria-live="polite">
+        <span class="emoji flex-none" aria-hidden="true">{{ icon(message.kind) }}</span>
+        <span class="text min-w-0 flex-1 truncate group-data-[kind=warning]:text-warning group-data-[kind=critical]:text-danger">{{ message.text }}</span>
+        <button type="button" class="dismiss flex-none cursor-pointer border-0 bg-transparent px-0.5 text-sm leading-none text-muted hover:text-fg" aria-label="Dismiss message" (click)="messages.clear()">×</button>
       </div>
     }
   `,
-  styles: `
-    :host { display: block; flex: 1 1 auto; min-width: 0; }
-    .message { display: flex; align-items: center; gap: 7px; min-height: 28px; padding: 0 8px; background: transparent; color: var(--text-muted); font-size: 12px; line-height: 1.2; }
-    .message[data-kind='warning'] .text { color: #e0b050; }
-    .message[data-kind='critical'] .text { color: var(--danger); }
-    .emoji { flex: none; }
-    .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .dismiss { flex: none; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; }
-    .dismiss:hover { color: var(--text); }
-  `,
+
 })
 export class MessageCenter {
   protected readonly messages = inject(MessageStore);

@@ -17,13 +17,15 @@ export function shortTimestamp(timestamp: string): string {
 
 @Component({
   selector: 'app-sidebar-panel',
+  host: { class: 'flex h-full min-h-0 min-w-0 flex-col bg-sidebar' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs" role="tablist">
+    <div class="tabs flex flex-none border-b border-line" role="tablist">
       <button
         type="button"
         role="tab"
         data-testid="sidebar-tab-clipboard"
+        class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
         [class.active]="activeTab() === 'clipboard'"
         [attr.aria-selected]="activeTab() === 'clipboard'"
         (click)="tabChange.emit('clipboard')"
@@ -34,6 +36,7 @@ export function shortTimestamp(timestamp: string): string {
         type="button"
         role="tab"
         data-testid="sidebar-tab-history"
+        class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
         [class.active]="activeTab() === 'history'"
         [attr.aria-selected]="activeTab() === 'history'"
         (click)="tabChange.emit('history')"
@@ -41,8 +44,9 @@ export function shortTimestamp(timestamp: string): string {
         History
       </button>
     </div>
-    <div class="filters">
+    <div class="filters flex flex-none flex-col gap-2 p-3">
       <input
+        class="field"
         type="search"
         data-testid="sidebar-search"
         [placeholder]="activeTab() === 'clipboard' ? 'Search clipboard…' : 'Search history…'"
@@ -50,19 +54,19 @@ export function shortTimestamp(timestamp: string): string {
         [value]="query()"
         (input)="queryChange.emit($any($event.target).value)"
       />
-      <div class="filter-row">
-        <select data-testid="sidebar-machine-filter" aria-label="Machine filter" (change)="machineChange.emit($any($event.target).value)">
+      <div class="filter-row flex min-w-0 gap-2">
+        <select class="field flex-1 basis-0" data-testid="sidebar-machine-filter" aria-label="Machine filter" (change)="machineChange.emit($any($event.target).value)">
           <option value="" [selected]="machineFilter() === ''">All machines</option>
           @for (machine of machines(); track machine) {
             <option [value]="machine" [selected]="machine === machineFilter()">{{ machine }}</option>
           }
         </select>
-        <button type="button" class="refresh" data-testid="sidebar-refresh" aria-label="Refresh" title="Refresh" (click)="refresh.emit()">↻</button>
+        <button type="button" class="refresh btn flex-none px-2.5 py-0" data-testid="sidebar-refresh" aria-label="Refresh" title="Refresh" (click)="refresh.emit()">↻</button>
       </div>
     </div>
     @if (activeTab() === 'clipboard') {
-      <div class="capture" data-testid="clipboard-capture">
-        <label class="capture-toggle">
+      <div class="capture flex min-w-0 flex-none flex-col gap-2 px-3 pb-3" data-testid="clipboard-capture">
+        <label class="capture-toggle flex items-center gap-2 text-fg">
           <input
             type="checkbox"
             data-testid="clipboard-enable"
@@ -71,89 +75,61 @@ export function shortTimestamp(timestamp: string): string {
           />
           Enable clipboard capture
         </label>
-        <div class="capture-actions">
+        <div class="capture-actions flex flex-wrap gap-2">
           <button
             type="button"
+            class="btn"
             data-testid="clipboard-pause"
             [disabled]="!clipboardState().enabled"
             (click)="configureClipboard.emit({ enabled: true, paused: !clipboardState().paused })"
           >
             {{ clipboardState().paused ? 'Resume' : 'Pause' }}
           </button>
-          <button type="button" data-testid="clipboard-clear-dedupe" (click)="clearClipboard.emit()">Clear dedupe</button>
+          <button type="button" class="btn" data-testid="clipboard-clear-dedupe" (click)="clearClipboard.emit()">Clear dedupe</button>
         </div>
-        <p class="capture-status" data-testid="clipboard-status">
+        <p class="capture-status m-0 wrap-anywhere text-xs leading-[normal] text-muted" data-testid="clipboard-status">
           {{ captureLabel() }}@if (clipboardState().lastEventAt; as last) { · last: {{ last }} }
         </p>
         @if (clipboardError()) {
-          <p class="capture-error" role="alert" data-testid="clipboard-error">Clipboard capture state unavailable.</p>
+          <p class="capture-error m-0 mb-2 text-xs text-danger" role="alert" data-testid="clipboard-error">Clipboard capture state unavailable.</p>
         }
       </div>
     }
     @if (notice(); as message) {
-      <p class="notice" role="status" data-testid="sidebar-notice">{{ message }}</p>
+      <p class="notice m-0 flex-none px-3 pb-2 text-xs leading-[normal] text-accent" role="status" data-testid="sidebar-notice">{{ message }}</p>
     }
-    <div class="list" data-testid="sidebar-list">
+    <div class="list min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3" data-testid="sidebar-list">
       @if (error()) {
-        <p class="error" role="alert" data-testid="sidebar-error">Search unavailable. The terminal is unaffected; try again with ↻.</p>
+        <p class="error m-0 mb-2 text-xs text-danger" role="alert" data-testid="sidebar-error">Search unavailable. The terminal is unaffected; try again with ↻.</p>
       }
       @for (entry of entries(); track $index) {
-        <article class="entry" data-testid="sidebar-entry" [attr.data-kind]="entry.kind">
-          <header class="meta">
+        <article class="entry card border-l-2 border-l-transparent hover:border-l-accent" data-testid="sidebar-entry" [attr.data-kind]="entry.kind">
+          <header class="meta flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-muted wrap-anywhere">
             <time data-testid="entry-time">{{ time(entry) }}</time>
-            <span class="machine" data-testid="entry-machine">{{ entry.machine }}</span>
+            <span class="machine text-accent" data-testid="entry-machine">{{ entry.machine }}</span>
             <span data-testid="entry-session">{{ entry.sessionId }}</span>
             @if (entry.source) {
-              <span class="source" data-testid="entry-source">{{ entry.source }}</span>
+              <span class="source uppercase tracking-[.04em]" data-testid="entry-source">{{ entry.source }}</span>
             }
           </header>
-          <p class="preview" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
-          <div class="entry-actions">
-            <button type="button" data-testid="entry-copy" (click)="copyText.emit(entry.text)">Copy</button>
-            <button type="button" data-testid="entry-insert" (click)="insertText.emit(entry.text)">Insert</button>
+          <p class="preview my-1.5 font-mono text-xs leading-[normal] wrap-anywhere" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
+          <div class="entry-actions flex gap-2">
+            <button type="button" class="btn px-2.5 py-1 text-xs leading-[normal]" data-testid="entry-copy" (click)="copyText.emit(entry.text)">Copy</button>
+            <button type="button" class="btn px-2.5 py-1 text-xs leading-[normal]" data-testid="entry-insert" (click)="insertText.emit(entry.text)">Insert</button>
           </div>
         </article>
       } @empty {
         @if (loading()) {
-          <p class="empty" data-testid="sidebar-loading">Loading…</p>
+          <p class="empty mt-6 text-center text-muted" data-testid="sidebar-loading">Loading…</p>
         } @else if (!error()) {
-          <p class="empty" data-testid="sidebar-empty">{{ emptyMessage() }}</p>
+          <p class="empty mt-6 text-center text-muted" data-testid="sidebar-empty">{{ emptyMessage() }}</p>
         }
       }
     </div>
   `,
   styles: `
-    :host { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; background: var(--sidebar-bg); }
-    .tabs { display: flex; flex: none; border-bottom: 1px solid var(--border); }
-    .tabs button { flex: 1; padding: 12px; background: none; border: 0; color: var(--text-muted); cursor: pointer; }
+    /* Active tab state depends on an Angular class binding. */
     .tabs button.active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
-    .filters { display: flex; flex-direction: column; gap: 8px; padding: 12px; flex: none; }
-    .filters input, .filters select {
-      min-width: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
-    }
-    .filter-row { display: flex; gap: 8px; min-width: 0; }
-    .filter-row select { flex: 1 1 0; }
-    .refresh { flex: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; cursor: pointer; color: var(--text); }
-    .capture { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 12px; flex: none; min-width: 0; }
-    .capture-toggle { display: flex; align-items: center; gap: 8px; color: var(--text); }
-    .capture-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .capture-actions button, .entry-actions button {
-      background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--text);
-    }
-    .capture-actions button:disabled { color: var(--text-muted); cursor: default; }
-    .capture-status { margin: 0; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
-    .capture-error, .error { margin: 0 0 8px; color: var(--danger, #e5484d); font-size: 12px; }
-    .notice { margin: 0; padding: 0 12px 8px; color: var(--accent); font-size: 12px; flex: none; }
-    .list { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 12px 12px; }
-    .empty { color: var(--text-muted); text-align: center; margin-top: 24px; }
-    .entry { background: var(--card-bg); border: 1px solid var(--border); border-left: 2px solid transparent; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; min-width: 0; }
-    .entry:hover { border-left-color: var(--accent); }
-    .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--text-muted); overflow-wrap: anywhere; }
-    .machine { color: var(--accent); }
-    .source { text-transform: uppercase; letter-spacing: 0.04em; }
-    .preview { margin: 6px 0; font-family: var(--font-code); font-size: 12px; overflow-wrap: anywhere; word-break: break-word; }
-    .entry-actions { display: flex; gap: 8px; }
-    .entry-actions button { padding: 4px 10px; font-size: 12px; }
   `,
 })
 export class SidebarPanel {
