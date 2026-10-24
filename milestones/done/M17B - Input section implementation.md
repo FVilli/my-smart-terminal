@@ -10,4 +10,10 @@ depends_on: "M17A"
 
 # M17B - Input section implementation
 
-Blocked until M17A is explicitly approved. Implementation scope is defined by docs/27.
+## Delivered
+- Single 1px/8px bordered composer with textarea and bottom action row.
+- AI, mic and send inside the border at bottom right; send is the filled primary circle.
+- Composer height 103px at 1024/1440; focus/disabled/recording states and notices preserved.
+- Keyboard/IME/AI/STT semantics unchanged; editor/layout tests green.
+
+Implementation reference: `docs/27 - M17A input design proposal.md`.
