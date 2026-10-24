@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { AppConfig } from './app-config';
 import { STT_TEST_TEXT, SttService } from './stt-service';
+import { stubStores } from './testing/stores';
 
 const config = (overrides: Partial<AppConfig> = {}): AppConfig => ({
   machineName: 'host',
@@ -16,23 +17,6 @@ const config = (overrides: Partial<AppConfig> = {}): AppConfig => ({
 
 const audio = (size = 32): Uint8Array => new Uint8Array(size).fill(7);
 
-function stores(cfg: AppConfig | undefined, token: string | null = 'cloud-token') {
-  return {
-    configStore: {
-      load: vi.fn(() =>
-        cfg === undefined
-          ? { status: 'missing' as const }
-          : { status: 'valid' as const, config: cfg, restoredFromBackup: false },
-      ),
-    },
-    secrets: {
-      isSecure: vi.fn(() => true),
-      has: vi.fn(() => token !== null),
-      get: vi.fn(() => token ?? undefined),
-    },
-  };
-}
-
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'st-stt-service-'));
 afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -40,35 +24,35 @@ afterAll(() => {
 
 describe('SttService', () => {
   it('reports unconfigured without config or provider', () => {
-    expect(new SttService(stores(undefined) as never).status()).toMatchObject({ configured: false, provider: 'none', hasToken: false });
-    expect(new SttService(stores(config({ sttProvider: 'none' })) as never).status()).toMatchObject({
+    expect(new SttService(stubStores(undefined, 'cloud-token') as never).status()).toMatchObject({ configured: false, provider: 'none', hasToken: false });
+    expect(new SttService(stubStores(config({ sttProvider: 'none' }), 'cloud-token') as never).status()).toMatchObject({
       configured: false,
       provider: 'none',
     });
   });
 
   it('reports local provider configured only with a command', () => {
-    const withCommand = new SttService(stores(config()) as never).status();
+    const withCommand = new SttService(stubStores(config(), 'cloud-token') as never).status();
     expect(withCommand).toMatchObject({ configured: true, provider: 'local' });
     expect(withCommand.warning).toBeUndefined();
-    const withoutCommand = new SttService(stores(config({ sttCommand: undefined })) as never).status();
+    const withoutCommand = new SttService(stubStores(config({ sttCommand: undefined }), 'cloud-token') as never).status();
     expect(withoutCommand).toMatchObject({ configured: false, provider: 'local' });
     expect(withoutCommand.warning).toContain('Local STT command');
   });
 
   it('reports cloud provider configured only with the stt:cloud token', () => {
-    const configured = new SttService(stores(config({ sttProvider: 'cloud', sttCommand: undefined })) as never).status();
+    const configured = new SttService(stubStores(config({ sttProvider: 'cloud', sttCommand: undefined }), 'cloud-token') as never).status();
     expect(configured).toMatchObject({ configured: true, hasToken: true, secureStorage: true });
-    const missing = new SttService(stores(config({ sttProvider: 'cloud' }), null) as never).status();
+    const missing = new SttService(stubStores(config({ sttProvider: 'cloud' }), null) as never).status();
     expect(missing).toMatchObject({ configured: false, hasToken: false });
     expect(missing.warning).toContain('STT token');
-    const secrets = stores(config({ sttProvider: 'cloud' }));
+    const secrets = stubStores(config({ sttProvider: 'cloud' }), 'cloud-token');
     new SttService(secrets as never).status();
     expect(secrets.secrets.has).toHaveBeenCalledWith('stt:cloud');
   });
 
   it('uses the selected AI provider URL and token for shared cloud STT', async () => {
-    const secrets = stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttBaseUrl: 'https://ignored.example/v1', sttCommand: undefined }));
+    const secrets = stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttBaseUrl: 'https://ignored.example/v1', sttCommand: undefined }), 'cloud-token');
     const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
       expect(String(url)).toBe('https://llm.example/v1/audio/transcriptions');
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer cloud-token');
@@ -91,7 +75,7 @@ describe('SttService', () => {
         { id: 'chat-model', audio_workflows: ['chat'] },
       ] }), { status: 200 });
     });
-    const service = new SttService({ ...stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttCommand: undefined })), fetch: fetcher as typeof fetch });
+    const service = new SttService({ ...stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttCommand: undefined }), 'cloud-token'), fetch: fetcher as typeof fetch });
     await expect(service.models()).resolves.toEqual([
       { id: 'qwen3-asr-0.6b', loaded: false },
       { id: 'qwen3-asr-1.7b', loaded: false },
@@ -99,7 +83,7 @@ describe('SttService', () => {
   });
 
   it('rejects shared STT for unsupported AI providers', async () => {
-    const service = new SttService(stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'anthropic', sttCommand: undefined })) as never);
+    const service = new SttService(stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'anthropic', sttCommand: undefined }), 'cloud-token') as never);
     expect(service.status()).toMatchObject({ configured: false, warning: expect.stringContaining('OpenAI-compatible') });
     await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ skipped: true, reason: 'unconfigured' });
   });
@@ -107,7 +91,7 @@ describe('SttService', () => {
   it('returns a fixed transcript in test mode without adapters, network or files', async () => {
     const run = vi.fn();
     const fetcher = vi.fn();
-    const service = new SttService({ ...stores(config()), testMode: true, run, fetch: fetcher as never });
+    const service = new SttService({ ...stubStores(config(), 'cloud-token'), testMode: true, run, fetch: fetcher as never });
     expect(service.status()).toMatchObject({ configured: true, warning: 'STT test mode active.' });
     await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: STT_TEST_TEXT, skipped: false, diagnostics: { stage: 'test', serviceReached: false } });
     expect(run).not.toHaveBeenCalled();
@@ -116,7 +100,7 @@ describe('SttService', () => {
   });
 
   it('validates audio size and mime type in test mode too', async () => {
-    const service = new SttService({ ...stores(config()), testMode: true });
+    const service = new SttService({ ...stubStores(config(), 'cloud-token'), testMode: true });
     expect(await service.transcribe({ audio: new Uint8Array(0), mimeType: 'audio/webm' })).toMatchObject({
       skipped: true,
       reason: 'invalid-audio',
@@ -139,7 +123,7 @@ describe('SttService', () => {
     const run = vi.fn(async (_file: string, _args: readonly string[], _input: Uint8Array, _timeoutMs: number) => ({
       stdout: ' local dictation ',
     }));
-    const service = new SttService({ ...stores(config()), run });
+    const service = new SttService({ ...stubStores(config(), 'cloud-token'), run });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
     expect(result).toMatchObject({ text: 'local dictation', skipped: false });
     expect(run).toHaveBeenCalledTimes(1);
@@ -154,7 +138,7 @@ describe('SttService', () => {
       return new Response(JSON.stringify({ text: 'cloud dictation' }), { status: 200 });
     });
     const service = new SttService({
-      ...stores(config({ sttProvider: 'cloud', sttCommand: undefined })),
+      ...stubStores(config({ sttProvider: 'cloud', sttCommand: undefined }), 'cloud-token'),
       fetch: fetcher as typeof fetch,
     });
     const result = await service.transcribe({ audio: audio(), mimeType: 'audio/webm' });
@@ -166,7 +150,7 @@ describe('SttService', () => {
     const fetcher = vi.fn();
     const run = vi.fn();
     const cloud = new SttService({
-      ...stores(config({ sttProvider: 'cloud', sttCommand: undefined }), null),
+      ...stubStores(config({ sttProvider: 'cloud', sttCommand: undefined }), null),
       fetch: fetcher as never,
       run,
     });
@@ -174,7 +158,7 @@ describe('SttService', () => {
       skipped: true,
       reason: 'missing-token',
     });
-    const none = new SttService({ ...stores(config({ sttProvider: 'none' })), run });
+    const none = new SttService({ ...stubStores(config({ sttProvider: 'none' }), 'cloud-token'), run });
     expect(await none.transcribe({ audio: audio(), mimeType: 'audio/webm' })).toMatchObject({
       skipped: true,
       reason: 'unconfigured',

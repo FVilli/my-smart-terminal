@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { stubStores } from './testing/stores';
 import type { AppConfig } from './app-config';
 import { AiService } from './ai-service';
 
@@ -11,25 +12,14 @@ const config = (overrides: Partial<AppConfig> = {}): AppConfig => ({
   ...overrides,
 });
 
-function stores(cfg: AppConfig | undefined, token: string | null = 'secret-token') {
-  return {
-    configStore: { load: vi.fn(() => (cfg === undefined ? { status: 'missing' as const } : { status: 'valid' as const, config: cfg, restoredFromBackup: false })) },
-    secrets: {
-      isSecure: vi.fn(() => true),
-      has: vi.fn(() => token !== null),
-      get: vi.fn(() => token ?? undefined),
-    },
-  };
-}
-
 describe('AiService', () => {
   it('reports unconfigured without a provider or token', () => {
-    expect(new AiService(stores(config({ aiProvider: 'none' })) as never).status()).toMatchObject({ configured: false, provider: 'none' });
-    expect(new AiService(stores(config(), null) as never).status()).toMatchObject({ configured: false, hasToken: false });
+    expect(new AiService(stubStores(config({ aiProvider: 'none' }), 'secret-token') as never).status()).toMatchObject({ configured: false, provider: 'none' });
+    expect(new AiService(stubStores(config(), null) as never).status()).toMatchObject({ configured: false, hasToken: false });
   });
 
   it('corrects in test mode without network and preserves paths', async () => {
-    const service = new AiService({ ...stores(config()), testMode: true });
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), testMode: true });
     expect(service.status()).toMatchObject({ configured: true, hasToken: true });
     const result = await service.correct({ text: 'This is a sentance with /tmp/x' });
     expect(result).toMatchObject({ changed: true, skipped: false, corrected: 'This is a sentence with /tmp/x' });
@@ -37,9 +27,9 @@ describe('AiService', () => {
 
   it('skips shell commands and missing tokens without calling the provider', async () => {
     const fetcher = vi.fn(async () => new Response('{}'));
-    const shell = await new AiService({ ...stores(config()) }).correct({ text: 'git status' });
+    const shell = await new AiService({ ...stubStores(config(), 'secret-token') }).correct({ text: 'git status' });
     expect(shell).toMatchObject({ skipped: true, reason: 'shell', corrected: 'git status' });
-    const missing = await new AiService({ ...stores(config(), null) }).correct({ text: 'ciao mondo' });
+    const missing = await new AiService({ ...stubStores(config(), null) }).correct({ text: 'ciao mondo' });
     expect(missing).toMatchObject({ skipped: true, reason: 'missing-token' });
     expect(fetcher).not.toHaveBeenCalled();
   });
@@ -52,7 +42,7 @@ describe('AiService', () => {
       expect(body).toMatchObject({ model: 'test-model', temperature: 0 });
       return new Response(JSON.stringify({ choices: [{ message: { content: 'corrected text' } }] }), { status: 200 });
     });
-    const service = new AiService({ ...stores(config({ aiBaseUrl: 'https://example.test/v1' })), fetch: fetcher as typeof fetch });
+    const service = new AiService({ ...stubStores(config({ aiBaseUrl: 'https://example.test/v1' }), 'secret-token'), fetch: fetcher as typeof fetch });
     const result = await service.correct({ text: 'text to correct' });
     expect(result).toMatchObject({ corrected: 'corrected text', skipped: false });
     expect(JSON.stringify(result)).not.toContain('secret-token');
@@ -60,7 +50,7 @@ describe('AiService', () => {
 
   it('falls back to the original on provider failure with a sanitized status', async () => {
     const fetcher = vi.fn(async () => new Response('nope', { status: 500 }));
-    const result = await new AiService({ ...stores(config()), fetch: fetcher as typeof fetch }).correct({ text: 'text' });
+    const result = await new AiService({ ...stubStores(config(), 'secret-token'), fetch: fetcher as typeof fetch }).correct({ text: 'text' });
     expect(result).toMatchObject({ corrected: 'text', skipped: true, reason: 'provider-error', error: 'HTTP 500' });
     expect(JSON.stringify(result)).not.toContain('secret-token');
     expect(JSON.stringify(result)).not.toContain('nope');
@@ -69,7 +59,7 @@ describe('AiService', () => {
 
 describe('AiService connection test', () => {
   it('reports a deterministic success in test mode', async () => {
-    const service = new AiService({ ...stores(config()), testMode: true });
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), testMode: true });
     await expect(service.testConnection()).resolves.toMatchObject({ ok: true, provider: 'openai', response: 'OK' });
   });
 
@@ -79,7 +69,7 @@ describe('AiService connection test', () => {
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer sk-unsloth-entered');
       return new Response(JSON.stringify({ choices: [{ message: { content: 'OK' } }] }), { status: 200 });
     });
-    const result = await new AiService({ ...stores(config({ aiProvider: 'none' }), null), fetch: fetcher as typeof fetch }).testConnection({
+    const result = await new AiService({ ...stubStores(config({ aiProvider: 'none' }), null), fetch: fetcher as typeof fetch }).testConnection({
       config: { machineName: 'host', dataRepoPath: '/tmp/data', aiProvider: 'openai-compatible', aiBaseUrl: 'https://unsloth.example/v1', aiModel: 'unsloth/gemma-test:UD', sttProvider: 'none' },
       aiToken: 'sk-unsloth-entered',
     });
@@ -89,14 +79,14 @@ describe('AiService connection test', () => {
 
   it('reports a sanitized HTTP status from Test AI', async () => {
     const fetcher = vi.fn(async () => new Response('unauthorized', { status: 401 }));
-    const result = await new AiService({ ...stores(config({ aiBaseUrl: 'https://example.test/v1' })), fetch: fetcher as typeof fetch }).testConnection();
+    const result = await new AiService({ ...stubStores(config({ aiBaseUrl: 'https://example.test/v1' }), 'secret-token'), fetch: fetcher as typeof fetch }).testConnection();
     expect(result).toMatchObject({ ok: false, error: 'HTTP 401' });
     expect(JSON.stringify(result)).not.toContain('secret-token');
     expect(JSON.stringify(result)).not.toContain('unauthorized');
   });
 
   it('reports unconfigured and missing-token states', async () => {
-    await expect(new AiService(stores(config({ aiProvider: 'none' })) as never).testConnection()).resolves.toMatchObject({ ok: false, provider: 'none' });
-    await expect(new AiService(stores(config(), null) as never).testConnection()).resolves.toMatchObject({ ok: false, error: 'AI token is not configured.' });
+    await expect(new AiService(stubStores(config({ aiProvider: 'none' }), 'secret-token') as never).testConnection()).resolves.toMatchObject({ ok: false, provider: 'none' });
+    await expect(new AiService(stubStores(config(), null) as never).testConnection()).resolves.toMatchObject({ ok: false, error: 'AI token is not configured.' });
   });
 });

@@ -69,6 +69,17 @@ const services: IpcServices = {
   },
 };
 const channels = createChannelMap(env, gateway as TerminalGateway, services);
+
+describe('channel map completeness', () => {
+  it('exposes exactly the declared IPC channels, each with a validator and handler', () => {
+    expect(Object.keys(channels).sort()).toEqual([...Object.values(IPC_CHANNELS)].sort());
+    for (const [name, definition] of Object.entries(channels)) {
+      expect(typeof definition.validate, `${name} validate`).toBe('function');
+      expect(typeof definition.handle, `${name} handle`).toBe('function');
+    }
+  });
+});
+
 const policy: SenderPolicy = { expectedSenderIds: new Set([7]), devServerUrl: undefined, appOrigin: 'smart-terminal://bundle/' };
 const sender: SenderInfo = { senderId: 7, isMainFrame: true, frameUrl: 'smart-terminal://bundle/index.html' };
 
