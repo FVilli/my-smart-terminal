@@ -38,6 +38,8 @@ Enter the token only in the token field; **never** in the data repository or a M
 
 The renderer never receives the token; it only sees whether a token is present. Logout/revocation removes it.
 
+Cloud STT can optionally reuse this AI base URL and token via **Use same AI provider (OpenAI-compatible)** in the STT tab.
+
 ## Test the provider
 
 Click **Test AI**. Smart Terminal uses the current unsaved form values and the token entered in the form for this test; it does not require saving first. It sends a fixed minimal prompt through the main process, waits up to 8 seconds, and reports success with latency/model or an actionable error. It does not log your terminal text and does not execute commands. **Save** persists the non-secret configuration and token through the keychain.

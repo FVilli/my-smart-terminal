@@ -63,11 +63,11 @@ import type { TerminalSessionView } from '../session.model';
                 [attr.data-alias]="alias"
                 (click)="menuOpen.set(false); createSsh.emit(alias)"
               >
-                SSH <small>{{ alias }}</small>
+                <span class="menu-kind">SSH</span><small>{{ alias }}</small>
               </button>
             } @empty {
               <button type="button" role="menuitem" data-testid="session-new-ssh" disabled>
-                SSH <small>No hosts in ~/.ssh/config</small>
+                <span class="menu-kind">SSH</span><small>No hosts in ~/.ssh/config</small>
               </button>
             }
           </div>
@@ -98,10 +98,12 @@ import type { TerminalSessionView } from '../session.model';
       position: absolute; top: 100%; left: 0; z-index: 10; min-width: 220px; display: flex; flex-direction: column;
       background: var(--tab-bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px;
     }
-    .menu button { text-align: left; padding: 8px 10px; border-radius: 4px; }
+    .menu button { text-align: left; padding: 5px 8px; border-radius: 4px; font-size: 11px; }
     .menu button:hover:not(:disabled) { background: var(--border); }
     .menu button:disabled { color: var(--text-muted); cursor: not-allowed; }
-    small { margin-left: 6px; color: var(--text-muted); }
+    .menu button > small { margin-left: 6px; color: var(--text-muted); font-size: 10px; font-weight: 400; }
+    .menu button:disabled > small { font-size: 10px; }
+    .menu-kind { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; line-height: 1.2; }
   `,
 })
 export class SessionTabs {

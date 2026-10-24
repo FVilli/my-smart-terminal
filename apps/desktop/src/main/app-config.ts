@@ -23,6 +23,7 @@ export interface AppConfig {
   aiBaseUrl?: string;
   aiModel?: string;
   sttProvider: SttProvider;
+  sttUseAiProvider?: boolean;
   sttModel?: string;
   sttBaseUrl?: string;
   sttResponseFormat?: SttResponseFormat;
@@ -52,6 +53,7 @@ const KNOWN_KEYS = [
   'ai_base_url',
   'ai_model',
   'stt_provider',
+  'stt_use_ai_provider',
   'stt_model',
   'stt_base_url',
   'stt_response_format',
@@ -150,6 +152,8 @@ export function parseAppConfig(content: string): AppConfig {
   const remote = optionalString(known, 'data_repo_remote', configValidators.dataRepoRemote);
   const baseUrl = optionalString(known, 'ai_base_url', configValidators.aiBaseUrl);
   const aiModel = optionalString(known, 'ai_model', configValidators.modelName);
+  const sttUseAiProvider = known['stt_use_ai_provider'];
+  if (sttUseAiProvider !== undefined && sttUseAiProvider !== null && typeof sttUseAiProvider !== 'boolean') throw new AppConfigError('stt_use_ai_provider');
   const sttModel = optionalString(known, 'stt_model', configValidators.modelName);
   const sttBaseUrl = optionalString(known, 'stt_base_url', configValidators.aiBaseUrl);
   const sttResponseFormat = optionalString(known, 'stt_response_format', (v) => STT_RESPONSE_FORMATS.some((format) => format === v));
@@ -167,6 +171,7 @@ export function parseAppConfig(content: string): AppConfig {
     ...(baseUrl !== undefined && { aiBaseUrl: baseUrl }),
     ...(aiModel !== undefined && { aiModel }),
     sttProvider: provider(known, 'stt_provider', STT_PROVIDERS),
+    ...(sttUseAiProvider === true && { sttUseAiProvider: true }),
     ...(sttModel !== undefined && { sttModel }),
     ...(sttBaseUrl !== undefined && { sttBaseUrl }),
     ...(sttResponseFormat !== undefined && { sttResponseFormat: sttResponseFormat as SttResponseFormat }),
@@ -189,6 +194,7 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.aiBaseUrl !== undefined && { ai_base_url: config.aiBaseUrl }),
     ...(config.aiModel !== undefined && { ai_model: config.aiModel }),
     stt_provider: config.sttProvider,
+    ...(config.sttUseAiProvider === true && { stt_use_ai_provider: true }),
     ...(config.sttModel !== undefined && { stt_model: config.sttModel }),
     ...(config.sttBaseUrl !== undefined && { stt_base_url: config.sttBaseUrl }),
     ...(config.sttResponseFormat !== undefined && { stt_response_format: config.sttResponseFormat }),

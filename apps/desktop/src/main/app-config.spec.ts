@@ -20,6 +20,7 @@ const full: AppConfig = {
   aiBaseUrl: 'https://llm.example.com/v1',
   aiModel: 'gpt-x',
   sttProvider: 'local',
+  sttUseAiProvider: true,
   sttModel: 'whisper-1',
   sttBaseUrl: 'https://stt.example.com/v1',
   sttResponseFormat: 'verbose_json',
@@ -37,6 +38,7 @@ describe('app config', () => {
   it('roundtrips full and minimal configs', () => {
     expect(parseAppConfig(serializeAppConfig(full))).toEqual(full);
     expect(parseAppConfig(serializeAppConfig(minimal))).toEqual(minimal);
+    expect(serializeAppConfig(full)).toContain('stt_use_ai_provider: true');
     expect(serializeAppConfig(full)).toContain('schema_version: 1');
   });
 

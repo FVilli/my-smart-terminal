@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { AiStore, correctionNotice } from '../ai/ai-store';
 import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
+import { SettingsStore } from '../settings/settings-store';
 
 @Component({
   selector: 'app-assisted-input',
@@ -13,7 +14,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         #textarea
         rows="2"
         spellcheck="false"
-        placeholder="Enter sends · Shift+Enter inserts a newline"
+        placeholder="Enter sends · Shift+Enter newline"
         aria-label="Assisted input"
         title="Focus composer: Ctrl+Shift+E"
         [value]="draft()"
@@ -22,7 +23,6 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
         (keydown)="onKeydown($event)"
       ></textarea>
       <div class="bottom">
-        <span class="hint">Enter sends · Shift+Enter newline</span>
         <div class="actions">
       <button
         type="button"
@@ -43,10 +43,9 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
           [attr.aria-label]="micLabel()"
           [attr.aria-pressed]="voice.phase() === 'recording'"
           [class.listening]="voice.phase() === 'recording'"
-          [class.configured]="canRecord()"
-          [disabled]="!canRecord()"
+          [class.configured]="voice.status().configured"
           [attr.title]="voice.notice() ?? voice.status().warning ?? 'Dettatura vocale'"
-          (pointerdown)="startRecording()"
+          (pointerdown)="canRecord() ? startRecording() : openSttSettings()"
           (pointerup)="stopRecording()"
           (pointerleave)="stopRecording()"
           (pointercancel)="stopRecording()"
@@ -73,6 +72,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
     .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
     .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; font-size: 14px; overflow: auto; }
     .editor:disabled { opacity: .65; }
+    .editor::placeholder { color: var(--text-muted); opacity: 1; font: inherit; }
     .bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
     .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
     .actions { display: flex; flex: none; align-items: center; gap: 4px; }
@@ -96,6 +96,7 @@ import { SttStore, appendTranscript, voiceLabel } from '../stt/stt-store';
 })
 export class AssistedInput implements OnDestroy {
   private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('textarea');
+  private readonly settings = inject(SettingsStore);
   readonly draft = input('');
   /** No active session or the session is not running: editing, sending, and microphone are disabled. */
   readonly disabled = input(false);
@@ -149,7 +150,12 @@ export class AssistedInput implements OnDestroy {
 
   /** Push-to-talk: pressing the button records; releasing it (or leaving) transcribes into the draft. */
   protected startRecording(): void {
+    if (!this.canRecord()) { this.settings.openSettings('stt'); return; }
     void this.voice.start();
+  }
+
+  protected openSttSettings(): void {
+    this.settings.openSettings('stt');
   }
 
   protected stopRecording(): void {
@@ -158,6 +164,10 @@ export class AssistedInput implements OnDestroy {
 
   /** Keyboard click (Enter/Space): `detail === 0`, so use the accessible toggle; mouse taps are already handled. */
   protected toggleRecording(event: MouseEvent): void {
+    if (!this.canRecord()) {
+      this.openSttSettings();
+      return;
+    }
     if (event.detail > 0) {
       return;
     }

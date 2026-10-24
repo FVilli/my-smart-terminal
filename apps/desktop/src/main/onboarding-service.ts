@@ -107,13 +107,14 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['aiBaseUrl'], configValidators.aiBaseUrl)) fail('aiBaseUrl');
   if (!isOptionalText(c['aiModel'], configValidators.modelName)) fail('aiModel');
   if (!STT_PROVIDERS.some((p) => p === c['sttProvider'])) fail('sttProvider');
+  if (c['sttUseAiProvider'] !== undefined && typeof c['sttUseAiProvider'] !== 'boolean') errors['sttUseAiProvider'] = 'Invalid setting.';
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
   if (!isOptionalText(c['sttBaseUrl'], configValidators.aiBaseUrl)) fail('sttBaseUrl');
   if (c['sttResponseFormat'] !== undefined && c['sttResponseFormat'] !== 'json' && c['sttResponseFormat'] !== 'verbose_json') fail('sttResponseFormat');
   if (!isOptionalText(c['sttLanguage'], configValidators.sttLanguage)) fail('sttLanguage');
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
   if (c['terminalFont'] !== undefined && c['terminalFont'] !== '' && !TERMINAL_FONT_IDS.some((id) => id === c['terminalFont'])) fail('terminalFont');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont'].includes(key));
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont'].includes(key));
   if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -158,6 +159,7 @@ export class OnboardingService {
       ...(config.aiBaseUrl !== undefined && { aiBaseUrl: config.aiBaseUrl }),
       ...(config.aiModel !== undefined && { aiModel: config.aiModel }),
       sttProvider: config.sttProvider,
+      ...(config.sttUseAiProvider === true && { sttUseAiProvider: true }),
       ...(config.sttModel !== undefined && { sttModel: config.sttModel }),
       ...(config.sttBaseUrl !== undefined && { sttBaseUrl: config.sttBaseUrl }),
       ...(config.sttResponseFormat !== undefined && { sttResponseFormat: config.sttResponseFormat }),
@@ -233,12 +235,13 @@ export class OnboardingService {
       sttProvider: input.sttProvider,
       terminalFont: (input.terminalFont ?? 'jetbrains') as TerminalFontId,
     } as AppConfig;
-    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
+    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
       delete next[key];
     }
     if (baseRemote !== undefined) next.dataRepoRemote = baseRemote;
     if (baseUrl !== undefined) next.aiBaseUrl = baseUrl;
     if (aiModel !== undefined) next.aiModel = aiModel;
+    if (input.sttUseAiProvider === true) next.sttUseAiProvider = true;
     if (sttModel !== undefined) next.sttModel = sttModel;
     if (sttBaseUrl !== undefined) next.sttBaseUrl = sttBaseUrl;
     if (input.sttResponseFormat !== undefined) next.sttResponseFormat = input.sttResponseFormat;
@@ -269,7 +272,7 @@ export class OnboardingService {
       }
     };
     if (next.aiProvider !== 'none') storeToken(`ai:${next.aiProvider}`, request.aiToken);
-    if (next.sttProvider !== 'none') storeToken(`stt:${next.sttProvider}`, request.sttToken);
+    if (next.sttProvider !== 'none' && !(next.sttProvider === 'cloud' && next.sttUseAiProvider === true)) storeToken(`stt:${next.sttProvider}`, request.sttToken);
 
     const effective = resolveDataPaths(this.options.userDataPath, this.options.env, this.options.hostname, next);
     const remoteEnv = this.options.env['SMART_TERMINAL_GIT_REMOTE'];

@@ -36,6 +36,8 @@ Use the wrapper's absolute path in **Local STT command**, then click **Test tran
 
 ## 3. Cloud STT
 
+For a self-hosted OpenAI-compatible server, enable **Use same AI provider (OpenAI-compatible)** in the STT tab. It reuses the base URL and token from the AI tab; the AI provider must be `openai` or `openai-compatible`. STT model, response format and language remain independent. Configure and test AI first, then select this option and test transcription.
+
 Choose **cloud** and configure the provider model and token. The token is stored through the system keychain/Electron `safeStorage`, never in Markdown. On Linux, if the keyring backend is `basic_text` or encryption is unavailable, the token remains in memory for the session only; configure a secure keyring before relying on cloud STT after restart.
 
 Cloud transcription requires network access. In the **STT** Settings tab, or in the STT onboarding step, configure these fields:

@@ -1,6 +1,27 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.3
+
+Interaction and settings polish release.
+
+### Added
+
+- STT option **Use same AI provider (OpenAI-compatible)**, reusing the AI tab base URL and keychain token while keeping STT model/format/language separate.
+- Contextual GitHub guide link in the Settings footer with GitHub icon.
+
+### Changed
+
+- New-session menu is denser; SSH is visually stronger than the alias.
+- Composer hint now lives inside the field as a placeholder; typed text is white and monospace.
+- Settings has a fixed height, scrollable body and standard `[Cancel] [Save]` order.
+- Clicking the microphone with STT unconfigured opens Settings directly on the STT tab.
+
+### Fixed
+
+- No visible “STT not configured” text; microphone state is faded/configured/recording.
+- Composer surrounding area matches the app background.
+
 ## v1.3.2
 
 Composer background hotfix.

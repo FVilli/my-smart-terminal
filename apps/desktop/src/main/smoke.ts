@@ -273,7 +273,7 @@ const EDITOR_SCRIPT = `(async () => {
     setText('escape-draft');
     textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     result.escapeReturnsToTerminalAndKeepsDraft = await waitFor(() => document.activeElement !== textarea(), 1000) && textarea().value === 'escape-draft';
-    result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter inserts a newline';
+    result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter newline';
     const composer = textarea().closest('.composer');
     result.singleComposerStructure = !!composer && document.querySelectorAll('app-assisted-input .composer').length === 1 && ['ai-correction', 'assisted-mic', 'assisted-send'].every((id) => composer.querySelector('[data-testid="' + id + '"]')) && !!composer.querySelector('[data-testid="voice-label"]');
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
@@ -633,11 +633,19 @@ const SETTINGS_SCRIPT = `(async () => {
   result.windowControlsPresent = !!q('window-minimize') && !!q('window-maximize') && !!q('window-close');
   click('settings-open'); result.opened = await waitFor(() => !!q('onboarding-overlay'));
   result.noProgress = !q('onboarding-progress');
+  const settingsHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
+  result.githubHelpPresent = !!q('settings-github-help');
+  result.footerOrder = !!q('onboarding-cancel') && !!q('onboarding-save') && (q('onboarding-cancel').compareDocumentPosition(q('onboarding-save')) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
   result.tabs = ['repository','ai','stt','appearance'].every((tab) => !!q('settings-tab-' + tab));
   click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));
   click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
+  const sttProvider = q('onboarding-stt-provider'); sttProvider.value = 'cloud'; sttProvider.dispatchEvent(new Event('change', { bubbles: true }));
+  result.sttUseAiOption = await waitFor(() => !!q('onboarding-stt-use-ai'));
+  result.sttSeparateFields = !!q('onboarding-stt-url') && !!q('onboarding-stt-token');
   click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font'));
+  const appearanceHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
+  result.fixedSettingsHeight = settingsHeight > 400 && Math.abs(settingsHeight - appearanceHeight) <= 1;
   if (q('settings-terminal-font')) { q('settings-terminal-font').value = 'system'; q('settings-terminal-font').dispatchEvent(new Event('change', { bubbles: true })); }
   click('onboarding-cancel'); result.dirtyConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -722,7 +730,8 @@ const STT_SETUP_SCRIPT = `(async () => {
   result.step3 = await waitFor(() => !!q('onboarding-stt-provider'));
   const provider = q('onboarding-stt-provider'); provider.value = 'cloud'; provider.dispatchEvent(new Event('change', { bubbles: true }));
   await waitFor(() => !!q('onboarding-stt-url'));
-  result.fields = !!q('onboarding-stt-url') && !!q('onboarding-stt-format') && !!q('onboarding-stt-language');
+  result.useAiCheckbox = !!q('onboarding-stt-use-ai');
+  result.fields = !!q('onboarding-stt-url') && !!q('onboarding-stt-token') && !!q('onboarding-stt-format') && !!q('onboarding-stt-language');
   const base = q('onboarding-stt-url'); base.value = 'https://unsloth.example/v1'; base.dispatchEvent(new Event('input', { bubbles: true }));
   const model = q('onboarding-stt-model'); model.value = 'parakeet-tdt-0.6b-v3'; model.dispatchEvent(new Event('input', { bubbles: true }));
   q('onboarding-stt-format').value = 'verbose_json'; q('onboarding-stt-format').dispatchEvent(new Event('change', { bubbles: true }));

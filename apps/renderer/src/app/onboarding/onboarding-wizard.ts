@@ -38,7 +38,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
   template: `
     @if (visible()) {
       <div class="backdrop" data-testid="onboarding-overlay">
-        <section class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
+        <section class="dialog" [class.settings-dialog]="editMode()" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
           <header>
             <h2>{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
             @if (!editMode()) { <span class="steps" data-testid="onboarding-progress">Step {{ step() }} of 3</span> }
@@ -64,6 +64,7 @@ const MIC_MESSAGES: Record<MicState, string> = {
                 <button type="button" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
               </div>
             }
+            <div class="dialog-body">
             @if (state()?.reason === 'corrupt') {
               <p class="warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
             }
@@ -101,7 +102,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       }
                     </p>
                   }
-                  <button type="button" class="help-link" data-testid="onboarding-help-repository" (click)="openHelp('repository')">Repository setup guide</button>
                 </div>
               }
               @case (2) {
@@ -146,7 +146,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       </p>
                     }
                   }
-                  <button type="button" class="help-link" data-testid="onboarding-help-ai" (click)="openHelp('ai')">AI provider setup guide</button>
                 </div>
               }
               @case (3) {
@@ -164,10 +163,15 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <input data-testid="onboarding-stt-model" [value]="config().sttModel ?? ''" (input)="patch({ sttModel: value($event) })" />
                     </label>
                     @if (config().sttProvider === 'cloud') {
+                      <label><input type="checkbox" data-testid="onboarding-stt-use-ai" [checked]="config().sttUseAiProvider === true" [disabled]="!canUseAiProvider()" (change)="patch({ sttUseAiProvider: checked($event) })" /> Use same AI provider (OpenAI-compatible)</label>
+                      @if (!canUseAiProvider()) { <p class="hint" data-testid="onboarding-stt-ai-unavailable">Select OpenAI or OpenAI-compatible in the AI tab to share its provider.</p> }
+                      @if (config().sttUseAiProvider && canUseAiProvider()) { <p class="hint">Using AI provider, base URL, and token from the AI tab.</p> }
+                      @if (!config().sttUseAiProvider) {
                       <label>Base URL (optional)
                         <span class="hint">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
                         <input data-testid="onboarding-stt-url" [value]="config().sttBaseUrl ?? ''" (input)="patch({ sttBaseUrl: value($event) })" />
                       </label>
+                      }
                       <label>Response format
                         <select data-testid="onboarding-stt-format" [value]="config().sttResponseFormat ?? 'json'" (change)="patch({ sttResponseFormat: sttResponseFormat($event) })">
                           <option value="json">json</option><option value="verbose_json">verbose_json</option>
@@ -176,9 +180,11 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <label>Language (optional)
                         <input data-testid="onboarding-stt-language" placeholder="e.g. en" [value]="config().sttLanguage ?? ''" (input)="patch({ sttLanguage: value($event) })" />
                       </label>
-                      <label>Token (optional, keychain only)
-                        <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
-                      </label>
+                      @if (!config().sttUseAiProvider) {
+                        <label>Token (optional, keychain only)
+                          <input type="password" autocomplete="off" data-testid="onboarding-stt-token" [value]="sttToken()" (input)="sttToken.set(value($event))" />
+                        </label>
+                      }
                     }
                     @if (config().sttProvider === 'local') {
                       <label>Local STT command (absolute path)
@@ -200,7 +206,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
                       <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
                     }
                   }
-                  <button type="button" class="help-link" data-testid="onboarding-help-stt" (click)="openHelp('stt')">STT setup guide</button>
                 </div>
               }
               @case (4) {
@@ -218,9 +223,20 @@ const MIC_MESSAGES: Record<MicState, string> = {
             @for (warning of warnings(); track warning) {
               <p class="warning" data-testid="onboarding-warning">{{ warning }}</p>
             }
+            </div>
             <footer>
+              @if (editMode()) {
+                <button type="button" class="footer-help" data-testid="settings-github-help" (click)="openHelp(helpTopic())">
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8a7.2 7.2 0 0 0-2.3 14c.36.07.5-.16.5-.35v-1.25c-2 .43-2.43-.85-2.43-.85-.33-.84-.81-1.06-.81-1.06-.66-.45.05-.44.05-.44.73.05 1.12.75 1.12.75.65 1.11 1.7.79 2.12.6.07-.47.25-.79.46-.97-1.6-.18-3.28-.8-3.28-3.56 0-.79.28-1.43.74-1.93-.07-.18-.32-.91.07-1.9 0 0 .6-.19 1.97.73a6.8 6.8 0 0 1 3.58 0c1.37-.92 1.97-.73 1.97-.73.39.99.14 1.72.07 1.9.46.5.74 1.14.74 1.93 0 2.77-1.69 3.38-3.3 3.56.26.22.49.66.49 1.33v1.97c0 .19.13.42.5.35A7.2 7.2 0 0 0 8 .8Z" fill="currentColor"/></svg>
+                  <span>{{ helpLabel() }}</span>
+                </button>
+              }
               @if (!editMode() && step() === 1) {
                 <button type="button" data-testid="onboarding-defaults" [disabled]="busy()" (click)="useDefaults()">Use defaults</button>
+              }
+              @if (editMode()) {
+                <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
+                <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
               }
               @if (!editMode()) { <button type="button" data-testid="onboarding-back" [disabled]="busy()" (click)="back()">Back</button> }
               @if (!editMode() && step() > 1) {
@@ -228,10 +244,10 @@ const MIC_MESSAGES: Record<MicState, string> = {
               }
               @if (!editMode() && step() < 3) {
                 <button type="button" data-testid="onboarding-next" [disabled]="busy()" (click)="next()">Next</button>
-              } @else {
+              } @else if (!editMode()) {
                 <button type="button" data-testid="onboarding-save" [disabled]="busy()" (click)="save()">Save</button>
+                <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
               }
-              <button type="button" data-testid="onboarding-cancel" [disabled]="busy()" (click)="requestCancel()">Cancel</button>
             </footer>
             @if (confirmDiscard()) {
               <div class="confirm" data-testid="onboarding-discard-confirm" role="alertdialog" aria-label="Discard changes">
@@ -248,6 +264,9 @@ const MIC_MESSAGES: Record<MicState, string> = {
   styles: `
     .backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(5, 8, 11, 0.7); }
     .dialog { width: min(520px, 92vw); max-height: 90vh; overflow: auto; padding: 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
+    .settings-dialog { display: flex; flex-direction: column; height: min(620px, 90vh); overflow: hidden; }
+    .settings-dialog .dialog-body { flex: 1; min-height: 0; overflow: auto; }
+    .settings-dialog footer { margin-top: auto; }
     header { display: flex; justify-content: space-between; align-items: baseline; }
     h2 { margin: 0 0 12px; font-size: 18px; }
     .steps, .hint { color: var(--text-muted); font-size: 12px; }
@@ -257,7 +276,10 @@ const MIC_MESSAGES: Record<MicState, string> = {
     input, select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); }
     .error { margin: 4px 0 0; color: var(--danger); font-size: 12px; }
     .warning { margin: 8px 0 0; color: #e0b050; font-size: 12px; }
-    footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .footer-help { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; padding: 6px 8px; border: 0; background: transparent; color: var(--text-muted); font-size: 12px; }
+    .footer-help svg { width: 16px; height: 16px; }
+    .footer-help:hover { color: var(--text); }
     button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); color: var(--text); cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     [data-testid='onboarding-mic-check'] { margin-top: 12px; }
@@ -266,7 +288,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
     .remote-result { margin: 8px 0 0; font-size: 12px; line-height: 1.45; }
     .remote-result.ok { color: var(--accent); }
     .remote-result.error { color: var(--danger); }
-    .help-link { margin-top: 8px; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; }
     .confirm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text); }
     .confirm span { flex: 1; }
   `,
@@ -329,6 +350,7 @@ export class OnboardingWizard {
     this.confirmDiscard.set(false);
     this.editMode.set(true);
     this.visible.set(true);
+    const requestedTab = this.settings.takeInitialTab();
     this.step.set(1);
     this.confirmDiscard.set(false);
     try {
@@ -340,7 +362,7 @@ export class OnboardingWizard {
       this.warnings.set([]);
       this.aiToken.set('');
       this.sttToken.set('');
-      this.step.set(1);
+      this.step.set(({ repository: 1, ai: 2, stt: 3, appearance: 4 } as const)[requestedTab]);
       this.editMode.set(true);
       this.visible.set(true);
       this.restartNotice.set(false);
@@ -410,6 +432,10 @@ export class OnboardingWizard {
     this.step.set(step);
   }
 
+  protected checked(event: Event): boolean { return (event.target as HTMLInputElement).checked; }
+
+  protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible'; }
+
   protected sttProvider(event: Event): SttProvider {
     return STT_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
   }
@@ -426,13 +452,21 @@ export class OnboardingWizard {
     if ('aiProvider' in change || 'aiBaseUrl' in change || 'aiModel' in change) {
       this.aiTestResult.set(null);
     }
-    if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change || 'sttBaseUrl' in change || 'sttResponseFormat' in change || 'sttLanguage' in change) {
+    if ('sttProvider' in change || 'sttModel' in change || 'sttCommand' in change || 'sttBaseUrl' in change || 'sttUseAiProvider' in change || 'sttResponseFormat' in change || 'sttLanguage' in change) {
       this.sttTestResult.set(null);
     }
   }
 
   protected openHelp(topic: HelpTopic): void {
-    void this.api.helpOpen(topic).catch(() => undefined);
+    void this.api.helpOpen(topic).catch(() => this.errors.set({ config: 'Could not open the GitHub guide.' }));
+  }
+
+  protected helpTopic(): HelpTopic {
+    return this.step() === 2 ? 'ai' : this.step() === 3 ? 'stt' : this.step() === 4 ? 'troubleshooting' : 'repository';
+  }
+
+  protected helpLabel(): string {
+    return this.step() === 2 ? 'AI guide' : this.step() === 3 ? 'STT guide' : this.step() === 4 ? 'User manual' : 'Repository guide';
   }
 
   protected async testSttProvider(): Promise<void> {
@@ -508,20 +542,21 @@ export class OnboardingWizard {
 
   /** Removes empty optional fields before sending them to the main process. */
   private payload(): OnboardingConfig {
-    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, sttBaseUrl, sttResponseFormat, sttLanguage, terminalFont, ...required } = this.config();
+    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, sttBaseUrl, sttUseAiProvider, sttResponseFormat, sttLanguage, terminalFont, ...required } = this.config();
     const optional = {
       dataRepoRemote,
       aiBaseUrl,
       aiModel,
       sttModel,
       sttBaseUrl,
+      sttUseAiProvider,
       sttResponseFormat,
       sttLanguage,
       terminalFont,
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
     };
-    const kept = Object.fromEntries(Object.entries(optional).filter(([, value]) => value !== undefined && value.trim() !== ''));
+    const kept = Object.fromEntries(Object.entries(optional).filter(([, value]) => typeof value === 'boolean' || (value !== undefined && value.trim() !== '')));
     return { ...required, ...kept };
   }
 
@@ -587,7 +622,7 @@ export class OnboardingWizard {
       const result = await this.api.onboardingSave({
         config,
         ...(this.aiToken() !== '' && config.aiProvider !== 'none' ? { aiToken: this.aiToken() } : {}),
-        ...(this.sttToken() !== '' && config.sttProvider === 'cloud' ? { sttToken: this.sttToken() } : {}),
+        ...(this.sttToken() !== '' && config.sttProvider === 'cloud' && config.sttUseAiProvider !== true ? { sttToken: this.sttToken() } : {}),
       });
       this.handleResult(result);
     } catch {

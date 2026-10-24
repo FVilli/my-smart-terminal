@@ -22,6 +22,8 @@ Those guides explain release verification, unsigned-artifact warnings, and manua
 
 ## First launch: three onboarding steps
 
+Later Settings uses a fixed-height tabbed dialog with Cancel/Save at the bottom and a contextual GitHub guide link at the lower left. The composer hint is inside the text field and disappears while typing.
+
 The first launch opens **Initial setup**. The wizard has three steps. You may skip the optional AI and STT steps; skipping them does not disable the terminal.
 
 ![Initial setup, step 1 of 3, with machine name, data repository, optional Git remote, Use defaults, and Next](assets/screenshots/01-onboarding.png)

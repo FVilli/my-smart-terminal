@@ -67,6 +67,26 @@ describe('SttService', () => {
     expect(secrets.secrets.has).toHaveBeenCalledWith('stt:cloud');
   });
 
+  it('uses the selected AI provider URL and token for shared cloud STT', async () => {
+    const secrets = stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttBaseUrl: 'https://ignored.example/v1', sttCommand: undefined }));
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://llm.example/v1/audio/transcriptions');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer cloud-token');
+      return new Response(JSON.stringify({ text: 'shared' }), { status: 200 });
+    });
+    const service = new SttService({ ...secrets, fetch: fetcher as typeof fetch });
+    expect(service.status()).toMatchObject({ configured: true, hasToken: true });
+    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toEqual({ text: 'shared', skipped: false });
+    expect(secrets.secrets.has).toHaveBeenCalledWith('ai:openai-compatible');
+    expect(secrets.secrets.has).not.toHaveBeenCalledWith('stt:cloud');
+  });
+
+  it('rejects shared STT for unsupported AI providers', async () => {
+    const service = new SttService(stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'anthropic', sttCommand: undefined })) as never);
+    expect(service.status()).toMatchObject({ configured: false, warning: expect.stringContaining('OpenAI-compatible') });
+    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ skipped: true, reason: 'unconfigured' });
+  });
+
   it('returns a fixed transcript in test mode without adapters, network or files', async () => {
     const run = vi.fn();
     const fetcher = vi.fn();

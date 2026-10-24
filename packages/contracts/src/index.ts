@@ -241,6 +241,7 @@ export interface OnboardingConfig {
   aiBaseUrl?: string;
   aiModel?: string;
   sttProvider: SttProvider;
+  sttUseAiProvider?: boolean;
   sttModel?: string;
   sttBaseUrl?: string;
   sttResponseFormat?: SttResponseFormat;

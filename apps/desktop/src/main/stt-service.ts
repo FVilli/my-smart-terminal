@@ -16,6 +16,7 @@ export interface SttServiceOptions {
 export const STT_TEST_TEXT = 'test transcript';
 
 const CLOUD_TOKEN_KEY = 'stt:cloud';
+const aiTokenKey = (provider: string): string => `ai:${provider}`;
 
 const skipped = (reason: NonNullable<SttTranscribeResult['reason']>): SttTranscribeResult => ({
   text: '',
@@ -47,7 +48,14 @@ export class SttService {
         ...(this.testMode ? { warning: testWarning } : {}),
       };
     }
-    const hasToken = this.options.secrets.has(CLOUD_TOKEN_KEY);
+    const shared = config.sttProvider === 'cloud' && config.sttUseAiProvider === true;
+    const supportedSharedProvider = config.aiProvider === 'openai' || config.aiProvider === 'openai-compatible';
+    if (shared && !supportedSharedProvider) {
+      return { configured: false, provider: config.sttProvider, ...(config.sttModel !== undefined ? { model: config.sttModel } : {}), hasToken: false, secureStorage, warning: 'Use same AI provider requires an OpenAI-compatible AI provider.' };
+    }
+    const hasToken = config.sttProvider === 'cloud'
+      ? this.options.secrets.has(shared ? aiTokenKey(config.aiProvider) : CLOUD_TOKEN_KEY)
+      : false;
     const hasCommand = config.sttCommand !== undefined;
     const configured = this.testMode || (config.sttProvider === 'cloud' ? hasToken : hasCommand);
     const warning = configured
@@ -80,7 +88,10 @@ export class SttService {
     if (config === undefined || config.sttProvider === 'none') {
       return skipped('unconfigured');
     }
-    const token = config.sttProvider === 'cloud' ? this.options.secrets.get(CLOUD_TOKEN_KEY) : undefined;
+    const shared = config.sttProvider === 'cloud' && config.sttUseAiProvider === true;
+    if (shared && config.aiProvider !== 'openai' && config.aiProvider !== 'openai-compatible') return skipped('unconfigured');
+    const tokenKey = shared ? aiTokenKey(config.aiProvider) : CLOUD_TOKEN_KEY;
+    const token = config.sttProvider === 'cloud' ? this.options.secrets.get(tokenKey) : undefined;
     return transcribeAudio({
       provider: config.sttProvider,
       audio,
@@ -88,7 +99,7 @@ export class SttService {
       ...(token !== undefined ? { token } : {}),
       ...(config.sttProvider === 'local' && config.sttCommand !== undefined ? { command: config.sttCommand } : {}),
       ...(config.sttModel !== undefined ? { model: config.sttModel } : {}),
-      ...(config.sttBaseUrl !== undefined ? { baseUrl: config.sttBaseUrl } : {}),
+      ...((shared ? config.aiBaseUrl : config.sttBaseUrl) !== undefined ? { baseUrl: shared ? config.aiBaseUrl : config.sttBaseUrl } : {}),
       ...(config.sttResponseFormat !== undefined ? { responseFormat: config.sttResponseFormat } : {}),
       ...(config.sttLanguage !== undefined ? { language: config.sttLanguage } : {}),
       ...(this.options.timeoutMs !== undefined ? { timeoutMs: this.options.timeoutMs } : {}),
