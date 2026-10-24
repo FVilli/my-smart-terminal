@@ -144,7 +144,8 @@ export class OpenAiSttAdapter implements SttAdapter {
     const timer = setTimeout(() => controller.abort(), options.timeoutMs);
     try {
       const form = new FormData();
-      form.append('file', new Blob([request.audio], { type: request.mimeType }), 'audio');
+      const extension = request.mimeType === 'audio/wav' ? 'wav' : request.mimeType === 'audio/ogg' ? 'ogg' : request.mimeType === 'audio/mp4' ? 'm4a' : 'webm';
+      form.append('file', new Blob([request.audio], { type: request.mimeType }), `audio.${extension}`);
       if (this.options.model === undefined) form.append('model', 'whisper-1');
       else if (this.options.model !== '') form.append('model', this.options.model);
       form.append('response_format', request.responseFormat ?? this.options.responseFormat ?? 'json');
