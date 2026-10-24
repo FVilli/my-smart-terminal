@@ -7,7 +7,9 @@ const release = path.resolve('release');
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const version = packageJson.version;
 const releaseFiles = fs.readdirSync(release);
-const deb = process.argv[2] ?? releaseFiles.find((name) => name.endsWith('.deb'));
+const debArg = process.argv.slice(2).find((arg) => !arg.startsWith('--'));
+const deb = debArg ?? releaseFiles.find((name) => name.endsWith('.deb'));
+const debOnly = process.argv.includes('--deb-only');
 const appImage = releaseFiles.find((name) => name === `Smart.Terminal-${version}-linux-x86_64.AppImage`);
 if (!deb) {
   console.error('[verify-linux-package] no .deb in release/');
@@ -40,8 +42,8 @@ try {
   if (packageName !== 'my-smart-terminal') problems.push(`unexpected package name: ${packageName}`);
   if (packageVersion !== version) problems.push(`unexpected package version: ${packageVersion} (expected ${version})`);
   if (architecture !== 'amd64') problems.push(`unexpected package architecture: ${architecture}`);
-  if (!appImage) problems.push('no matching .AppImage in release/');
-  else {
+  if (!debOnly && !appImage) problems.push('no matching .AppImage in release/');
+  else if (!debOnly && appImage) {
     const appPath = path.join(release, appImage);
     try {
       const appRoot = path.join(root, 'appimage'); fs.mkdirSync(appRoot);

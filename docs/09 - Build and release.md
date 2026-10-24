@@ -17,6 +17,17 @@ GitHub Actions, Linux/macOS/Windows matrix: reproducible lockfile installation, 
 ## Release security
 Publish SHA-256 checksums with the release artifacts. Sign macOS/Windows only when certificates are available; otherwise clearly state that artifacts are unsigned (never claim that an unsigned package is signed). Protect CI secrets. Rebuild native `node-pty` dependencies for Electron and the target OS/architecture.
 
+## Fast local Linux testing
+
+For iterative testing do not wait for GitHub Actions:
+
+```bash
+npm run package:deb
+sudo apt install --reinstall ./release/Smart.Terminal-1.3.11-linux-amd64.deb
+```
+
+For UI-only iterations, `npm run package:dir` and run `release/linux-unpacked/smart-terminal`; for renderer hot reload use `npm run dev`. GitHub Actions is only for publishing/CI, not required for local feedback.
+
 ## Release gate
 1. Tests and packaging pass on the declared platforms.
 2. Verify offline terminal, multiple windows, primary election, lock recovery, Git sync with concurrency, and push rejection.
