@@ -49,17 +49,26 @@ export const IPC_EVENTS = {
   windowMaximized: 'window:maximized',
 } as const;
 
+/** Maximum terminal input size in bytes per write. */
 export const TERMINAL_MAX_WRITE_BYTES = 64 * 1024;
+/** Maximum history text size in bytes. */
 export const HISTORY_MAX_TEXT_BYTES = 16 * 1024;
+/** Maximum agent identifier length in characters. */
 export const HISTORY_MAX_AGENT_LENGTH = 64;
+/** Maximum search query length in characters. */
 export const SEARCH_MAX_QUERY_LENGTH = 256;
+/** Maximum clipboard text size in bytes per write. */
 export const CLIPBOARD_WRITE_MAX_BYTES = 32 * 1024;
+/** Maximum text size in bytes submitted for AI correction. */
 export const AI_CORRECTION_MAX_TEXT_BYTES = 16 * 1024;
 /** Maximum audio sent to the main process for a single transcription (10 MiB). */
 export const STT_MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+/** Minimum terminal row or column count. */
 export const TERMINAL_MIN_DIMENSION = 1;
+/** Maximum terminal row or column count. */
 export const TERMINAL_MAX_DIMENSION = 1000;
 
+/** Union of request channel names. */
 export type IpcChannel = (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS];
 
 export interface AppPingResult {
@@ -214,6 +223,7 @@ export interface ClipboardWriteRequest {
   text: string;
 }
 
+/** Available terminal font choices and their CSS fallback stacks. */
 export const TERMINAL_FONTS = [
   { id: 'jetbrains', label: 'JetBrains Mono', stack: "'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
   { id: 'cascadia', label: 'Cascadia Code', stack: "'Cascadia Code', 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', Menlo, Consolas, monospace" },
@@ -231,6 +241,7 @@ export const STT_RESPONSE_FORMATS = ['json', 'verbose_json'] as const;
 export type SttResponseFormat = (typeof STT_RESPONSE_FORMATS)[number];
 export type AiProvider = (typeof AI_PROVIDERS)[number];
 export type SttProvider = (typeof STT_PROVIDERS)[number];
+/** Maximum secret token length in characters. */
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
 
 /** Configuration fields editable by the wizard (no secrets). */
@@ -276,6 +287,7 @@ export interface OnboardingValidateRequest {
   config: OnboardingConfig;
 }
 
+/** Topics available in the in-app help. */
 export const HELP_TOPICS = ['repository', 'ai', 'stt', 'troubleshooting'] as const;
 export type HelpTopic = (typeof HELP_TOPICS)[number];
 
@@ -342,6 +354,7 @@ export interface AiCorrectRequest {
   text: string;
 }
 
+/** Reason an AI correction was skipped or failed. */
 export type CorrectionReason = 'shell' | 'unconfigured' | 'missing-token' | 'timeout' | 'provider-error' | 'empty';
 
 export interface CorrectionResult {
@@ -406,6 +419,7 @@ export interface SttSaveDebugAudioResult {
   bytes: number;
 }
 
+/** Reason speech transcription was skipped. */
 export type SttSkipReason =
   | 'unconfigured'
   | 'missing-token'
@@ -422,6 +436,7 @@ export interface SttTranscribeResult {
   diagnostics?: SttDiagnostics;
 }
 
+/** Function that removes a registered event listener. */
 export type Unsubscribe = () => void;
 
 export interface SmartTerminalApi {

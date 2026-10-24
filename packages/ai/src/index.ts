@@ -16,6 +16,7 @@ export {
   type TranscribeAudioRequest,
 } from './stt';
 
+/** Input for one correction: provider, text, and optional endpoint/model/token overrides. */
 export interface CorrectionRequest {
   provider: AiProvider;
   text: string;
@@ -26,6 +27,7 @@ export interface CorrectionRequest {
   fetch?: typeof fetch;
 }
 
+/** Outcome of a correction: text, whether it changed, or why it was skipped (sanitized `error`). */
 export interface CorrectionResult {
   original: string;
   corrected: string;
@@ -43,10 +45,12 @@ class ProviderHttpError extends Error {
   }
 }
 
+/** Provider adapter contract: return corrected text or throw a sanitized provider error. */
 export interface AiProviderAdapter {
   correct(input: string, options: { token: string; baseUrl?: string; model?: string; timeoutMs?: number; fetch?: typeof fetch }): Promise<string>;
 }
 
+/** Checks whether text appears to be a shell command. */
 export function isShellCommand(text: string): boolean {
   const value = text.trim();
   if (!value) return false;
@@ -58,6 +62,7 @@ export function isShellCommand(text: string): boolean {
   return /(?:\|\||&&|\$\(|`)/.test(value) || /[;<>]/.test(value) || startsAsCommand;
 }
 
+/** Builds the instruction prompt used for text correction. */
 export function buildCorrectionPrompt(text: string): string {
   return `Correct only the typos in the text. Preserve code, paths, URLs, commands, flags, file names, and meaning exactly. Reply only with the corrected text, without explanations or additions.\n\n--- BEGIN TEXT ---\n${text}\n--- END TEXT ---`;
 }
@@ -95,8 +100,11 @@ async function request(provider: AiProvider, input: string, options: Parameters<
   } finally { clearTimeout(timer); }
 }
 
+/** Adapter for text correction through Anthropic. */
 export const anthropicAdapter: AiProviderAdapter = { correct: (input, options) => request('anthropic', input, options) };
+/** Adapter for text correction through OpenAI. */
 export const openAiAdapter: AiProviderAdapter = { correct: (input, options) => request('openai', input, options) };
+/** Adapter for text correction through an OpenAI-compatible endpoint. */
 export const openAiCompatibleAdapter: AiProviderAdapter = { correct: (input, options) => request('openai-compatible', input, options) };
 
 export async function correctText(requestData: CorrectionRequest): Promise<CorrectionResult> {
