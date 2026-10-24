@@ -276,6 +276,12 @@ const EDITOR_SCRIPT = `(async () => {
     result.placeholderHint = textarea().placeholder === 'Enter sends · Shift+Enter newline';
     const composer = textarea().closest('.composer');
     result.singleComposerStructure = !!composer && document.querySelectorAll('app-assisted-input .composer').length === 1 && ['ai-correction', 'assisted-mic', 'assisted-send'].every((id) => composer.querySelector('[data-testid="' + id + '"]')) && !!composer.querySelector('[data-testid="voice-label"]');
+    const composerStyle = getComputedStyle(textarea());
+    result.editorMonospace = composerStyle.fontFamily.toLowerCase().includes('monospace');
+    result.editorWhiteText = composerStyle.color === 'rgb(230, 237, 243)';
+    const composerRect = composer.getBoundingClientRect();
+    const actionsRect = composer.querySelector('.actions').getBoundingClientRect();
+    result.actionsBottomRight = Math.abs(actionsRect.right - composerRect.right) < 12 && actionsRect.left > composerRect.left + composerRect.width * 0.45;
     result.sendDisabledWhenEmpty = q('assisted-send')[0].disabled === true;
     setText("printf 'EDITOR_%s\\\\n' OK");
     await sleep(100);

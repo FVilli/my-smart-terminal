@@ -70,10 +70,10 @@ import { SettingsStore } from '../settings/settings-store';
     :host { display: block; flex: none; background: var(--terminal-bg); border-top: 1px solid var(--border); padding: 10px 16px; }
     .composer { border: 1px solid var(--border-soft); border-radius: 8px; background: var(--input-bg); padding: 5px 8px; }
     .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(76, 194, 165, .18); }
-    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; font-size: 14px; overflow: auto; }
+    .editor { display: block; width: 100%; min-width: 0; min-height: 46px; resize: none; background: transparent; border: 0; outline: 0; padding: 2px; color: var(--text); font-family: var(--font-mono), monospace; font-size: 14px; font-weight: 400; font-style: normal; line-height: 1.5; font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; overflow: auto; }
     .editor:disabled { opacity: .65; }
-    .editor::placeholder { color: var(--text-muted); opacity: 1; font: inherit; }
-    .bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; }
+    .editor::placeholder { color: var(--text-muted); opacity: 1; font-family: inherit; font-size: inherit; font-weight: inherit; font-style: inherit; line-height: inherit; }
+    .bottom { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 26px; }
     .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 11px; }
     .actions { display: flex; flex: none; align-items: center; gap: 4px; }
     .icon { display: inline-flex; align-items: center; justify-content: center; height: 26px; padding: 0 6px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); cursor: pointer; }

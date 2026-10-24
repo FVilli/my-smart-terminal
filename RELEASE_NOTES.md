@@ -1,6 +1,15 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.4
+
+Composer regression hotfix.
+
+### Fixed
+
+- Composer AI/mic/send controls are anchored bottom-right again after the hint was moved into the placeholder.
+- Editor and placeholder now explicitly share the same monospace family and weight; typed text remains white and the hint stays muted.
+
 ## v1.3.3
 
 Interaction and settings polish release.
