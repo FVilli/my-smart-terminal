@@ -116,6 +116,16 @@
   .card {
     @apply mb-2 min-w-0 rounded-md border border-line bg-card px-2.5 py-2;
   }
+
+  .field-sm {
+    @apply w-full min-w-0 rounded-md border border-line bg-input px-2 py-1.5 text-fg;
+  }
+  .field-sm:focus-visible {
+    @apply border-accent outline-none;
+  }
+  .field-sm::placeholder {
+    @apply text-muted;
+  }
 }
 
 /* Base reset lives in the base layer so utilities and component styles can

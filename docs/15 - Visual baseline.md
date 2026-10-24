@@ -96,7 +96,7 @@ Single source of truth: `apps/renderer/src/styles.css`. Raw values are declared 
 
 Measured geometry exposed as spacing utilities: `h-header` (35px), `h-tabbar` (38px), `h-footer` (28px), `h-composer` (120px), `max-w-tab` (220px). These numbers are the approved measurements, not arbitrary values.
 
-Shared controls (Tailwind `@layer components`): `.btn`, `.icon-btn`, `.field`, `.card`, plus the built-in `sr-only`. Everything else is composed from utilities in the component template.
+Shared controls (Tailwind `@layer components`): `.btn`, `.icon-btn`, `.field`, `.field-sm` (compact 6px/8px form controls used by settings and onboarding), `.card`, plus the built-in `sr-only`. Everything else is composed from utilities in the component template.
 
 Ownership and exceptions:
 - Token values and shared controls: `apps/renderer/src/styles.css` only.
