@@ -92,7 +92,10 @@ describe('SttService', () => {
       ] }), { status: 200 });
     });
     const service = new SttService({ ...stores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai-compatible', aiBaseUrl: 'https://llm.example/v1', sttCommand: undefined })), fetch: fetcher as typeof fetch });
-    await expect(service.models()).resolves.toEqual([{ id: 'qwen3-asr-0.6b' }, { id: 'qwen3-asr-1.7b' }]);
+    await expect(service.models()).resolves.toEqual([
+      { id: 'qwen3-asr-0.6b', loaded: false },
+      { id: 'qwen3-asr-1.7b', loaded: false },
+    ]);
   });
 
   it('rejects shared STT for unsupported AI providers', async () => {

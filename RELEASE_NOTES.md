@@ -1,6 +1,29 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.12
+
+STT model discovery release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### Added
+
+- The STT test area discovers models from the configured audio endpoint and shows whether each model is loaded, with a refresh control next to the model select.
+- Unsloth Qwen ASR models are supported; model diagnostics show endpoint, model, loaded state and test details.
+- Standalone Unsloth SDK transcription diagnostic for troubleshooting outside the app.
+
+### Fixed
+
+- Multipart STT uploads now use the audio filename extension instead of a generic one, which some servers rejected.
+- The composer microphone is a toggle with a 2 s red recording pulse; the transcript is inserted at the caret.
+- STT test control icons and table styles restored.
+- STT provider can use the server default model by omitting the model field.
+
+### Notes
+
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- The Windows guide checksum snippet now matches the current installer name instead of a stale one.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.11
 
 STT debug audio release.

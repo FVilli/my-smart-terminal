@@ -1,6 +1,18 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.12
+### Added
+- Dynamic STT model discovery from the audio endpoint, with loaded state and model test details.
+- Unsloth Qwen ASR model support, model refresh control, and standalone SDK transcription diagnostic.
+### Fixed
+- Multipart STT uploads use the audio filename extension expected by the server.
+- Composer mic is a toggle with a 2s red recording pulse and inserts the transcript at the caret.
+- Restored STT test control icons and table styles.
+### Changed
+- STT provider can use the server default model (model field omitted).
+- Fast local deb build/verification path for release testing.
+
 ## 1.3.11
 ### Added
 - STT test debug audio file with visible path; 0600 in userData/stt-debug.
