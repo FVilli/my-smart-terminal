@@ -50,6 +50,11 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
     setTimeout(() => {
       void (async () => {
         const scenario = process.env['SMART_TERMINAL_CAPTURE_SCENARIO'] ?? '';
+        const zoom = Number.parseFloat(process.env['SMART_TERMINAL_CAPTURE_ZOOM'] ?? '');
+        if (Number.isFinite(zoom) && zoom > 0) {
+          window.webContents.setZoomFactor(zoom);
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
         const script = `(async () => {
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           const waitFor = async (predicate, timeoutMs = 10000) => {

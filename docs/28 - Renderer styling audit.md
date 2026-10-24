@@ -174,3 +174,17 @@ Pre-migration evidence observed here (only the allowed commands were run):
 - No `!important` usages and no template `style="..."` attributes.
 - `--border-soft` is undefined (`assisted-input.ts:61`) — pre-existing defect.
 - Not run: `capture-layout.mjs` / Electron smokes / `ng build renderer` (display/Electron build required; deferred to parent).
+
+## Migration log and evidence (M20)
+
+| Task | Change | Verification |
+| --- | --- | --- |
+| T02 | Pinned `tailwindcss`/`@tailwindcss/postcss` 4.3.3, `apps/renderer/.postcssrc.json`, theme+utilities imports with explicit `@source`, preflight intentionally excluded | production bundle contains a generated utility; xterm CSS still inlined; layout metrics identical |
+| T03 | Single token source in `styles.css`, `@theme inline` mapping, `.btn/.icon-btn/.field/.card`, geometry utilities, `--font-code` rename, `--border-soft` defined | layout metrics identical; lint/tests/build pass |
+| T04 | Shell, header, tabs, footer, message center, sidebar, workarea converted; `app.css` deleted; host roles moved to `host.class`; base reset moved into `@layer base` | metrics identical; 1308 px diff vs T03 confined to the sidebar filter row (placeholder + sub-pixel text); IPC/tabs/search/clipboard/sidebar/settings smokes pass |
+| T05 | Composer and settings/onboarding converted; `.field-sm` added; `bg-backdrop` token fixed; paragraph margins/line-heights matched; dead `.stt-debug` and mic-check rules removed | composer pixel-identical; capture screenshots 8/8 OK with 0 diff on settings/STT/AI screens; all 10 smokes pass |
+| T06 | Dead `.terminal-status--error` removed; docs/06 and docs/15 updated; zoom and packaging verified | `test:layout`, zoom 50/100/200, capture harness, smokes, `package:deb` + `test:deb`, lint/tsc/vitest all green |
+
+Residual caveats:
+- Documentation screenshots in `docs/assets/screenshots` predate M20 and were not regenerated; the milestone evidence lives in `docs/assets/m20-baseline` plus the harness output.
+- Component CSS that remains is intentional: window drag regions, state rules that depend on Angular class bindings, mic pulse keyframes, fixed-height settings dialog, STT glyphs/table, xterm host/status. No palette literal lives outside `styles.css` and `TERMINAL_THEME`.
