@@ -42,6 +42,7 @@ export class SttService {
   }
 
   async models(): Promise<SttModelInfo[]> {
+    if (this.testMode) return [{ id: 'qwen3-asr-0.6b', loaded: true }, { id: 'qwen3-asr-1.7b', loaded: false }];
     const config = this.currentConfig();
     if (config === undefined || config.sttProvider !== 'cloud') return [];
     const shared = config.sttUseAiProvider === true;
@@ -60,10 +61,12 @@ export class SttService {
     const entries = Array.isArray((data as { data?: unknown }).data) ? (data as { data: unknown[] }).data : [];
     return entries.flatMap((entry) => {
       if (typeof entry !== 'object' || entry === null) return [];
-      const item = entry as { id?: unknown; audio_workflows?: unknown };
+      const item = entry as { id?: unknown; audio_workflows?: unknown; loaded?: unknown; is_loaded?: unknown; status?: unknown };
       if (typeof item.id !== 'string') return [];
       const workflows = Array.isArray(item.audio_workflows) ? item.audio_workflows : [];
-      return workflows.some((workflow) => workflow === 'transcribe') ? [{ id: item.id }] : [];
+      if (!workflows.some((workflow) => workflow === 'transcribe')) return [];
+      const loaded = item.loaded === true || item.is_loaded === true || item.status === 'loaded';
+      return [{ id: item.id, loaded }];
     });
   }
 

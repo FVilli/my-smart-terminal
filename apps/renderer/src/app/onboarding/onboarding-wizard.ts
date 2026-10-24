@@ -33,13 +33,6 @@ const MIC_MESSAGES: Record<MicState, string> = {
   unavailable: 'No microphone available. You can continue without it.',
 };
 
-const DEFAULT_STT_MODEL = 'audio-cpp/audio.cpp-gguf/Parakeet-TDT-0.6B-v3-GGUF';
-const STT_MODEL_OPTIONS = [
-  { value: '', label: 'Server default (do not send model)' },
-  { value: DEFAULT_STT_MODEL, label: 'Parakeet TDT 0.6B v3 (GGUF)' },
-  { value: 'qwen3-asr-0.6b', label: 'Qwen3 ASR 0.6B' },
-  { value: 'qwen3-asr-1.7b', label: 'Qwen3 ASR 1.7B' },
-];
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
@@ -174,6 +167,9 @@ const STT_MODEL_OPTIONS = [
                       @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
                     </select>
                   </label>
+                  @if (sttModelWarning(); as modelWarning) {
+                    <p class="warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
+                  }
                   <div class="test-row">
                     <button type="button" data-testid="onboarding-stt-refresh-models" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">{{ sttModelsLoading() ? 'Loading models…' : 'Refresh models' }}</button>
                     @if (sttModelsError(); as modelsError) { <span class="hint" data-testid="onboarding-stt-models-error">{{ modelsError }}</span> }
@@ -185,20 +181,24 @@ const STT_MODEL_OPTIONS = [
                     </select>
                   </label>
                   <div class="stt-test-controls">
-                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()">REC</button>
-                    <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()">STOP</button>
-                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()">PLAY</button>
-                    <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
+                    <button type="button" data-testid="onboarding-stt-rec" [disabled]="testRecording() || testTranscribing() || busy()" (click)="startSttRecording()"><span class="rec-dot" aria-hidden="true"></span> REC</button>
+                    <button type="button" data-testid="onboarding-stt-stop" [disabled]="!testRecording()" (click)="stopSttRecording()"><span class="stop-square" aria-hidden="true"></span> STOP</button>
+                    <button type="button" data-testid="onboarding-stt-play" [disabled]="testAudioUrl() === null || testPlayback()" (click)="playSttAudio()"><span class="play-triangle" aria-hidden="true"></span> PLAY</button>
+                    <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()"><span class="transcribe-icon" aria-hidden="true"></span> {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}</button>
                   </div>
-                  @if (testAudioPath(); as audioPath) {
-                    <p class="hint" data-testid="onboarding-stt-audio-path">Saved audio: {{ audioPath }}</p>
-                  }
+                  <span class="hint" data-testid="onboarding-stt-duration">{{ testDurationSeconds() }}s · {{ testAudioBytes() }} bytes · {{ testRecState() }}</span>
                   @if (testAudioUrl() !== null) {
                     <audio #audioPlayer controls preload="metadata" data-testid="onboarding-stt-player" (ended)="onPlaybackEnded()" (error)="onPlaybackError()"></audio>
                   }
-                  <button type="button" data-testid="onboarding-stt-transcribe" [disabled]="testAudioUrl() === null || testTranscribing() || busy()" (click)="transcribeSttAudio()">
-                    {{ testTranscribing() ? 'Transcribing…' : 'TRANSCRIBE' }}
-                  </button>
+                  <table class="stt-details" data-testid="onboarding-stt-details">
+                    <tbody>
+                      <tr><th>file</th><td data-testid="onboarding-stt-file">{{ testAudioPath() ?? '—' }}</td></tr>
+                      <tr><th>size</th><td>{{ testAudioBytes() }} bytes</td></tr>
+                      <tr><th>duration</th><td>{{ testDurationSeconds() }} seconds</td></tr>
+                      <tr><th>transcription</th><td data-testid="onboarding-stt-transcription">{{ sttTranscription() ?? '—' }}</td></tr>
+                      <tr><th>elapsed</th><td>{{ sttDebug()?.elapsedMs ?? 0 }} ms</td></tr>
+                    </tbody>
+                  </table>
                   @if (sttTestResult(); as result) {
                     <p class="remote-result" data-testid="onboarding-stt-result" role="status">{{ result }}</p>
                   }
@@ -345,6 +345,7 @@ export class OnboardingWizard {
   protected readonly testPlayback = signal(false);
   protected readonly testRecState = signal<'idle' | 'requesting' | 'recording' | 'stopping' | 'ready' | 'playing' | 'error'>('idle');
   protected readonly sttDebug = signal<SttDiagnostics | null>(null);
+  protected readonly sttTranscription = signal<string | null>(null);
   protected readonly testAudioPath = signal<string | null>(null);
   private testRecorder: MediaRecorder | null = null;
   private testStream: MediaStream | null = null;
@@ -472,12 +473,10 @@ export class OnboardingWizard {
   protected readonly discoveredSttModels = signal<SttModelInfo[]>([]);
   protected readonly sttModelsLoading = signal(false);
   protected readonly sttModelsError = signal<string | null>(null);
-  protected readonly sttModelOptions = computed(() => {
-    const options = [...STT_MODEL_OPTIONS];
-    for (const model of this.discoveredSttModels()) {
-      if (!options.some((option) => option.value === model.id)) options.push({ value: model.id, label: model.label ?? model.id });
-    }
-    return options;
+  protected readonly sttModelOptions = computed(() => this.discoveredSttModels().map((model) => ({ value: model.id, label: `${model.label ?? model.id}${model.loaded ? ' (loaded)' : ' (not loaded)'}` })));
+  protected readonly sttModelWarning = computed(() => {
+    const model = this.discoveredSttModels().find((entry) => entry.id === this.config().sttModel);
+    return model !== undefined && model.loaded !== true ? 'This model is not declared loaded. The provider may need to load it before transcription.' : null;
   });
 
   protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible'; }
@@ -556,7 +555,15 @@ export class OnboardingWizard {
     try {
       const models = await this.api.sttModels();
       this.discoveredSttModels.set(models);
-      this.sttModelsError.set(models.length === 0 ? 'No audio transcription models were returned; use Server default or a known model.' : null);
+      if (models.length === 0) {
+        this.sttModelsError.set('No audio transcription models were returned by the provider.');
+      } else {
+        this.sttModelsError.set(null);
+        if (!models.some((model) => model.id === this.config().sttModel)) {
+          const preferred = models.find((model) => model.loaded === true) ?? models[0];
+          if (preferred !== undefined) this.patch({ sttModel: preferred.id });
+        }
+      }
     } catch {
       this.discoveredSttModels.set([]);
       this.sttModelsError.set('Could not load models. Check the AI base URL/token and retry.');
@@ -711,6 +718,7 @@ export class OnboardingWizard {
         durationMs: this.testDurationMs(),
       });
       this.sttDebug.set(result.diagnostics ?? null);
+      this.sttTranscription.set(result.skipped ? null : result.text.trim());
       const debug = result.diagnostics;
       const service = debug === undefined ? '' : debug.serviceReached ? ` Service responded${debug.httpStatus !== undefined ? ' (HTTP ' + debug.httpStatus + ')' : ''}.` : ' Service was not reached.';
       this.sttTestResult.set(result.skipped ? `${sttNotice(result.reason)}${service}${debug?.error ? ' ' + debug.error : ''}` : `Transcription: “${result.text.trim()}”${service}`);

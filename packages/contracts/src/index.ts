@@ -392,6 +392,7 @@ export interface SttDiagnostics {
 export interface SttModelInfo {
   id: string;
   label?: string;
+  loaded?: boolean;
 }
 
 export interface SttSaveDebugAudioRequest {
