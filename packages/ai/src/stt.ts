@@ -45,6 +45,7 @@ function endpointForDiagnostics(baseUrl?: string): string | undefined {
   } catch { return undefined; }
 }
 
+/** Coarse network classification for diagnostics: never leaks URLs, bodies or credentials. */
 function networkCategory(error: unknown): string {
   const code = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined;
   if (code === 'ECONNREFUSED') return 'connection refused';
@@ -209,6 +210,7 @@ export async function transcribeAudio(request: TranscribeAudioRequest): Promise<
     mimeType: request.mimeType,
     ...(request.durationMs !== undefined ? { durationMs: request.durationMs } : {}),
   };
+  // Every failure path returns this shape: stable reason + sanitized diagnostics, never a raw body.
   const skipped = (reason: SttSkipReason, stage: SttDiagnostics['stage'], extra: Partial<SttDiagnostics> = {}): SttResult => ({
     text: '',
     skipped: true,

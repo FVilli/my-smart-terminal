@@ -11,6 +11,11 @@ import {
 } from './frontmatter';
 import { isIsoTimestamp, isValidMachine, parseSessionLabel } from './paths';
 
+/**
+ * Current Markdown frontmatter version. Readers must reject other versions with
+ * SCHEMA_INVALID_VERSION instead of guessing; a future bump requires an explicit
+ * migration that preserves existing synchronized files.
+ */
 export const SCHEMA_VERSION = 1;
 
 export type SchemaErrorCode =
