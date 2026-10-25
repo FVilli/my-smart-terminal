@@ -6,13 +6,16 @@ import { renderMarkdown } from './markdown.logic';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-none items-center justify-end gap-1" role="group" aria-label="Answer view">
+    <div class="flex flex-none items-center justify-between gap-1" role="group" aria-label="Answer view">
+      @if (label()) { <span class="text-sm">{{ label() }}</span> } @else { <span></span> }
+      <div class="flex items-center gap-1">
       <button type="button" class="btn px-2 py-0.5 text-[11px]" data-testid="ai-answer-view-rendered" [attr.aria-pressed]="mode() === 'rendered'" (click)="setMode('rendered')">Rendered</button>
       <button type="button" class="btn px-2 py-0.5 text-[11px]" data-testid="ai-answer-view-raw" [attr.aria-pressed]="mode() === 'raw'" (click)="setMode('raw')">Raw</button>
+      </div>
     </div>
     <div
       data-testid="ai-answer-rendered"
-      class="markdown min-h-24 overflow-auto rounded border border-line bg-input p-2"
+      class="markdown min-h-0 flex-1 overflow-auto rounded border border-line bg-input p-2"
       [class.hidden]="mode() === 'raw'"
       [innerHTML]="html()"
       (mouseup)="captureRendered($event)"
@@ -22,7 +25,7 @@ import { renderMarkdown } from './markdown.logic';
       readonly
       aria-label="AI answer raw"
       data-testid="ai-answer"
-      class="min-h-24 resize-y rounded border border-line bg-input p-2 font-mono"
+      class="min-h-0 flex-1 resize-none overflow-auto rounded border border-line bg-input p-2 font-mono"
       [class.hidden]="mode() === 'rendered'"
       [value]="text()"
       (select)="captureRaw($event)"
@@ -43,6 +46,7 @@ import { renderMarkdown } from './markdown.logic';
 })
 export class MarkdownView {
   readonly text = input('');
+  readonly label = input('');
   readonly selectionChange = output<string>();
   readonly mode = signal<'rendered' | 'raw'>('rendered');
 

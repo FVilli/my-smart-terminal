@@ -3,6 +3,7 @@ import { AI_ACTION_IDS, AI_RENDERED_PROMPT_MAX_BYTES, type AiActionDefinition, t
 import { AiStore } from './ai-store';
 import { SessionsStore } from '../sessions-store';
 import { TerminalConsole } from './terminal-console';
+import { readLastAction, writeLastAction } from './ai-last-action';
 
 @Injectable({ providedIn: 'root' })
 export class AiActionsStore {
@@ -31,13 +32,20 @@ export class AiActionsStore {
     try { this.actions.set((await this.api.aiActionsList()).actions.map(({id,title,description})=>({id,title,description}))); } catch { /* retain built-in fallback */ }
     const id = this.sessions.activeId(); const kept = id ? this.keptPrompt.get(id) : undefined;
     if (kept) { this.actionId.set(kept.actionId); this.system.set(kept.system); this.user.set(kept.user); this.phase.set('idle'); }
-    else await this.selectAction(this.actions()[0]?.id ?? 'suggest-command');
+    else {
+      let stored: string | null = null;
+      try { stored = readLastAction(globalThis.localStorage); } catch { /* storage may be unavailable */ }
+      const preferred = this.actions().some(action => action.id === stored) ? stored! : this.actions()[0]?.id ?? 'suggest-command';
+      await this.selectAction(preferred);
+    }
   }
   close(): void { this.sequence++; this.open.set(false); this.answer.set(''); this.selectedAnswer.set(''); this.phase.set('idle'); }
   cancel(): void { const id=this.sessions.activeId(); if(id)this.keptPrompt.delete(id); this.system.set(''); this.user.set(''); this.answer.set(''); this.selectedAnswer.set(''); this.close(); }
   keepAndClose(): void { const id=this.sessions.activeId(); if(id)this.keptPrompt.set(id,{actionId:this.actionId(),system:this.system(),user:this.user()}); this.close(); }
   async selectAction(id: string): Promise<void> {
-    this.actionId.set(id); this.answer.set(''); this.selectedAnswer.set(''); this.error.set(null); this.notice.set(null); this.phase.set('composing');
+    this.actionId.set(id);
+    try { writeLastAction(globalThis.localStorage, id); } catch { /* storage may be unavailable */ }
+    this.answer.set(''); this.selectedAnswer.set(''); this.error.set(null); this.notice.set(null); this.phase.set('composing');
     const session=this.sessions.activeSession();
     const environment=session?.environment ? {os:session.environment.os,shell:session.environment.shell,source:session.environment.source} : undefined;
     const terminalInfo=session ? `${session.label ?? 'unknown'} · ${session.kind ?? 'unknown'} · ${session.environment?.os ?? 'unknown'} · ${session.environment?.shell ?? 'unknown'}` : 'unknown · unknown · unknown · unknown';
