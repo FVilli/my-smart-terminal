@@ -200,6 +200,11 @@ type Step = 1 | 2 | 3 | 4 | 5;
               @case (5) { @if (editMode()) { <app-ai-actions-settings /> } }
               @case (4) {
                 <div data-testid="settings-appearance">
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Theme
+                    <select class="field-sm" data-testid="settings-terminal-theme" [value]="config().terminalTheme ?? 'dark'" (change)="setTheme($event)">
+                      <option value="dark">Dark</option><option value="light">Light</option>
+                    </select>
+                  </label>
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Terminal monospace font
                     <select class="field-sm" data-testid="settings-terminal-font" [value]="config().terminalFont ?? 'jetbrains'" (change)="patch({ terminalFont: terminalFont($event) })">
                       @for (font of terminalFonts; track font.id) { <option [value]="font.id">{{ font.label }}</option> }
@@ -310,6 +315,7 @@ export class OnboardingWizard {
   private testBlob: Blob | null = null;
   private testTimer: ReturnType<typeof setInterval> | undefined;
   private initialSnapshot = '';
+  private savedTheme: 'dark' | 'light' = 'dark';
 
   constructor() {
     void this.loadState();
@@ -324,7 +330,9 @@ export class OnboardingWizard {
     try {
       const state = await this.api.onboardingState();
       this.state.set(state);
-      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains' });
+      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains', terminalTheme: state.config.terminalTheme ?? 'dark' });
+      this.savedTheme = state.config.terminalTheme ?? 'dark';
+      this.appearance.setTheme(this.savedTheme);
       this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.visible.set(state.required);
       this.initialSnapshot = JSON.stringify(this.payload());
@@ -346,7 +354,9 @@ export class OnboardingWizard {
     try {
       const state = await this.api.onboardingState();
       this.state.set(state);
-      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains' });
+      this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains', terminalTheme: state.config.terminalTheme ?? 'dark' });
+      this.savedTheme = state.config.terminalTheme ?? 'dark';
+      this.appearance.setTheme(this.savedTheme);
       this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.errors.set({});
       this.warnings.set([]);
@@ -395,6 +405,7 @@ export class OnboardingWizard {
   }
 
   private close(): void {
+    this.appearance.setTheme(this.savedTheme);
     this.appearance.set(this.state()?.config.terminalFont ?? 'jetbrains');
     this.dismiss();
   }
@@ -409,6 +420,12 @@ export class OnboardingWizard {
 
   protected aiProvider(event: Event): AiProvider {
     return AI_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
+  }
+
+  protected setTheme(event: Event): void {
+    const terminalTheme = this.value(event) === 'light' ? 'light' : 'dark';
+    this.patch({ terminalTheme });
+    this.appearance.setTheme(terminalTheme);
   }
 
   protected terminalFont(event: Event): TerminalFontId {
@@ -755,7 +772,7 @@ export class OnboardingWizard {
 
   /** Removes empty optional fields before sending them to the main process. */
   private payload(): OnboardingConfig {
-    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, sttBaseUrl, sttUseAiProvider, sttResponseFormat, sttLanguage, terminalFont, ...required } = this.config();
+    const { dataRepoRemote, aiBaseUrl, aiModel, sttModel, sttCommand, sttBaseUrl, sttUseAiProvider, sttResponseFormat, sttLanguage, terminalFont, terminalTheme, ...required } = this.config();
     const optional = {
       dataRepoRemote,
       aiBaseUrl,
@@ -766,6 +783,7 @@ export class OnboardingWizard {
       sttLanguage: this.config().sttProvider === 'cloud' ? (sttLanguage ?? this.autoSttLanguage()) : sttLanguage,
       sttModel,
       terminalFont,
+      terminalTheme: terminalTheme ?? 'dark',
       // The local command is meaningful only with the `local` provider.
       ...(required.sttProvider === 'local' ? { sttCommand } : {}),
     };
@@ -857,6 +875,8 @@ export class OnboardingWizard {
     }
     // STT state may change as soon as it is saved: the microphone resynchronizes without a restart.
     void this.stt.load();
+    this.savedTheme = this.payload().terminalTheme ?? 'dark';
+    this.appearance.setTheme(this.savedTheme);
     this.appearance.set(this.payload().terminalFont ?? 'jetbrains');
     if (result.restartRequired) {
       this.restartNotice.set(true);

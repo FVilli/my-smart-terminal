@@ -31,15 +31,22 @@ const full: AppConfig = {
   syncFetchIntervalMs: 60000,
   clipboardEnabled: true,
   terminalFont: 'cascadia',
+  terminalTheme: 'light',
 };
 const minimal: AppConfig = { machineName: 'host', dataRepoPath: '/data', aiProvider: 'none', sttProvider: 'none' };
 
 describe('app config', () => {
   it('roundtrips full and minimal configs', () => {
     expect(parseAppConfig(serializeAppConfig(full))).toEqual(full);
-    expect(parseAppConfig(serializeAppConfig(minimal))).toEqual(minimal);
+    expect(parseAppConfig(serializeAppConfig(minimal))).toEqual({ ...minimal, terminalTheme: 'dark' });
     expect(serializeAppConfig(full)).toContain('stt_use_ai_provider: true');
     expect(serializeAppConfig(full)).toContain('schema_version: 1');
+  });
+
+  it('defaults missing theme to dark and accepts both persisted enum values', () => {
+    expect(parseAppConfig(serializeAppConfig(minimal)).terminalTheme).toBe('dark');
+    expect(parseAppConfig(serializeAppConfig({ ...minimal, terminalTheme: 'dark' })).terminalTheme).toBe('dark');
+    expect(parseAppConfig(serializeAppConfig({ ...minimal, terminalTheme: 'light' })).terminalTheme).toBe('light');
   });
 
   it.each([
@@ -48,6 +55,7 @@ describe('app config', () => {
     ['unknown field', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\napi_key: sk-123\n---\n'],
     ['relative path', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: rel/d\nai_provider: none\nstt_provider: none\n---\n'],
     ['bad provider', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: evil\nstt_provider: none\n---\n'],
+    ['invalid terminal theme', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nterminal_theme: system\n---\n'],
     ['invalid terminal font', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nterminal_font: "url(javascript:evil)"\n---\n'],
     ['url with credentials', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: openai\nai_base_url: "https://u:p@x.com"\nstt_provider: none\n---\n'],
     ['bad ms', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nsync_debounce_ms: -5\n---\n'],
@@ -82,10 +90,10 @@ describe('app config', () => {
     const store = new AppConfigStore(file);
     expect(store.load()).toEqual({ status: 'missing' });
     store.save(minimal);
-    expect(store.load()).toEqual({ status: 'valid', config: minimal, restoredFromBackup: false });
+    expect(store.load()).toEqual({ status: 'valid', config: { ...minimal, terminalTheme: 'dark' }, restoredFromBackup: false });
     store.save(full);
     expect(fs.readdirSync(path.dirname(file)).sort()).toEqual(['config.md', 'config.md.bak']);
-    expect(parseAppConfig(fs.readFileSync(`${file}.bak`, 'utf8'))).toEqual(minimal);
+    expect(parseAppConfig(fs.readFileSync(`${file}.bak`, 'utf8'))).toEqual({ ...minimal, terminalTheme: 'dark' });
   });
 
   it('quarantines a corrupt file and restores the valid backup', () => {
@@ -93,9 +101,9 @@ describe('app config', () => {
     store.save(minimal);
     store.save(full);
     fs.writeFileSync(file, '---\nschema_version: 1\ngarbage\n---\n');
-    expect(store.load()).toEqual({ status: 'valid', config: minimal, restoredFromBackup: true });
+    expect(store.load()).toEqual({ status: 'valid', config: { ...minimal, terminalTheme: 'dark' }, restoredFromBackup: true });
     expect(fs.readFileSync(`${file}.corrupt`, 'utf8')).toContain('garbage');
-    expect(parseAppConfig(fs.readFileSync(file, 'utf8'))).toEqual(minimal);
+    expect(parseAppConfig(fs.readFileSync(file, 'utf8'))).toEqual({ ...minimal, terminalTheme: 'dark' });
   });
 
   it('reports corrupt without backup and never overwrites the corrupt content silently', () => {
@@ -112,6 +120,14 @@ describe('app config', () => {
     fs.writeFileSync(file, 'bad');
     fs.writeFileSync(`${file}.bak`, 'also bad');
     expect(store.load()).toEqual({ status: 'corrupt' });
+  });
+
+  it('applies SMART_TERMINAL_THEME capture override and ignores invalid values', () => {
+    const store = new AppConfigStore(file);
+    store.save({ ...minimal, terminalTheme: 'dark' });
+    expect(store.load({ SMART_TERMINAL_THEME: 'light' })).toMatchObject({ status: 'valid', config: { terminalTheme: 'light' } });
+    expect(store.load({ SMART_TERMINAL_THEME: 'invalid' })).toMatchObject({ status: 'valid', config: { terminalTheme: 'dark' } });
+    expect(store.load({})).toMatchObject({ status: 'valid', config: { terminalTheme: 'dark' } });
   });
 
   it('resolves the path from SMART_TERMINAL_CONFIG_PATH or userData', () => {

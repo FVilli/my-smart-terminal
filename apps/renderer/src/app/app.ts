@@ -85,7 +85,12 @@ export class App {
     this.sync.start();
     this.search.start();
     const api = window.smartTerminal;
-    void api.onboardingState().then((state) => this.appearance.set(state.config.terminalFont ?? 'jetbrains')).catch(() => undefined);
+    // Dark is applied immediately as the no-flash fallback; persisted preference takes authority when loaded.
+    this.appearance.setTheme('dark');
+    void api.onboardingState().then((state) => {
+      this.appearance.setTheme(state.config.terminalTheme ?? 'dark');
+      this.appearance.set(state.config.terminalFont ?? 'jetbrains');
+    }).catch(() => this.appearance.setTheme('dark'));
     void api.runtimeInfo().then((info) => this.isPrimary.set(info.isPrimary));
     api.onRoleChanged((event) => this.isPrimary.set(event.isPrimary));
   }

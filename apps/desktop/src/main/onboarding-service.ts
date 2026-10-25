@@ -52,6 +52,7 @@ const MESSAGES = {
   sttLanguage: 'Invalid language.',
   sttCommand: 'Invalid command: an absolute executable path is required.',
   terminalFont: 'Invalid terminal font.',
+  terminalTheme: 'Invalid terminal theme.',
   aiToken: 'Invalid token.',
   sttToken: 'Invalid token.',
 } as const;
@@ -114,7 +115,8 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['sttLanguage'], configValidators.sttLanguage)) fail('sttLanguage');
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
   if (c['terminalFont'] !== undefined && c['terminalFont'] !== '' && !TERMINAL_FONT_IDS.some((id) => id === c['terminalFont'])) fail('terminalFont');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont'].includes(key));
+  if (c['terminalTheme'] !== undefined && c['terminalTheme'] !== '' && c['terminalTheme'] !== 'dark' && c['terminalTheme'] !== 'light') fail('terminalTheme');
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont', 'terminalTheme'].includes(key));
   if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -147,6 +149,7 @@ export class OnboardingService {
       aiProvider: 'none',
       sttProvider: 'none',
       terminalFont: 'jetbrains',
+      terminalTheme: 'dark',
     };
   }
 
@@ -166,6 +169,7 @@ export class OnboardingService {
       ...(config.sttLanguage !== undefined && { sttLanguage: config.sttLanguage }),
       ...(config.sttCommand !== undefined && { sttCommand: config.sttCommand }),
       terminalFont: config.terminalFont ?? 'jetbrains',
+      terminalTheme: config.terminalTheme ?? 'dark',
     };
   }
 
@@ -234,6 +238,7 @@ export class OnboardingService {
       aiProvider: input.aiProvider,
       sttProvider: input.sttProvider,
       terminalFont: (input.terminalFont ?? 'jetbrains') as TerminalFontId,
+      terminalTheme: input.terminalTheme ?? 'dark',
     } as AppConfig;
     for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
       delete next[key];

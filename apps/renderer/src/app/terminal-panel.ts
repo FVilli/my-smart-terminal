@@ -17,13 +17,7 @@ import { SessionsStore } from './sessions-store';
 import { AppearanceStore } from './appearance/appearance-store';
 import { TerminalConsole } from './ai/terminal-console';
 import { copyTerminalSelection, isTerminalCopyShortcut } from './terminal-copy';
-
-const TERMINAL_THEME = {
-  background: '#171e25',
-  foreground: '#e6edf3',
-  cursor: '#4cc2a5',
-  selectionBackground: '#2c3a4a',
-};
+import { terminalPalette } from './appearance/terminal-theme';
 
 @Component({
   selector: 'app-terminal-panel',
@@ -76,6 +70,11 @@ export class TerminalPanel implements OnDestroy {
     });
 
     effect(() => {
+      const palette = terminalPalette(this.appearance.terminalTheme());
+      if (this.terminal !== null) this.terminal.options.theme = palette;
+    });
+
+    effect(() => {
       const stack = this.appearance.fontStack();
       if (this.terminal !== null) {
         this.terminal.options.fontFamily = stack;
@@ -109,7 +108,7 @@ export class TerminalPanel implements OnDestroy {
       fontFamily: this.appearance.fontStack(),
       fontSize: 14,
       cursorBlink: true,
-      theme: TERMINAL_THEME,
+      theme: terminalPalette(this.appearance.terminalTheme()),
       allowProposedApi: false,
     });
     const fitAddon = new FitAddon();

@@ -297,8 +297,11 @@ export type SttProvider = (typeof STT_PROVIDERS)[number];
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
 
 /** Configuration fields editable by the wizard (no secrets). */
+export type TerminalTheme = 'dark' | 'light';
+
 export interface OnboardingConfig {
   terminalFont?: TerminalFontId;
+  terminalTheme?: TerminalTheme;
   machineName: string;
   dataRepoPath: string;
   dataRepoRemote?: string;

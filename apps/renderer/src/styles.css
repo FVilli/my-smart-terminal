@@ -43,6 +43,32 @@
   color-scheme: dark;
 }
 
+:root[data-theme='light'] {
+  --bg: #f4f6f8;
+  --terminal-bg: #ffffff;
+  --tab-bg: #e8edf2;
+  --tab-active: #d5e0e8;
+  --input-bg: #ffffff;
+  --sidebar-bg: #f4f6f8;
+  --card-bg: #ffffff;
+  --surface: #e8edf2;
+  --surface-raised: #ffffff;
+  --border: #c5cdd5;
+  --border-soft: #aeb9c4;
+  --text: #18212b;
+  --text-muted: #526170;
+  --accent: #006b57;
+  --danger: #b42318;
+  --danger-strong: #8f1d14;
+  --warning: #805400;
+  --syncing: #805400;
+  --record: #b4232b;
+  --record-strong: #a31621;
+  --focus-ring: rgb(0 107 87 / 30%);
+  --backdrop: rgb(24 33 43 / 55%);
+  color-scheme: light;
+}
+
 @theme inline {
   --color-app: var(--bg);
   --color-terminal: var(--terminal-bg);

@@ -708,9 +708,8 @@ const SETTINGS_SCRIPT = `(async () => {
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
   result.sttSharedProvider = q('onboarding-stt-provider')?.value === 'shared';
   result.sttSharedFields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
-  click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font'));
-  const appearanceHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
-  result.fixedSettingsHeight = settingsHeight > 400 && Math.abs(settingsHeight - appearanceHeight) <= 1;
+  result.initialThemeDark = document.documentElement.dataset.theme === 'dark';
+  click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font') && !!q('settings-terminal-theme'));
   if (q('settings-terminal-font')) { q('settings-terminal-font').value = 'system'; q('settings-terminal-font').dispatchEvent(new Event('change', { bubbles: true })); }
   click('onboarding-cancel'); result.dirtyConfirmation = await waitFor(() => !!q('onboarding-discard-confirm'));
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -775,6 +774,22 @@ const SETTINGS_SCRIPT = `(async () => {
     result.aiResetInModal = await waitFor(() => !(q('ai-system-prompt')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'), 4000);
     result.aiCustomGoneFromModal = !!finalSelect && !Array.from(finalSelect.options).some((option) => option.textContent.includes('Smoke action'));
     click('ai-cancel'); await waitFor(() => !q('ai-modal'));
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay')); click('settings-tab-appearance'); await waitFor(() => !!q('settings-terminal-theme'));
+  result.initialThemeDark = (document.documentElement.dataset.theme ?? 'dark') === 'dark';
+  const setTheme = (value) => { const el = q('settings-terminal-theme'); if (!el) return false; el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); return true; };
+  setTheme('light'); result.themePreviewsLight = document.documentElement.dataset.theme === 'light';
+  click('onboarding-cancel'); await waitFor(() => !!q('onboarding-discard-confirm'));
+  click('onboarding-discard'); await waitFor(() => !q('onboarding-overlay'));
+  result.themeDiscardRestoresDark = document.documentElement.dataset.theme === 'dark';
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay')); click('settings-tab-appearance');
+  result.themeControlRestoredDark = await waitFor(() => q('settings-terminal-theme')?.value === 'dark');
+  setTheme('light'); click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay')); click('settings-tab-appearance');
+  result.themeSavedLight = await waitFor(() => q('settings-terminal-theme')?.value === 'light' && document.documentElement.dataset.theme === 'light');
+  setTheme('dark'); click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay')); click('settings-tab-appearance');
+  const appearanceHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
+  result.fixedSettingsHeight = settingsHeight > 400 && Math.abs(settingsHeight - appearanceHeight) <= 1;
   return result;
 })()`;
 /** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */

@@ -94,13 +94,15 @@ function registerAppProtocol(): void {
   });
 }
 
+let configuredTheme: 'dark' | 'light' = 'dark';
+
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
     icon: resolveWindowIcon(app.isPackaged, process.resourcesPath, path.resolve(__dirname, '../../..')),
     ...readWindowSize(),
     minWidth: 960,
     minHeight: 600,
-    backgroundColor: '#171e25',
+    backgroundColor: configuredTheme === 'light' ? '#f4f6f8' : '#171e25',
     frame: process.platform === 'darwin',
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
     show: false,
@@ -264,6 +266,7 @@ void app.whenReady().then(async () => {
   const configStore = new AppConfigStore(resolveConfigPath(userDataPath));
   const configLoad = configStore.load();
   const config = configLoad.status === 'valid' ? configLoad.config : undefined;
+  configuredTheme = config?.terminalTheme ?? 'dark';
   const runtime = new CoordinatorRuntime({ userDataPath, clipboardSource: electronClipboardSource, config });
   if (syncUiSmokeTest) {
     seedSyncUiSmokeData(runtime.paths.dataRepoPath);
