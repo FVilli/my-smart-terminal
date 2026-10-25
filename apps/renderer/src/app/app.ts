@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { AiStore } from './ai/ai-store';
 import { AiActionsModal } from './ai/ai-actions-modal';
+import { AiActionsManager } from './ai/ai-actions-manager';
 import { AppearanceStore } from './appearance/appearance-store';
 import { ClipboardCaptureStore } from './clipboard-capture/clipboard-capture-store';
 import type { SidebarTab } from './session.model';
@@ -20,7 +21,7 @@ import { TerminalWorkarea } from './terminal-workarea/terminal-workarea';
 
 @Component({
   selector: 'app-root',
-  imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter, AiActionsModal],
+  imports: [OnboardingWizard, AppHeader, SessionTabs, TerminalWorkarea, TerminalPanel, AssistedInput, SidebarPanel, StatusFooter, AiActionsModal, AiActionsManager],
   templateUrl: './app.html',
   host: { class: 'flex h-full w-full flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
