@@ -14,7 +14,7 @@ Smart Terminal uses the OpenAI-compatible AI provider configured in the **AI** t
 
 Open **Settings** with the gear, select the **STT** tab, and configure:
 
-- **STT provider:** `Use the same AI provider (OpenAI-compatible)` (the only option).
+- **Speech to Text provider:** `Use the same AI provider (OpenAI-compatible)` (the only option).
 - **Model:** choose an explicit audio model, or **Server default (do not send model)** to omit the `model` field and let the provider choose. **Refresh models** queries the provider's `/v1/models` endpoint and filters entries whose `audio_workflows` contains `transcribe`; static fallback options include Parakeet, Qwen3 ASR 0.6B and Qwen3 ASR 1.7B.
 - **Language:** `EN (English)` or `IT (Italiano)`.
 

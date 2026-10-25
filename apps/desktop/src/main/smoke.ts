@@ -859,6 +859,11 @@ const STT_SETUP_SCRIPT = `(async () => {
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-stt');
   result.provider = await waitFor(() => q('onboarding-stt-provider')?.value === 'shared');
+  const provider = q('onboarding-stt-provider');
+  result.providerLabel = !!provider?.closest('label')?.textContent?.includes('Speech to Text provider');
+  const model = q('onboarding-stt-model');
+  const refresh = q('onboarding-stt-refresh-models');
+  result.refreshHeightMatchesModel = !!model && !!refresh && Math.abs(refresh.getBoundingClientRect().height - model.getBoundingClientRect().height) <= 1;
   result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
   const language = q('onboarding-stt-language');
   if (language) { language.value = 'en'; language.dispatchEvent(new Event('change', { bubbles: true })); }

@@ -145,7 +145,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
               }
               @case (3) {
                 <div data-testid="onboarding-step-3">
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">STT provider
+                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Speech to Text provider
                     <select class="field-sm" data-testid="onboarding-stt-provider" [value]="'shared'" (change)="enableSharedStt()">
                       <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
                     </select>
@@ -153,15 +153,18 @@ type Step = 1 | 2 | 3 | 4 | 5;
                   @if (!canUseAiProvider()) {
                     <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
                   }
-                  <div class="model-row mt-2.5 flex items-end gap-2">
-                    <label class="m-0 flex-1 flex flex-col gap-1 text-[13px]">Model
-                      <select class="field-sm" data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
+                  <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
+                    <span>Model</span>
+                    <div class="flex items-stretch gap-2">
+                    <label class="min-w-0 flex-1">
+                      <select class="field-sm w-full" aria-label="STT model" data-testid="onboarding-stt-model" [value]="sttModelValue()" (change)="patch({ sttModel: value($event) })">
                         @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
                       </select>
                     </label>
-                    <button type="button" class="refresh-models h-[34px] w-[34px] flex-none cursor-pointer rounded-md border border-line bg-raised p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
+                    <button type="button" class="refresh-models field-sm w-[34px] flex-none cursor-pointer p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
                       <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
+                    </div>
                   </div>
                   @if (sttModelWarning(); as modelWarning) {
                     <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
