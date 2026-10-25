@@ -65,6 +65,31 @@ describe('SttService', () => {
     expect(secrets.secrets.has).not.toHaveBeenCalledWith('stt:cloud');
   });
 
+  it('uses the specific provider URL and stt:cloud token for transcription', async () => {
+    const secrets = stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: false, sttApiProvider: 'deepseek', sttBaseUrl: 'https://specific.example/v1', aiBaseUrl: 'https://ignored.example/v1', sttCommand: undefined }), 'cloud-token');
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://specific.example/v1/audio/transcriptions');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer cloud-token');
+      return new Response(JSON.stringify({ text: 'specific' }), { status: 200 });
+    });
+    const service = new SttService({ ...secrets, fetch: fetcher as typeof fetch });
+    expect(service.status()).toMatchObject({ configured: true, hasToken: true });
+    await expect(service.transcribe({ audio: audio(), mimeType: 'audio/webm' })).resolves.toMatchObject({ text: 'specific', skipped: false });
+    expect(secrets.secrets.has).toHaveBeenCalledWith('stt:cloud');
+    expect(secrets.secrets.has).not.toHaveBeenCalledWith('ai:deepseek');
+  });
+
+  it('resolves a specific provider preset and an entered refresh token before saving', async () => {
+    const configOverride = config({ sttProvider: 'cloud', sttUseAiProvider: false, sttApiProvider: 'deepseek', sttBaseUrl: undefined, sttCommand: undefined });
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe('https://api.deepseek.com/v1/models');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer typed-token');
+      return new Response(JSON.stringify({ data: [{ id: 'whisper-large-v3', audio_workflows: ['transcribe'] }] }), { status: 200 });
+    });
+    const service = new SttService({ ...stubStores(configOverride, null), fetch: fetcher as typeof fetch });
+    await expect(service.models({ config: configOverride, sttToken: 'typed-token' })).resolves.toEqual([{ id: 'whisper-large-v3', loaded: false }]);
+  });
+
   it('lists only models that advertise the transcribe workflow', async () => {
     const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
       expect(String(url)).toBe('https://llm.example/v1/models');

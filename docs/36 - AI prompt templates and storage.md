@@ -29,6 +29,7 @@ Templates are rendered in one substitution pass. Recognized placeholders are rep
 | `{{action}}` | Action title |
 | `{{intent}}` | Action description (custom action intent) |
 | `{{description}}` | Action description |
+| `{{clipboard}}` | System clipboard contents read by the main process at compose time; capped at 16,000 characters (longer values are truncated). It is not persisted by this feature. The value is read from the system clipboard when composing, not from clipboard history.
 
 Console text is collected on demand from the active xterm buffer: the last 200 lines, further bounded to 8000 characters. It is not persisted; provider submission still requires the user's explicit Send action.
 
@@ -46,4 +47,4 @@ Five defaults are defined in `packages/ai/src/action-templates.ts`; rendered by 
 
 ## Editing and security
 
-The AI Actions manager is opened from the header wand in its own modal; it is separate from the composer AI assistant modal. Its bordered list footer shows `BUILT-IN:n CUSTOM:n` counts. Built-in templates can be reset per action. Custom actions can be deleted only after confirmation; bulk Reset has been removed. The AI Actions manager and AI Assistant are separate modal surfaces. In the assistant, an action select composes two editable prompts; the answer is shown as rendered Markdown with a Raw view escape hatch. Editing the System prompt is supported; it is not an immutable system instruction. Main blocks detected secrets in either submitted prompt before provider access. This UI change does not alter prompt or answer persistence: neither is persisted or logged by this feature. A secret-filter match blocks the call; filtering should not be treated as a guarantee of detection for every secret format.
+The AI Assistant remembers the last selected action in local storage only. The AI Actions manager is opened from the header wand in its own modal; it is separate from the composer AI assistant modal. Its bordered list footer shows `BUILT-IN:n CUSTOM:n` counts. Built-in templates can be reset per action. Custom actions can be deleted only after confirmation; bulk Reset has been removed. The AI Actions manager and AI Assistant are separate modal surfaces. In the assistant, an action select composes two editable prompts; the answer is shown as rendered Markdown with a Raw view escape hatch. Editing the System prompt is supported; it is not an immutable system instruction. Main blocks detected secrets in either submitted prompt before provider access. This UI change does not alter prompt or answer persistence: neither is persisted or logged by this feature. A secret-filter match blocks the call; filtering should not be treated as a guarantee of detection for every secret format.

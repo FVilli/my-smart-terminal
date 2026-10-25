@@ -46,7 +46,7 @@ Choose **Next** to save these values and continue. Choose **Use defaults** to us
 
 See the [AI provider setup guide](19%20-%20AI%20provider%20setup%20guide.md).
 
-The exact fields are **AI provider**, **Base URL (optional)**, **Model (optional)**, and **Token (optional, keychain only)**. Choose **none** to disable AI, or choose **anthropic**, **openai**, or **openai-compatible** for typo correction. Base URL and model let you customize a compatible endpoint; the token is stored in the operating system keychain (Electron `safeStorage`), never in Markdown or the synchronized repository.
+Choose an AI provider and optionally configure its base URL, model, and token (keychain only). The model selector supports **Provider default**, discovered models via **Refresh**, and **Custom** for a manual model name. Claude Platform and DeepSeek Platform presets fill their base URLs. The token is stored in the operating system keychain (Electron `safeStorage`), never in Markdown or the synchronized repository.
 
 Use **Skip** to continue without AI. AI correction is explicit and reviewable; it is not required for command entry. If the keychain is unavailable, the wizard shows **Keychain unavailable: the token will only be kept in memory.** Smart Terminal does not write a plaintext token. Configure a working keyring before expecting cloud AI to survive a restart.
 
@@ -54,7 +54,7 @@ Use **Skip** to continue without AI. AI correction is explicit and reviewable; i
 
 For permissions, local commands, cloud tokens and troubleshooting, see the [STT setup guide](17%20-%20STT%20setup%20guide.md).
 
-The STT tab is intentionally minimal: **Use the same AI provider (OpenAI-compatible)**, a **Model** select, an **EN/IT** language select, and **TEST**. It reuses the AI base URL and token. TEST saves the current values, records for about two seconds, transcribes, and discards the audio. Configure and test AI first; see the [STT setup guide](17%20-%20STT%20setup%20guide.md). A denied or unavailable microphone does not affect the terminal.
+Choose among **Use same AI provider**, **Use Specific Provider (OpenAI-compatible)**, **Local command**, and **None**. The specific cloud choice configures provider (OpenAI, DeepSeek, or OpenAI-compatible), base URL, keychain token, and model; refresh discovers models. Shared and specific cloud modes both offer model refresh. A denied or unavailable microphone does not affect the terminal.
 
 ### Later launches: Settings
 

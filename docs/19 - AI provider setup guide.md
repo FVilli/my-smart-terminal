@@ -24,7 +24,7 @@ AI actions are optional. In the reviewable modal, select an action and edit both
 | OpenAI | Provider, optional model, API token. |
 | OpenAI-compatible | Provider, base URL, model, API token. The endpoint must expose an OpenAI-compatible chat-completions API. |
 
-The base URL must be `http(s)`, without credentials or query parameters. The model name is provider-specific.
+The base URL must be `http(s)`, without credentials or query parameters. The model name is provider-specific. The model selector can refresh/discover chat models; **Provider default** omits a model, while **Custom** allows a manually entered model when discovery is unavailable or incomplete. Claude Platform and DeepSeek Platform presets auto-fill their base URLs.
 
 ## Self-hosted OpenAI-compatible / Unsloth
 
@@ -40,7 +40,7 @@ The `/v1` suffix is part of the base URL. These are configuration examples; this
 
 Enter the token only in the token field; **never** in the data repository or a Markdown file. The main process stores it through the system keychain/Electron `safeStorage`. On Linux, if the backend is `basic_text`, `unknown`, or encryption is unavailable, the token is kept in memory for the current session only and a warning is displayed. Configure a secure keyring before relying on cloud AI after restart.
 
-The renderer never receives the token; it only sees whether a token is present. Logout/revocation removes it.
+The renderer never receives the token; it only sees whether a token is present. Logout/revocation removes it. Tokens remain keychain-only; do not place them in templates, URLs, or Markdown.
 
 Cloud STT can optionally reuse this AI base URL and token via **Use same AI provider (OpenAI-compatible)** in the STT tab.
 

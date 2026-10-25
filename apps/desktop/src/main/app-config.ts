@@ -56,6 +56,7 @@ const KNOWN_KEYS = [
   'ai_model',
   'stt_provider',
   'stt_use_ai_provider',
+  'stt_api_provider',
   'stt_model',
   'stt_base_url',
   'stt_response_format',

@@ -21,6 +21,7 @@ const full: AppConfig = {
   aiModel: 'gpt-x',
   sttProvider: 'local',
   sttUseAiProvider: true,
+  sttApiProvider: 'deepseek',
   sttModel: 'whisper-1',
   sttBaseUrl: 'https://stt.example.com/v1',
   sttResponseFormat: 'verbose_json',
@@ -40,6 +41,7 @@ describe('app config', () => {
     expect(parseAppConfig(serializeAppConfig(full))).toEqual(full);
     expect(parseAppConfig(serializeAppConfig(minimal))).toEqual({ ...minimal, terminalTheme: 'dark' });
     expect(serializeAppConfig(full)).toContain('stt_use_ai_provider: true');
+    expect(serializeAppConfig(full)).toContain('stt_api_provider: deepseek');
     expect(serializeAppConfig(full)).toContain('schema_version: 1');
   });
 
@@ -55,6 +57,7 @@ describe('app config', () => {
     ['unknown field', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\napi_key: sk-123\n---\n'],
     ['relative path', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: rel/d\nai_provider: none\nstt_provider: none\n---\n'],
     ['bad provider', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: evil\nstt_provider: none\n---\n'],
+    ['bad stt api provider', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: cloud\nstt_api_provider: anthropic\n---\n'],
     ['invalid terminal theme', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nterminal_theme: system\n---\n'],
     ['invalid terminal font', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: none\nstt_provider: none\nterminal_font: "url(javascript:evil)"\n---\n'],
     ['url with credentials', '---\nschema_version: 1\nmachine_name: a\ndata_repo_path: /d\nai_provider: openai\nai_base_url: "https://u:p@x.com"\nstt_provider: none\n---\n'],

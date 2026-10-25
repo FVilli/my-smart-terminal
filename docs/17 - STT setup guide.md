@@ -8,7 +8,7 @@ created: 2026-10-23
 
 # STT setup guide
 
-Smart Terminal uses the OpenAI-compatible AI provider configured in the **AI** tab for speech-to-text. Audio is held in memory only: recordings are never written to the data repository or userData.
+STT can use the AI provider configured in **AI**, a separately configured OpenAI-compatible provider, a local command, or be disabled. Audio is held in memory only: recordings are never written to the data repository or userData.
 
 ## Configure
 
@@ -19,6 +19,12 @@ Open **Settings** with the gear, select the **STT** tab, and configure:
 - **Language:** `EN (English)` or `IT (Italiano)`.
 
 The base URL and token are taken from the AI tab, so configure and test AI first. Use an `openai` or `openai-compatible` AI provider. AI settings, including the token, remain in the main process/keychain and are not copied into Markdown or logs.
+
+## Specific cloud provider
+
+In Settings → **STT**, choose **Use Specific Provider (OpenAI-compatible)**, then select OpenAI, DeepSeek, or OpenAI-compatible and enter its base URL, token, and model. For example, DeepSeek's documented example base URL is `https://api.deepseek.com/v1`; OpenAI or a self-hosted OpenAI-compatible endpoint can also be configured. Enter tokens only in the token field: they are handled through the system keychain, never Markdown. Use model refresh to discover available models. Exact endpoint compatibility depends on the service; verify it with TEST.
+
+Alternatively, choose **Use same AI provider** to retain the existing shared AI URL and key. **Local command** configures a local transcription command; **None** disables STT. The shared-provider mode remains unchanged.
 
 ## TEST
 

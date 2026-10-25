@@ -166,6 +166,16 @@ describe('OnboardingService', () => {
     expect(fs.existsSync(store.filePath)).toBe(false);
   });
 
+  it('validates and persists a specific STT provider with its token', () => {
+    const { service, store, secrets } = setup();
+    expect(service.validate(valid({ sttProvider: 'cloud', sttUseAiProvider: false, sttApiProvider: 'anthropic' as never })).errors).toHaveProperty('sttApiProvider');
+    const config = valid({ sttProvider: 'cloud', sttUseAiProvider: false, sttApiProvider: 'deepseek', sttBaseUrl: 'https://api.deepseek.com/v1', sttModel: 'whisper-1' });
+    expect(service.validate(config).ok).toBe(true);
+    expect(service.save({ config, sttToken: 'stt-secret' }).ok).toBe(true);
+    expect(store.load()).toMatchObject({ status: 'valid', config: { sttApiProvider: 'deepseek', sttBaseUrl: 'https://api.deepseek.com/v1', sttModel: 'whisper-1' } });
+    expect(secrets.get('stt:cloud')).toBe('stt-secret');
+  });
+
   it('logout revokes a token', () => {
     const { service, secrets } = setup();
     service.save({ config: valid(), aiToken: 'tok' });
