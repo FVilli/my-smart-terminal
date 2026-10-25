@@ -1,11 +1,15 @@
 import type {
+  AiActionId,
+  AiActionResult,
+  AiComposeRequest,
+  AiComposeResult,
   AiCorrectRequest,
   AiStatus,
   CorrectionResult,
   SetupTestAiRequest,
   SetupTestAiResult,
 } from '@smart-terminal/contracts';
-import { correctText, isShellCommand } from '@smart-terminal/ai';
+import { buildActionBody, correctText, isShellCommand, runAiAction } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
 
@@ -14,11 +18,22 @@ export interface AiServiceOptions {
   secrets: Pick<SecretStore, 'isSecure' | 'has' | 'get'>;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /** AI action timeout (modal); defaults to 15 s. */
+  actionTimeoutMs?: number;
   /** Test seam: deterministic response, no network. Active only with SMART_TERMINAL_AI_TEST_MODE=1. */
   testMode?: boolean;
 }
 
 const TEST_CORRECTION = (text: string): string => text.replace(/\bsentance\b/g, 'sentence');
+
+/** Deterministic answers for smoke tests only (SMART_TERMINAL_AI_TEST_MODE=1). */
+const TEST_ACTIONS: Record<AiActionId, string> = {
+  'suggest-command': 'echo ok',
+  'explain-command': 'Prints "ok" to the terminal.',
+  'assess-risk': 'Risk: low\nWhy: prints text only.\nReversible: yes\nPrivileges: none\nSafer alternative: none',
+  'fix-message': 'Fixed message.',
+  'rewrite-dictated': 'Rewritten message.',
+};
 
 /**
  * Main-process AI correction: config and tokens never cross the IPC boundary.
@@ -27,11 +42,13 @@ const TEST_CORRECTION = (text: string): string => text.replace(/\bsentance\b/g, 
 export class AiService {
   private readonly fetchFn: typeof fetch | undefined;
   private readonly timeoutMs: number;
+  private readonly actionTimeoutMs: number;
   private readonly testMode: boolean;
 
   constructor(private readonly options: AiServiceOptions) {
     this.fetchFn = options.fetch;
     this.timeoutMs = options.timeoutMs ?? 8000;
+    this.actionTimeoutMs = options.actionTimeoutMs ?? 15000;
     this.testMode = options.testMode === true;
   }
 
@@ -94,6 +111,38 @@ export class AiService {
       response: result.corrected.slice(0, 120),
       ...(config.aiModel !== undefined ? { model: config.aiModel } : {}),
     };
+  }
+
+  /** Renders the editable prompt body; no network and no token access. */
+  compose(request: AiComposeRequest): AiComposeResult {
+    return { prompt: buildActionBody(request) };
+  }
+
+  /** Runs one modal action; provider bodies and tokens never leave this process. */
+  async action(request: { action: AiActionId; prompt: string }): Promise<AiActionResult> {
+    const started = Date.now();
+    const elapsed = (): number => Date.now() - started;
+    const config = this.currentConfig();
+    if (config === undefined || config.aiProvider === 'none') {
+      return { text: '', skipped: true, reason: 'unconfigured', elapsedMs: elapsed() };
+    }
+    if (this.testMode) {
+      return { text: TEST_ACTIONS[request.action], skipped: false, elapsedMs: elapsed() };
+    }
+    const token = this.options.secrets.get(`ai:${config.aiProvider}`);
+    if (token === undefined) {
+      return { text: '', skipped: true, reason: 'missing-token', elapsedMs: elapsed() };
+    }
+    return runAiAction({
+      action: request.action,
+      prompt: request.prompt,
+      provider: config.aiProvider,
+      token,
+      ...(config.aiBaseUrl !== undefined ? { baseUrl: config.aiBaseUrl } : {}),
+      ...(config.aiModel !== undefined ? { model: config.aiModel } : {}),
+      timeoutMs: this.actionTimeoutMs,
+      ...(this.fetchFn !== undefined ? { fetch: this.fetchFn } : {}),
+    });
   }
 
   async correct(request: AiCorrectRequest): Promise<CorrectionResult> {

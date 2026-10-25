@@ -89,4 +89,32 @@ describe('AiService connection test', () => {
     await expect(new AiService(stubStores(config({ aiProvider: 'none' }), 'secret-token') as never).testConnection()).resolves.toMatchObject({ ok: false, provider: 'none' });
     await expect(new AiService(stubStores(config(), null) as never).testConnection()).resolves.toMatchObject({ ok: false, error: 'AI token is not configured.' });
   });
+
+  it('composes prompts with the session environment and no network', () => {
+    const service = new AiService({ ...stubStores(config(), 'secret-token') });
+    const result = service.compose({ action: 'assess-risk', input: 'rm -rf build', environment: { os: 'linux', shell: 'bash', source: 'local' } });
+    expect(result.prompt).toContain('Context: os=linux; shell=bash; source=local');
+    expect(result.prompt).toContain('<user_body>\nrm -rf build\n</user_body>');
+  });
+
+  it('runs actions deterministically in test mode and skips when unconfigured', async () => {
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), testMode: true });
+    await expect(service.action({ action: 'suggest-command', prompt: 'list files' })).resolves.toMatchObject({ text: 'echo ok', skipped: false });
+    await expect(service.action({ action: 'assess-risk', prompt: 'rm' })).resolves.toMatchObject({ text: expect.stringContaining('Risk: low') });
+    const unconfigured = new AiService({ ...stubStores(config({ aiProvider: 'none' }), 'secret-token'), testMode: true });
+    await expect(unconfigured.action({ action: 'fix-message', prompt: 'x' })).resolves.toMatchObject({ skipped: true, reason: 'unconfigured' });
+    const noToken = new AiService({ ...stubStores(config(), null) });
+    await expect(noToken.action({ action: 'fix-message', prompt: 'x' })).resolves.toMatchObject({ skipped: true, reason: 'missing-token' });
+  });
+
+  it('calls the provider for actions and sanitizes HTTP failures', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: 'answer' } }] }), { status: 200 }));
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), fetch: fetchMock as typeof fetch });
+    await expect(service.action({ action: 'explain-command', prompt: 'ls' })).resolves.toMatchObject({ text: 'answer', skipped: false });
+    const failing = vi.fn(async () => new Response('raw provider body', { status: 429 }));
+    const failedService = new AiService({ ...stubStores(config(), 'secret-token'), fetch: failing as typeof fetch });
+    const failed = await failedService.action({ action: 'explain-command', prompt: 'ls' });
+    expect(failed).toMatchObject({ skipped: true, reason: 'provider-error', error: 'HTTP 429' });
+    expect(JSON.stringify(failed)).not.toContain('raw provider body');
+  });
 });

@@ -33,6 +33,8 @@ export const IPC_CHANNELS = {
   appRelaunch: 'app:relaunch',
   windowControl: 'window:control',
   aiStatus: 'ai:status',
+  aiCompose: 'ai:compose',
+  aiAction: 'ai:action',
   aiCorrect: 'ai:correct',
   sttStatus: 'stt:status',
   sttModels: 'stt:models',
@@ -381,6 +383,50 @@ export interface SecretsLogoutRequest {
   key: string;
 }
 
+/** Maximum editable AI prompt size in bytes. */
+export const AI_ACTION_MAX_PROMPT_BYTES = 16 * 1024;
+
+/** The five assistant actions offered by the AI modal. */
+export const AI_ACTION_IDS = ['suggest-command', 'explain-command', 'assess-risk', 'fix-message', 'rewrite-dictated'] as const;
+export type AiActionId = (typeof AI_ACTION_IDS)[number];
+
+/** OS/shell context sent with a prompt (derived from the persisted session environment). */
+export interface AiEnvironment {
+  os: SessionOs;
+  shell: SessionShell;
+  source?: SessionEnvironment['source'];
+}
+
+export interface AiComposeRequest {
+  action: AiActionId;
+  /** Current draft or free-form goal/command the action starts from. */
+  input: string;
+  environment?: AiEnvironment;
+}
+
+export interface AiComposeResult {
+  /** Editable prompt body; the immutable system instruction stays in main. */
+  prompt: string;
+}
+
+export interface AiActionRequest {
+  action: AiActionId;
+  /** Prompt body, possibly edited by the user (bounded by AI_ACTION_MAX_PROMPT_BYTES). */
+  prompt: string;
+}
+
+/** Why an action produced no usable text. */
+export type AiActionSkipReason = CorrectionReason | 'sensitive';
+
+export interface AiActionResult {
+  text: string;
+  skipped: boolean;
+  reason?: AiActionSkipReason;
+  /** Sanitized diagnostic: category/HTTP status only, never a provider body or token. */
+  error?: string;
+  elapsedMs: number;
+}
+
 export interface AiStatus {
   configured: boolean;
   provider: AiProvider;
@@ -519,6 +565,10 @@ export interface SmartTerminalApi {
   onWindowMaximized(listener: (event: WindowMaximizedEvent) => void): Unsubscribe;
   aiStatus(): Promise<AiStatus>;
   aiCorrect(request: AiCorrectRequest): Promise<CorrectionResult>;
+  /** Renders the editable prompt body for an action (no network). */
+  aiCompose(request: AiComposeRequest): Promise<AiComposeResult>;
+  /** Runs one action; the system instruction and provider call stay in main. */
+  aiAction(request: AiActionRequest): Promise<AiActionResult>;
   sttStatus(): Promise<SttStatus>;
   sttModels(): Promise<SttModelInfo[]>;
   sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;

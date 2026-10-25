@@ -4,6 +4,8 @@
  */
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
+  AI_ACTION_IDS,
+  AI_ACTION_MAX_PROMPT_BYTES,
   AI_CORRECTION_MAX_TEXT_BYTES,
   CLIPBOARD_WRITE_MAX_BYTES,
   HISTORY_MAX_AGENT_LENGTH,
@@ -15,6 +17,10 @@ import {
   TERMINAL_MAX_WRITE_BYTES,
   TERMINAL_MIN_DIMENSION,
   type AppPingResult,
+  type AiActionRequest,
+  type AiComposeRequest,
+  type AiComposeResult,
+  type AiActionResult,
   type AiCorrectRequest,
   type AiStatus,
   type AppRuntimeInfo,
@@ -147,6 +153,8 @@ export interface AiGateway {
   status(): AiStatus | Promise<AiStatus>;
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
   testConnection(request?: SetupTestAiRequest): SetupTestAiResult | Promise<SetupTestAiResult>;
+  compose(request: AiComposeRequest): AiComposeResult | Promise<AiComposeResult>;
+  action(request: AiActionRequest): AiActionResult | Promise<AiActionResult>;
 }
 
 export interface SttGateway {
@@ -288,6 +296,38 @@ export const validateClipboardWrite = singleRequest<ClipboardWriteRequest>(
     Buffer.byteLength(v['text'], 'utf8') <= CLIPBOARD_WRITE_MAX_BYTES,
 );
 
+const AI_OS_VALUES = ['linux', 'macos', 'windows', 'unknown'];
+const AI_SHELL_VALUES = ['bash', 'zsh', 'fish', 'sh', 'pwsh', 'powershell', 'cmd', 'unknown'];
+
+const isAiEnvironment = (value: unknown): boolean =>
+  isPlainRecord(value) &&
+  hasExactKeys(value, ['os', 'shell'], ['source']) &&
+  typeof value['os'] === 'string' &&
+  AI_OS_VALUES.includes(value['os']) &&
+  typeof value['shell'] === 'string' &&
+  AI_SHELL_VALUES.includes(value['shell']) &&
+  (value['source'] === undefined || value['source'] === 'local' || value['source'] === 'ssh-probe' || value['source'] === 'unknown');
+
+const isAiActionId = (value: unknown): boolean => typeof value === 'string' && (AI_ACTION_IDS as readonly string[]).includes(value);
+
+export const validateAiCompose = singleRequest<AiComposeRequest>(
+  (v) =>
+    hasExactKeys(v, ['action', 'input'], ['environment']) &&
+    isAiActionId(v['action']) &&
+    typeof v['input'] === 'string' &&
+    Buffer.byteLength(v['input'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES &&
+    (v['environment'] === undefined || isAiEnvironment(v['environment'])),
+);
+
+export const validateAiAction = singleRequest<AiActionRequest>(
+  (v) =>
+    hasExactKeys(v, ['action', 'prompt']) &&
+    isAiActionId(v['action']) &&
+    typeof v['prompt'] === 'string' &&
+    v['prompt'].trim().length > 0 &&
+    Buffer.byteLength(v['prompt'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES,
+);
+
 export const validateAiCorrect = singleRequest<AiCorrectRequest>(
   (v) =>
     hasExactKeys(v, ['text']) &&
@@ -403,6 +443,8 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.windowControl]: ChannelDefinition<[{ action: WindowControlAction }], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
+  [IPC_CHANNELS.aiCompose]: ChannelDefinition<[AiComposeRequest], AiComposeResult>;
+  [IPC_CHANNELS.aiAction]: ChannelDefinition<[AiActionRequest], AiActionResult>;
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
@@ -548,7 +590,7 @@ function buildSetupChannels(services: IpcServices): Pick<IpcChannelMap, typeof I
   };
 }
 
-function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
+function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.aiCompose | typeof IPC_CHANNELS.aiAction | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
   return {
     [IPC_CHANNELS.aiStatus]: {
       validate: noArguments,
@@ -557,6 +599,14 @@ function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_
     [IPC_CHANNELS.aiCorrect]: {
       validate: validateAiCorrect,
       handle: (_sender, request) => services.ai.correct(request),
+    },
+    [IPC_CHANNELS.aiCompose]: {
+      validate: validateAiCompose,
+      handle: (_sender, request) => services.ai.compose(request),
+    },
+    [IPC_CHANNELS.aiAction]: {
+      validate: validateAiAction,
+      handle: (_sender, request) => services.ai.action(request),
     },
     [IPC_CHANNELS.setupTestAi]: {
       validate: validateSetupTestAi,

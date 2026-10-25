@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { IPC_CHANNELS, STT_MAX_AUDIO_BYTES } from '@smart-terminal/contracts';
+import { AI_ACTION_MAX_PROMPT_BYTES, IPC_CHANNELS, STT_MAX_AUDIO_BYTES } from '@smart-terminal/contracts';
 import { TerminalError } from '@smart-terminal/terminal';
 import {
   MAX_PAYLOAD_BYTES,
@@ -60,6 +60,8 @@ const services: IpcServices = {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
     correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),
     testConnection: vi.fn(() => Promise.resolve({ ok: true, provider: 'openai' as const, latencyMs: 0, response: 'OK' })),
+    compose: vi.fn(() => ({ prompt: 'composed' })),
+    action: vi.fn(() => ({ text: 'answer', skipped: false, elapsedMs: 1 })),
   },
   stt: {
     status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),
@@ -362,5 +364,34 @@ describe('stt channels', () => {
     await expect(
       dispatchIpc(channels[IPC_CHANNELS.aiCorrect], sender, policy, [{ text: 'a'.repeat(MAX_PAYLOAD_BYTES) }]),
     ).rejects.toThrow('IPC_PAYLOAD_TOO_LARGE');
+  });
+});
+
+describe('ai:compose and ai:action validation', () => {
+  const compose = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.aiCompose], sender, policy, args);
+  const action = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.aiAction], sender, policy, args);
+  const environment = { os: 'linux', shell: 'bash', source: 'local' };
+
+  it('accepts valid compose/action payloads and delegates', async () => {
+    await expect(compose({ action: 'suggest-command', input: 'list files', environment })).resolves.toEqual({ prompt: 'composed' });
+    await expect(action({ action: 'suggest-command', prompt: '<user_body>\nlist files\n</user_body>' })).resolves.toMatchObject({ text: 'answer' });
+    expect(services.ai.compose).toHaveBeenCalledWith({ action: 'suggest-command', input: 'list files', environment });
+    expect(services.ai.action).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects unknown actions, malformed environments and extra keys', async () => {
+    await expect(compose({ action: 'run-command', input: 'x' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(compose({ action: 'fix-message', input: 'x', environment: { os: 'sunos', shell: 'bash' } })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(compose({ action: 'fix-message', input: 'x', environment: { os: 'linux', shell: 'bash', extra: 1 } })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(compose({ action: 'fix-message', input: 'x', extra: true })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(action({ action: 'fix-message', prompt: '   ' })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(action({ action: 'fix-message', prompt: 'x', extra: 1 })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+  });
+
+  it('rejects prompts over the action size limit', async () => {
+    await expect(action({ action: 'fix-message', prompt: 'a'.repeat(AI_ACTION_MAX_PROMPT_BYTES + 1) })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    await expect(compose({ action: 'fix-message', input: 'a'.repeat(AI_ACTION_MAX_PROMPT_BYTES + 1) })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    expect(services.ai.action).not.toHaveBeenCalled();
+    expect(services.ai.compose).not.toHaveBeenCalled();
   });
 });

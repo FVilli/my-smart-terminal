@@ -1,4 +1,5 @@
 import type { AiProvider } from '@smart-terminal/contracts';
+import { ProviderHttpError, requestCompletion } from './completion';
 export type { AiProvider } from '@smart-terminal/contracts';
 export {
   LocalSttAdapter,
@@ -38,13 +39,6 @@ export interface CorrectionResult {
   error?: string;
 }
 
-class ProviderHttpError extends Error {
-  constructor(readonly status: number) {
-    super(`HTTP ${status}`);
-    this.name = 'ProviderHttpError';
-  }
-}
-
 /** Provider adapter contract: return corrected text or throw a sanitized provider error. */
 export interface AiProviderAdapter {
   correct(input: string, options: { token: string; baseUrl?: string; model?: string; timeoutMs?: number; fetch?: typeof fetch }): Promise<string>;
@@ -67,45 +61,12 @@ export function buildCorrectionPrompt(text: string): string {
   return `Correct only the typos in the text. Preserve code, paths, URLs, commands, flags, file names, and meaning exactly. Reply only with the corrected text, without explanations or additions.\n\n--- BEGIN TEXT ---\n${text}\n--- END TEXT ---`;
 }
 
-function endpoint(provider: AiProvider, baseUrl?: string): string {
-  const base = (baseUrl || (provider === 'anthropic' ? 'https://api.anthropic.com' : provider === 'openai' ? 'https://api.openai.com/v1' : '')).replace(/\/$/, '');
-  if (!base) throw new Error('provider-error');
-  return provider === 'anthropic' ? `${base}/v1/messages` : `${base}/chat/completions`;
-}
-
-async function request(provider: AiProvider, input: string, options: Parameters<AiProviderAdapter['correct']>[1]): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000);
-  try {
-    const call = options.fetch ?? fetch;
-    const headers: Record<string, string> = { 'content-type': 'application/json' };
-    let body: unknown;
-    if (provider === 'anthropic') {
-      headers['x-api-key'] = options.token;
-      headers['anthropic-version'] = '2023-06-01';
-      body = { model: options.model || 'claude-3-5-haiku-latest', max_tokens: 2048, messages: [{ role: 'user', content: buildCorrectionPrompt(input) }] };
-    } else {
-      headers['authorization'] = `Bearer ${options.token}`;
-      body = { model: options.model || 'gpt-4o-mini', temperature: 0, messages: [{ role: 'user', content: buildCorrectionPrompt(input) }] };
-    }
-    const response = await call(endpoint(provider, options.baseUrl), { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
-    if (!response.ok) throw new ProviderHttpError(response.status);
-    const data: unknown = await response.json();
-    if (provider === 'anthropic') {
-      const content = (data as { content?: { text?: unknown }[] }).content;
-      return content?.map((part) => typeof part.text === 'string' ? part.text : '').join('').trim() ?? '';
-    }
-    const choices = (data as { choices?: { message?: { content?: unknown } }[] }).choices;
-    return typeof choices?.[0]?.message?.content === 'string' ? choices[0].message.content.trim() : '';
-  } finally { clearTimeout(timer); }
-}
-
 /** Adapter for text correction through Anthropic. */
-export const anthropicAdapter: AiProviderAdapter = { correct: (input, options) => request('anthropic', input, options) };
+export const anthropicAdapter: AiProviderAdapter = { correct: (input, options) => requestCompletion({ ...options, provider: 'anthropic', user: buildCorrectionPrompt(input) }) };
 /** Adapter for text correction through OpenAI. */
-export const openAiAdapter: AiProviderAdapter = { correct: (input, options) => request('openai', input, options) };
+export const openAiAdapter: AiProviderAdapter = { correct: (input, options) => requestCompletion({ ...options, provider: 'openai', user: buildCorrectionPrompt(input) }) };
 /** Adapter for text correction through an OpenAI-compatible endpoint. */
-export const openAiCompatibleAdapter: AiProviderAdapter = { correct: (input, options) => request('openai-compatible', input, options) };
+export const openAiCompatibleAdapter: AiProviderAdapter = { correct: (input, options) => requestCompletion({ ...options, provider: 'openai-compatible', user: buildCorrectionPrompt(input) }) };
 
 export async function correctText(requestData: CorrectionRequest): Promise<CorrectionResult> {
   const original = requestData.text;
@@ -125,3 +86,6 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
     return { ...skip(reason), error: diagnostic };
   }
 }
+
+export { completeText, ProviderHttpError, type CompletionOptions, type CompletionResult } from './completion';
+export * from './actions';
