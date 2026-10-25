@@ -522,6 +522,9 @@ const AI_SCRIPT = `(async () => {
     result.statusProvider = status.configured === true && typeof status.provider === 'string';
     setText('This is a sentance with a typo');
     await sleep(100);
+    const terminals = await api.listTerminals();
+    const sessionId = terminals[0]?.sessionId;
+    if (sessionId) await api.writeTerminal({ sessionId, data: 'echo AI_CONSOLE_MARKER\\n' });
     aiButton().click();
     const modal = () => document.querySelector('[data-testid="ai-modal-backdrop"]');
     result.modalOpened = await waitFor(() => !!modal(), 4000);
@@ -529,6 +532,7 @@ const AI_SCRIPT = `(async () => {
     action.click();
     const systemPrompt = () => document.querySelector('[data-testid="ai-system-prompt"]');
     const userPrompt = () => document.querySelector('[data-testid="ai-user-prompt"]');
+    result.consoleInSystemPrompt = await waitFor(() => (systemPrompt()?.value ?? '').includes('AI_CONSOLE_MARKER'), 4000);
     result.composedPrompt = await waitFor(() => !!systemPrompt()?.value && !!userPrompt()?.value, 4000) && userPrompt().value.includes('This is a sentance with a typo');
     document.querySelector('[data-testid="ai-send"]').click();
     result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 8000);

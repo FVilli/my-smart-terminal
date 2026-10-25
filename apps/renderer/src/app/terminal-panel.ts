@@ -15,6 +15,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 import { SessionsStore } from './sessions-store';
 import { AppearanceStore } from './appearance/appearance-store';
+import { TerminalConsole } from './ai/terminal-console';
 import { copyTerminalSelection, isTerminalCopyShortcut } from './terminal-copy';
 
 const TERMINAL_THEME = {
@@ -43,6 +44,7 @@ export class TerminalPanel implements OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly store = inject(SessionsStore);
   private readonly appearance = inject(AppearanceStore);
+  private readonly terminalConsole = inject(TerminalConsole);
 
   protected readonly session = computed(() => this.store.sessions().find((s) => s.id === this.sessionId()) ?? null);
 
@@ -92,6 +94,7 @@ export class TerminalPanel implements OnDestroy {
 
   ngOnDestroy(): void {
     window.removeEventListener('smart-terminal-focus-terminal', this.focusTerminal);
+    this.terminalConsole.unregister(this.sessionId());
     for (const dispose of this.disposers.splice(0)) {
       dispose();
     }
@@ -114,6 +117,16 @@ export class TerminalPanel implements OnDestroy {
     terminal.open(this.host().nativeElement);
     this.terminal = terminal;
     this.fitAddon = fitAddon;
+    // Read the live buffer only on demand; terminal output is transient and must never be persisted.
+    this.terminalConsole.register(id, () => {
+      const buffer = terminal.buffer.active;
+      const lines: string[] = [];
+      for (let i = 0; i < buffer.length; i += 1) {
+        const line = buffer.getLine(i);
+        if (line) lines.push(line.translateToString(true));
+      }
+      return lines.join('\n');
+    });
     // Only the copy shortcut is intercepted, and only when it can act on a selection; every
     // other key must reach the PTY unchanged (docs/23 - ADR assisted input and terminal keyboard behavior).
     terminal.attachCustomKeyEventHandler((event) => {

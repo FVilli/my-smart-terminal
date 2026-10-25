@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AiActionsStore } from '../apps/renderer/src/app/ai/ai-actions-store';
 import { SessionsStore } from '../apps/renderer/src/app/sessions-store';
 import { AiStore } from '../apps/renderer/src/app/ai/ai-store';
+import { TerminalConsole } from '../apps/renderer/src/app/ai/terminal-console';
 
 const definition = (id: string, title: string) => ({ id, title, description: `${title} description`, systemTemplate: `System ${id}`, userTemplate: `User ${id}`, builtIn: true });
 const definitions = [definition('suggest-command', 'Suggest a command'), definition('fix-message', 'Fix message for agent')];
@@ -12,6 +13,7 @@ function setup(api: Record<string, unknown>, sessions: Record<string, unknown>) 
   Object.assign(globalThis, { smartTerminal: api });
   const injector = createEnvironmentInjector([
     { provide: SessionsStore, useValue: sessions },
+    { provide: TerminalConsole, useValue: { read: vi.fn(() => 'user@host:~$ ls\naliases') } },
     { provide: AiActionsStore, useClass: AiActionsStore },
     { provide: AiStore, useClass: AiStore },
   ], Injector.NULL as unknown as EnvironmentInjector);
@@ -42,7 +44,7 @@ describe('AiActionsStore', () => {
     expect(api.aiCompose).toHaveBeenCalledWith({
       actionId: 'suggest-command',
       composerText: 'draft text',
-      consoleText: '',
+      consoleText: 'user@host:~$ ls\naliases',
       terminalInfo: 'S1 · local · linux · bash',
       environment: { os: 'linux', shell: 'bash', source: 'local' },
     });

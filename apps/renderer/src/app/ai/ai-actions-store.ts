@@ -2,11 +2,13 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { AI_ACTION_IDS, AI_RENDERED_PROMPT_MAX_BYTES, type AiActionDefinition, type AiActionResult, type SmartTerminalApi } from '@smart-terminal/contracts';
 import { AiStore } from './ai-store';
 import { SessionsStore } from '../sessions-store';
+import { TerminalConsole } from './terminal-console';
 
 @Injectable({ providedIn: 'root' })
 export class AiActionsStore {
   private readonly api = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;
   private readonly sessions = inject(SessionsStore);
+  private readonly console = inject(TerminalConsole);
   readonly ai = inject(AiStore);
   readonly open = signal(false);
   readonly actions = signal<Pick<AiActionDefinition, 'id'|'title'|'description'>[]>(AI_ACTION_IDS.map(id => ({id,title:id,description:''})));
@@ -39,7 +41,7 @@ export class AiActionsStore {
     const session=this.sessions.activeSession();
     const environment=session?.environment ? {os:session.environment.os,shell:session.environment.shell,source:session.environment.source} : undefined;
     const terminalInfo=session ? `${session.label ?? 'unknown'} · ${session.kind ?? 'unknown'} · ${session.environment?.os ?? 'unknown'} · ${session.environment?.shell ?? 'unknown'}` : 'unknown · unknown · unknown · unknown';
-    try { const result=await this.api.aiCompose({actionId:id,composerText:this.sessions.activeDraft(),consoleText:'',terminalInfo,...(environment?{environment}:{})}); this.system.set(result.system); this.user.set(result.user); this.phase.set('idle'); }
+    try { const result=await this.api.aiCompose({actionId:id,composerText:this.sessions.activeDraft(),consoleText:this.console.read(this.sessions.activeId()),terminalInfo,...(environment?{environment}:{})}); this.system.set(result.system); this.user.set(result.user); this.phase.set('idle'); }
     catch { this.error.set('Could not prepare the AI prompt.'); this.phase.set('error'); }
   }
   async send(): Promise<void> {
