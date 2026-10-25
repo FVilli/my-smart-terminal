@@ -119,8 +119,9 @@ type Step = 1 | 2 | 3 | 4 | 5;
                     </label>
                     <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
                       <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
-                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [value]="aiToken()" (input)="aiToken.set(value($event))" />
+                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" aria-describedby="onboarding-ai-token-stored" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
+                    @if (storedToken()) { <p id="onboarding-ai-token-stored" class="hint text-xs" data-testid="onboarding-ai-token-stored">Token stored in the keychain — type to replace.</p> }
                     @if (!state()?.secureStorage) {
                       <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
@@ -280,6 +281,7 @@ export class OnboardingWizard {
   protected readonly busy = signal(false);
   protected readonly restartNotice = signal(false);
   protected readonly aiToken = signal('');
+  protected readonly storedToken = computed(() => this.state()?.storedSecrets.includes(`ai:${this.config().aiProvider}`) ?? false);
   protected readonly sttToken = signal('');
   protected readonly editMode = signal(false);
   protected readonly confirmDiscard = signal(false);

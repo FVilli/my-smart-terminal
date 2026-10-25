@@ -812,13 +812,29 @@ const AI_SETUP_SCRIPT = `(async () => {
   await waitFor(() => !!q('onboarding-overlay'));
   click('settings-tab-ai');
   result.step2 = await waitFor(() => !!q('onboarding-ai-provider'));
+  const setField = (id, value) => {
+    const el = q(id);
+    if (!el) return false;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  };
   const provider = q('onboarding-ai-provider'); provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true }));
-  const base = q('onboarding-ai-url'); base.value = 'https://unsloth.example/v1'; base.dispatchEvent(new Event('input', { bubbles: true }));
-  const model = q('onboarding-ai-model'); model.value = 'custom/model:v1'; model.dispatchEvent(new Event('input', { bubbles: true }));
+  setField('onboarding-ai-url', 'https://unsloth.example/v1');
+  setField('onboarding-ai-model', 'custom/model:v1');
+  setField('onboarding-ai-token', 'smoke-ai-token');
   result.button = await waitFor(() => !!q('onboarding-test-ai'));
   click('onboarding-test-ai');
   result.resultVisible = await waitFor(() => !!q('onboarding-ai-result'), 20000);
   result.responseShown = await waitFor(() => (q('onboarding-ai-result')?.textContent ?? '').includes('responded'), 20000);
+  click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'), 8000);
+  click('settings-open'); await waitFor(() => !!q('onboarding-overlay'));
+  click('settings-tab-ai'); await waitFor(() => !!q('onboarding-ai-provider'));
+  result.tokenPlaceholderMasked = q('onboarding-ai-token')?.placeholder === '••••••••••••';
+  result.storedTokenHintVisible = !!q('onboarding-ai-token-stored');
+  result.tokenFieldEmptyAfterReload = (q('onboarding-ai-token')?.value ?? '') === '';
+  click('onboarding-cancel');
+  if (q('onboarding-discard-confirm')) click('onboarding-discard');
   return result;
 })()`;
 
