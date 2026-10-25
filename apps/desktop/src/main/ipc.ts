@@ -4,8 +4,11 @@
  */
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
+  AI_ACTION_DESCRIPTION_MAX,
   AI_ACTION_IDS,
+  AI_ACTION_TITLE_MAX,
   AI_ACTION_MAX_PROMPT_BYTES,
+  AI_TEMPLATE_MAX_BYTES,
   AI_CORRECTION_MAX_TEXT_BYTES,
   CLIPBOARD_WRITE_MAX_BYTES,
   HISTORY_MAX_AGENT_LENGTH,
@@ -17,7 +20,12 @@ import {
   TERMINAL_MAX_WRITE_BYTES,
   TERMINAL_MIN_DIMENSION,
   type AppPingResult,
+  type AiActionDefinition,
   type AiActionRequest,
+  type AiActionsDeleteRequest,
+  type AiActionsResetRequest,
+  type AiActionsSaveRequest,
+  type AiActionsState,
   type AiComposeRequest,
   type AiComposeResult,
   type AiActionResult,
@@ -152,6 +160,13 @@ export interface SyncGateway {
   status(): Promise<SyncStatusEvent>;
 }
 
+export interface AiActionsGateway {
+  list(): AiActionsState | Promise<AiActionsState>;
+  save(request: AiActionsSaveRequest): AiActionsState | Promise<AiActionsState>;
+  reset(request: AiActionsResetRequest): AiActionsState | Promise<AiActionsState>;
+  delete(request: AiActionsDeleteRequest): AiActionsState | Promise<AiActionsState>;
+}
+
 export interface AiGateway {
   status(): AiStatus | Promise<AiStatus>;
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
@@ -212,6 +227,7 @@ export interface IpcServices {
   sync: SyncGateway;
   clipboardWriter: ClipboardTextWriter;
   ai: AiGateway;
+  aiActions: AiActionsGateway;
   stt: SttGateway;
 }
 
@@ -302,6 +318,30 @@ export const validateClipboardWrite = singleRequest<ClipboardWriteRequest>(
     v['text'].length > 0 &&
     Buffer.byteLength(v['text'], 'utf8') <= CLIPBOARD_WRITE_MAX_BYTES,
 );
+
+const isActionTemplate = (value: unknown): boolean =>
+  typeof value === 'string' && value.trim().length > 0 && Buffer.byteLength(value, 'utf8') <= AI_TEMPLATE_MAX_BYTES && !value.includes('\0');
+
+const isActionTextField = (value: unknown, max: number): boolean =>
+  typeof value === 'string' && value.trim().length > 0 && value.length <= max && !/[\r\n]/.test(value);
+
+const isActionDefinition = (value: unknown): value is AiActionDefinition =>
+  isPlainRecord(value) &&
+  hasExactKeys(value, ['id', 'title', 'description', 'systemTemplate', 'userTemplate']) &&
+  typeof value['id'] === 'string' &&
+  value['id'].length > 0 &&
+  value['id'].length <= 64 &&
+  isActionTextField(value['title'], AI_ACTION_TITLE_MAX) &&
+  isActionTextField(value['description'], AI_ACTION_DESCRIPTION_MAX) &&
+  isActionTemplate(value['systemTemplate']) &&
+  isActionTemplate(value['userTemplate']);
+
+export const validateAiActionsSave = singleRequest<AiActionsSaveRequest>((v) => hasExactKeys(v, ['action']) && isActionDefinition(v['action']));
+
+const isActionId = (value: unknown): boolean => typeof value === 'string' && value.length > 0 && value.length <= 64;
+
+export const validateAiActionsReset = singleRequest<AiActionsResetRequest>((v) => hasExactKeys(v, ['id']) && isActionId(v['id']));
+export const validateAiActionsDelete = singleRequest<AiActionsDeleteRequest>((v) => hasExactKeys(v, ['id']) && isActionId(v['id']));
 
 const AI_OS_VALUES = ['linux', 'macos', 'windows', 'unknown'];
 const AI_SHELL_VALUES = ['bash', 'zsh', 'fish', 'sh', 'pwsh', 'powershell', 'cmd', 'unknown'];
@@ -453,6 +493,10 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
   [IPC_CHANNELS.aiCompose]: ChannelDefinition<[AiComposeRequest], AiComposeResult>;
   [IPC_CHANNELS.aiAction]: ChannelDefinition<[AiActionRequest], AiActionResult>;
+  [IPC_CHANNELS.aiActionsList]: ChannelDefinition<[], AiActionsState>;
+  [IPC_CHANNELS.aiActionsSave]: ChannelDefinition<[AiActionsSaveRequest], AiActionsState>;
+  [IPC_CHANNELS.aiActionsReset]: ChannelDefinition<[AiActionsResetRequest], AiActionsState>;
+  [IPC_CHANNELS.aiActionsDelete]: ChannelDefinition<[AiActionsDeleteRequest], AiActionsState>;
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
@@ -602,7 +646,7 @@ function buildSetupChannels(services: IpcServices): Pick<IpcChannelMap, typeof I
   };
 }
 
-function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.aiCompose | typeof IPC_CHANNELS.aiAction | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
+function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.aiCompose | typeof IPC_CHANNELS.aiAction | typeof IPC_CHANNELS.aiActionsList | typeof IPC_CHANNELS.aiActionsSave | typeof IPC_CHANNELS.aiActionsReset | typeof IPC_CHANNELS.aiActionsDelete | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
   return {
     [IPC_CHANNELS.aiStatus]: {
       validate: noArguments,
@@ -619,6 +663,22 @@ function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_
     [IPC_CHANNELS.aiAction]: {
       validate: validateAiAction,
       handle: (_sender, request) => services.ai.action(request),
+    },
+    [IPC_CHANNELS.aiActionsList]: {
+      validate: noArguments,
+      handle: () => services.aiActions.list(),
+    },
+    [IPC_CHANNELS.aiActionsSave]: {
+      validate: validateAiActionsSave,
+      handle: (_sender, request) => services.aiActions.save(request),
+    },
+    [IPC_CHANNELS.aiActionsReset]: {
+      validate: validateAiActionsReset,
+      handle: (_sender, request) => services.aiActions.reset(request),
+    },
+    [IPC_CHANNELS.aiActionsDelete]: {
+      validate: validateAiActionsDelete,
+      handle: (_sender, request) => services.aiActions.delete(request),
     },
     [IPC_CHANNELS.setupTestAi]: {
       validate: validateSetupTestAi,

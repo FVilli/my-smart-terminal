@@ -36,6 +36,10 @@ export const IPC_CHANNELS = {
   aiStatus: 'ai:status',
   aiCompose: 'ai:compose',
   aiAction: 'ai:action',
+  aiActionsList: 'ai:actions:list',
+  aiActionsSave: 'ai:actions:save',
+  aiActionsReset: 'ai:actions:reset',
+  aiActionsDelete: 'ai:actions:delete',
   aiCorrect: 'ai:correct',
   sttStatus: 'stt:status',
   sttModels: 'stt:models',
@@ -391,6 +395,47 @@ export interface SecretsLogoutRequest {
 
 /** Maximum editable AI prompt size in bytes. */
 export const AI_ACTION_MAX_PROMPT_BYTES = 16 * 1024;
+/** Maximum size of one System/User template. */
+export const AI_TEMPLATE_MAX_BYTES = 8 * 1024;
+/** Maximum rendered System + User prompt size. */
+export const AI_RENDERED_PROMPT_MAX_BYTES = 32 * 1024;
+/** Maximum total actions (built-in + custom). */
+export const AI_ACTIONS_MAX = 20;
+export const AI_ACTION_TITLE_MAX = 60;
+export const AI_ACTION_DESCRIPTION_MAX = 200;
+
+/** Placeholders available in System/User templates. Unknown placeholders stay literal. */
+export const AI_PLACEHOLDERS = ['os', 'shell', 'envSource', 'terminalInfo', 'console', 'composer', 'action', 'intent', 'description'] as const;
+export type AiPlaceholder = (typeof AI_PLACEHOLDERS)[number];
+
+/** One AI action: built-in ids have fixed title/description; templates are editable. */
+export interface AiActionDefinition {
+  id: string;
+  title: string;
+  description: string;
+  systemTemplate: string;
+  userTemplate: string;
+  builtIn: boolean;
+}
+
+export interface AiActionsState {
+  actions: AiActionDefinition[];
+  placeholders: readonly AiPlaceholder[];
+  /** Sanitized warning when the stored file was invalid and defaults were loaded. */
+  warning?: string;
+}
+
+export interface AiActionsSaveRequest {
+  action: AiActionDefinition;
+}
+
+export interface AiActionsResetRequest {
+  id: string;
+}
+
+export interface AiActionsDeleteRequest {
+  id: string;
+}
 
 /** The five assistant actions offered by the AI modal. */
 export const AI_ACTION_IDS = ['suggest-command', 'explain-command', 'assess-risk', 'fix-message', 'rewrite-dictated'] as const;
@@ -575,6 +620,14 @@ export interface SmartTerminalApi {
   aiCompose(request: AiComposeRequest): Promise<AiComposeResult>;
   /** Runs one action; the system instruction and provider call stay in main. */
   aiAction(request: AiActionRequest): Promise<AiActionResult>;
+  /** Stored action templates and placeholders (built-in defaults when nothing was customized). */
+  aiActionsList(): Promise<AiActionsState>;
+  /** Upserts one action; built-in titles/descriptions stay fixed. */
+  aiActionsSave(request: AiActionsSaveRequest): Promise<AiActionsState>;
+  /** Restores one built-in action to its default templates. */
+  aiActionsReset(request: AiActionsResetRequest): Promise<AiActionsState>;
+  /** Deletes a custom action. */
+  aiActionsDelete(request: AiActionsDeleteRequest): Promise<AiActionsState>;
   sttStatus(): Promise<SttStatus>;
   sttModels(): Promise<SttModelInfo[]>;
   sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;

@@ -64,6 +64,12 @@ const services: IpcServices = {
     compose: vi.fn(() => ({ prompt: 'composed' })),
     action: vi.fn(() => ({ text: 'answer', skipped: false, elapsedMs: 1 })),
   },
+  aiActions: {
+    list: vi.fn(() => ({ actions: [], placeholders: [] })),
+    save: vi.fn(() => ({ actions: [], placeholders: [] })),
+    reset: vi.fn(() => ({ actions: [], placeholders: [] })),
+    delete: vi.fn(() => ({ actions: [], placeholders: [] })),
+  },
   stt: {
     status: vi.fn(() => ({ configured: true, provider: 'local' as const, hasToken: false, secureStorage: true })),
     models: vi.fn(() => []),
@@ -408,4 +414,34 @@ describe('terminal:detect-environment validation', () => {
     }
   });
 });
+});
+
+describe('ai:actions validation', () => {
+  const run = (channel: string, ...args: unknown[]) => dispatchIpc(channels[channel as keyof typeof channels]!, sender, policy, args);
+  const action = { id: 'custom-review', title: 'Review diff', description: 'Review a diff', systemTemplate: 'System {{os}}', userTemplate: 'User {{composer}}' };
+
+  it('accepts valid save/reset/delete payloads and delegates', async () => {
+    await expect(run(IPC_CHANNELS.aiActionsSave, { action })).resolves.toMatchObject({ actions: [] });
+    await expect(run(IPC_CHANNELS.aiActionsReset, { id: 'fix-message' })).resolves.toMatchObject({ actions: [] });
+    await expect(run(IPC_CHANNELS.aiActionsDelete, { id: 'custom-review' })).resolves.toMatchObject({ actions: [] });
+    expect(services.aiActions.save).toHaveBeenCalledWith({ action });
+  });
+
+  it('rejects malformed actions and ids', async () => {
+    for (const payload of [
+      {},
+      { action: { ...action, extra: 1 } },
+      { action: { ...action, title: '' } },
+      { action: { ...action, title: 'x'.repeat(61) } },
+      { action: { ...action, description: 'a\nb' } },
+      { action: { ...action, systemTemplate: 'x'.repeat(8 * 1024 + 1) } },
+      { action: { ...action, systemTemplate: 1 } },
+    ]) {
+      await expect(run(IPC_CHANNELS.aiActionsSave, payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
+    for (const id of ['', 1, 'x'.repeat(65)]) {
+      await expect(run(IPC_CHANNELS.aiActionsReset, { id })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+      await expect(run(IPC_CHANNELS.aiActionsDelete, { id })).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
+  });
 });

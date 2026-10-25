@@ -15,6 +15,7 @@ import { AppConfigStore, resolveConfigPath } from './app-config';
 import { CoordinatorRuntime, resolveGitRemote } from './coordinator-runtime';
 import { OnboardingService } from './onboarding-service';
 import { AiService } from './ai-service';
+import { AiActionsStore } from './ai-actions-store';
 import { SttService } from './stt-service';
 import { SecretStore } from './secret-store';
 import { InstallationStore } from './installation-store';
@@ -347,6 +348,7 @@ void app.whenReady().then(async () => {
     secrets,
     testMode: process.env['SMART_TERMINAL_AI_TEST_MODE'] === '1',
   });
+  const aiActions = new AiActionsStore({ configPath: path.join(userDataPath, 'config', 'ai-actions.json') });
   const stt = new SttService({
     configStore,
     secrets,
@@ -368,6 +370,7 @@ void app.whenReady().then(async () => {
       ssh: { aliases: () => listSshAliases() },
       onboarding,
       ai,
+      aiActions,
       help: { open: async (topic) => { await shell.openExternal(HELP_URLS[topic]); } },
       stt,
       window: { control: (senderId, action) => {

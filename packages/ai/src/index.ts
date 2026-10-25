@@ -89,3 +89,4 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
 
 export { completeText, ProviderHttpError, type CompletionOptions, type CompletionResult } from './completion';
 export * from './actions';
+export * from './action-templates';

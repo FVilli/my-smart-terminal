@@ -44,6 +44,10 @@ const IPC_SCRIPT = `(async () => {
 
 const EXPECTED_KEYS = [
   'aiAction',
+  'aiActionsDelete',
+  'aiActionsList',
+  'aiActionsReset',
+  'aiActionsSave',
   'aiCompose',
   'aiCorrect',
   'aiStatus',
