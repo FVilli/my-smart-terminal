@@ -17,7 +17,7 @@ export class AiActionsManagerStore {
   template: `
     @if (manager.open()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-backdrop p-4" (click)="backdrop($event)">
-        <section #dialog data-testid="ai-actions-manager" class="flex max-h-[min(720px,90vh)] min-h-0 w-[min(1000px,94vw)] flex-col overflow-hidden rounded-[10px] border border-line bg-surface shadow" role="dialog" aria-modal="true" aria-labelledby="ai-actions-title">
+        <section #dialog data-testid="ai-actions-manager" class="flex max-h-[min(792px,90vh)] min-h-0 w-[min(1000px,94vw)] flex-col overflow-hidden rounded-[10px] border border-line bg-surface shadow" role="dialog" aria-modal="true" aria-labelledby="ai-actions-title">
           <header class="flex-none border-b border-line px-5 py-4">
             <h2 id="ai-actions-title" class="text-lg font-semibold">AI actions</h2>
             <p class="text-sm text-muted">Manage the actions available to your AI assistant.</p>
