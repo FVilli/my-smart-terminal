@@ -1,6 +1,17 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.14
+### Changed
+- AI Actions now live in a dedicated modal opened from the header, with the settings dialog narrowed to four tabs and made 20% taller.
+- Header action order is AI Actions (wand), Settings (wrench), layout toggle; window controls unchanged.
+- AI Actions list footer keeps only the separator, the add button and a tiny BUILT-IN/CUSTOM counter; the bulk Reset was removed (per-action reset remains).
+### Fixed
+- Deleting a custom AI action requires confirmation; built-in actions cannot be deleted.
+- Focus returns to the header wand on any AI Actions modal close, including programmatic closes.
+### Notes
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.13
 ### Added
 - AI actions modal with five actions (suggest, explain, risk, fix, rewrite) and session OS/shell context persisted in `session.md` (local exact, SSH best-effort with `unknown` fallback).

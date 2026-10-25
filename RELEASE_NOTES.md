@@ -1,6 +1,25 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.14
+
+Settings and AI Actions layout release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### AI Actions
+- The action manager moved out of Settings into its own modal, opened by the new magic-wand button in the header. The composer's AI assistant remains a separate modal.
+- The list uses the history/clipboard card pattern, with a `+` button and a tiny `BUILT-IN:<n> CUSTOM:<n>` counter. The bulk Reset was removed; built-in templates still have a per-action reset.
+- Deleting a custom action now requires an explicit confirmation; built-in actions are protected.
+- Focus returns to the header wand whenever the manager closes, including Escape, backdrop and programmatic closes.
+
+### Settings and header
+- The settings dialog is 20% taller and narrower (four tabs: Repository, AI, STT, Appearance), with unchanged fixed height, scrolling body and pinned footer.
+- Header order is now: AI Actions (wand), Settings (wrench), layout toggle; window controls are unchanged.
+- AI Actions are no longer listed in Settings.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.13
 
 AI assistant, settings and appearance release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).

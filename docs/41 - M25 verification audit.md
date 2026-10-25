@@ -43,5 +43,5 @@ Verdict: **OK with notes**. One MINOR finding: focus return only happened in the
 ## Residual/manual
 
 - Real browser opening and screen-reader checks from M24 remain manual and are unaffected by M25.
-- The v1.3.13 release (published before M25) does not include these post-release UI changes; they are on `main` and would ship with the next release (for example 1.3.14).
+- These M25 UI changes ship in v1.3.14 (v1.3.13 was published before M25).
 - Deferred appearance options (OS-following theme, accents, sizes, density, transparency) remain out of scope.
