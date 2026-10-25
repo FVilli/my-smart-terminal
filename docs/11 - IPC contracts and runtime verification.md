@@ -52,6 +52,8 @@ This document describes the current main/preload/renderer contract. The shared n
 | `app:relaunch` | none | `void` |
 | `window:control` | `'minimize' \| 'toggle-maximize' \| 'close'` | `void` |
 | `ai:status` / `ai:correct` | status or `{ text }` | AI status or correction result |
+| `ai:compose` | `{ action, input, environment? }` | `{ prompt }`: editable body for the modal, no network |
+| `ai:action` | `{ action, prompt }` (prompt ≤ 16 KiB) | `{ text, skipped, reason?, error?, elapsedMs }`; the system contract is fixed in main |
 | `stt:status` / `stt:transcribe` / `stt:save-debug-audio` | status or `{ audio: Uint8Array, mimeType }` | STT status or `{ text, skipped, reason? }` |
 
 Main-to-renderer events are `terminal:data`, `terminal:exit`, `terminal:environment` (`{ sessionId, environment }`, emitted when an SSH probe fills the session context after creation), `app:role-changed`, `sync:status`, `search:refreshed`, and `window:maximized` (`{ maximized: boolean }`).
