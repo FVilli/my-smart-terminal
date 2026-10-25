@@ -45,6 +45,7 @@ No SCSS/Less, CSS framework, or Tailwind is present yet. The only third-party CS
 | Right sidebar (Clipboard/History) | `app-sidebar-panel` (+ `.sidebar` in `app.css:5`) | `.tabs`, `.filters`, `.list`, `.entry`, `.meta`, `.preview` |
 | Settings tabs | `app-onboarding-wizard` | `.settings-tabs`, `[role='tab']` |
 | AI Actions manager | `ai-actions-manager.ts` wrapping `ai-actions-settings.ts` | Dedicated header-launched modal; owns action editing UI |
+| AI answer view | `ui/markdown-view.ts` + pure `ui/markdown.logic.ts` | Escaped Markdown rendering, http(s)-only links, Rendered/Raw toggle; no new dependency. Answer typography uses design tokens in a scoped styles block. |
 | Onboarding modal | `app-onboarding-wizard` | `.backdrop`, `.dialog`, `.dialog-body`, `footer` |
 | App shell notices / empty state | `App` | `.shell`, `.main-column`, `.notice`, `.empty-state` |
 

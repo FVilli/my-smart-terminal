@@ -66,7 +66,7 @@ Dark remains the pixel baseline; all exact dark values above are unchanged. Ligh
 
 ## Settings dialog
 
-The edit-mode settings dialog is `min(640px, 92vw)` wide and `min(744px, 90vh)` tall; its inner body scrolls while the footer remains pinned. Initial onboarding retains its 520 px width and 90vh maximum height. Dark/light theme checks are unchanged. The AI Actions manager is a separate header-launched modal; its captured manager view is `docs/assets/screenshots/12-ai-actions-manager.png`.
+The edit-mode settings dialog is `min(640px, 92vw)` wide and `min(744px, 90vh)` tall; its inner body scrolls while the footer remains pinned. Initial onboarding retains its 520 px width and 90vh maximum height. Dark/light theme checks are unchanged. The AI Actions manager is a separate header-launched modal, approximately 1000×792 px and capped at 90vh; its captured manager view is `docs/assets/screenshots/12-ai-actions-manager.png`. The AI Assistant modal is approximately 90vw×90vh, with a compact header and balanced 50/50 prompt and answer panes. Settings remains 640×744 px (`min(640px, 92vw)` by `min(744px, 90vh)`). Assistant answers have Rendered/Raw views; answer typography uses the same shared token palette.
 
 ## Zoom and terminal keyboard behavior
 

@@ -138,6 +138,16 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             click('ai-send');
             await waitFor(() => (q('ai-answer')?.value ?? '').length > 0, 8000);
           }
+          if (${JSON.stringify(scenario)} === 'ai-answer') {
+            await waitFor(() => q('ai-correction'));
+            click('ai-correction');
+            await waitFor(() => q('ai-modal'));
+            const select = q('ai-action-select');
+            if (select) { select.value = 'fix-message'; select.dispatchEvent(new Event('change', { bubbles: true })); }
+            await waitFor(() => (q('ai-user-prompt')?.value ?? '').length > 0);
+            click('ai-send');
+            await waitFor(() => (q('ai-answer-rendered')?.textContent ?? '').includes('Fixed message.'), 8000);
+          }
           if (${JSON.stringify(scenario)} === 'history') {
             await waitFor(() => q('sidebar-tab-history'));
             click('sidebar-tab-history');
@@ -157,6 +167,8 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-model');
           if (${JSON.stringify(scenario)} === 'ai-manager') checks['aiManagerVisible'] = !!q('ai-actions-manager') && !!q('ai-settings-counts') && !!q('ai-settings-add');
           if (${JSON.stringify(scenario)} === 'ai-actions') checks['aiModalOpen'] = !!q('ai-modal') && (q('ai-system-prompt')?.value ?? '').length > 0 && (q('ai-user-prompt')?.value ?? '').length > 0;
+          if (${JSON.stringify(scenario)} === 'ai-answer') checks['aiAnswerRendered'] = (q('ai-answer-rendered')?.textContent ?? '').includes('Fixed message.');
+          if (${JSON.stringify(scenario)} === 'ai-answer') checks['aiAnswerToggle'] = !!q('ai-answer-view-raw') && !!q('ai-answer-view-rendered');
           if (${JSON.stringify(scenario)} === 'ai-settings') checks['aiSettingsVisible'] = !!q('settings-terminal-theme') && !!q('settings-tab-appearance');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
           if (${JSON.stringify(scenario)} === 'ssh-menu') {
