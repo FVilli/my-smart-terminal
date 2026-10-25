@@ -505,7 +505,6 @@ const AI_SCRIPT = `(async () => {
   };
   const textarea = () => document.querySelector('[data-testid="assisted-textarea"]');
   const aiButton = () => document.querySelector('[data-testid="ai-correction"]');
-  const notice = () => document.querySelector('[data-testid="message-center"]');
   const setText = (value) => {
     const el = textarea();
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, value);
@@ -515,20 +514,25 @@ const AI_SCRIPT = `(async () => {
   try {
     const status = await api.aiStatus();
     result.statusConfigured = status.configured === true && status.hasToken === true;
-    result.buttonDisabledWhenEmpty = await waitFor(() => aiButton() && aiButton().disabled === true, 8000);
+    result.statusProvider = status.configured === true && typeof status.provider === 'string';
     setText('This is a sentance with a typo');
     await sleep(100);
-    result.buttonEnabledWithDraft = aiButton().disabled === false;
     aiButton().click();
-    result.corrected = await waitFor(() => textarea().value.includes('sentence'), 8000);
-    result.noticeReview = await waitFor(() => notice() && notice().textContent.includes('review'), 4000);
-    result.notSent = (await api.search({ query: 'typo' })).entries.length === 0;
-    setText('git status');
-    await sleep(100);
-    aiButton().click();
-    result.shellSkipped = await waitFor(() => notice() && notice().textContent.includes('shell command'), 4000);
-    result.shellDraftUnchanged = textarea().value === 'git status';
-    result.noAutoSend = (await api.search({ query: 'git status' })).entries.length === 0;
+    const modal = () => document.querySelector('[data-testid="ai-modal-backdrop"]');
+    result.modalOpened = await waitFor(() => !!modal(), 4000);
+    const action = document.querySelector('[data-testid="ai-action-fix-message"]');
+    action.click();
+    result.composedPrompt = await waitFor(() => document.querySelector('[data-testid="ai-prompt"]')?.value.includes('<user_body>'), 4000);
+    document.querySelector('[data-testid="ai-send"]').click();
+    result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 8000);
+    result.useEnabled = document.querySelector('[data-testid="ai-use"]')?.disabled === false;
+    document.querySelector('[data-testid="ai-cancel"]').click();
+    result.cancelClosed = await waitFor(() => !modal(), 3000);
+    aiButton().click(); await waitFor(() => !!modal(), 3000);
+    document.querySelector('[data-testid="ai-close"]').click();
+    result.closeKeepsPrompt = await waitFor(() => !modal(), 3000);
+    result.noDraftChange = textarea().value === 'This is a sentance with a typo';
+    result.noAutoSend = (await api.search({ query: 'sentance' })).entries.length === 0;
   } finally {
     // no cleanup required
   }

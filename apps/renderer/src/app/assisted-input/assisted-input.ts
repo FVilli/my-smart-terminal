@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, effect, inject, input, output, viewChild } from '@angular/core';
-import { AiStore, correctionNotice } from '../ai/ai-store';
+import { AiStore } from '../ai/ai-store';
+import { AiActionsStore } from '../ai/ai-actions-store';
 import { SttStore, voiceLabel } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
@@ -31,9 +32,8 @@ import { MessageStore } from '../messages/message-store';
         class="icon ai icon-btn h-[26px] w-[28px] p-0 flex-row gap-[2px] text-[10px] font-bold text-accent"
         data-testid="ai-correction"
         aria-label="AI correction"
-        [disabled]="!canCorrect()"
-        [attr.title]="ai.status().warning ?? 'Fix typos with AI'"
-        (click)="correctWithAi()"
+        [attr.title]="ai.status().warning ?? 'Open AI actions'"
+        (click)="openAiActions()"
       >
         @if (ai.busy()) { … } @else { <svg class="h-[15px] w-[15px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg><span>AI</span> }
       </button>
@@ -80,7 +80,7 @@ export class AssistedInput implements OnDestroy {
   protected readonly ai = inject(AiStore);
   protected readonly voice = inject(SttStore);
   protected readonly canSend = computed(() => !this.disabled() && this.draft().trim().length > 0);
-  protected readonly canCorrect = computed(() => this.ai.canCorrect() && this.draft().trim().length > 0);
+  private readonly aiActions = inject(AiActionsStore);
   protected readonly canRecord = computed(() => !this.disabled() && this.voice.status().configured);
   protected readonly micLabel = computed(() => voiceLabel(this.voice.status(), this.voice.phase(), this.voice.error()));
   private readonly unsubscribe: () => void;
@@ -165,14 +165,5 @@ export class AssistedInput implements OnDestroy {
     });
   }
 
-  protected async correctWithAi(): Promise<void> {
-    const result = await this.ai.correct(this.draft());
-    if (result === null) {
-      return;
-    }
-    this.messages.show('info', correctionNotice(result));
-    if (!result.skipped && result.changed) {
-      this.draftChange.emit(result.corrected);
-    }
-  }
+  protected openAiActions(): void { void this.aiActions.show(); }
 }
