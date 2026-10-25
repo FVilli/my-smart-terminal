@@ -34,6 +34,7 @@ export const IPC_CHANNELS = {
   appRelaunch: 'app:relaunch',
   windowControl: 'window:control',
   aiStatus: 'ai:status',
+  aiModels: 'ai:models',
   aiCompose: 'ai:compose',
   aiAction: 'ai:action',
   aiActionsList: 'ai:actions:list',
@@ -287,11 +288,19 @@ export const TERMINAL_FONTS = [
 export const TERMINAL_FONT_IDS = TERMINAL_FONTS.map(({ id }) => id);
 export type TerminalFontId = (typeof TERMINAL_FONT_IDS)[number];
 
-export const AI_PROVIDERS = ['none', 'anthropic', 'openai', 'openai-compatible'] as const;
+export const AI_PROVIDERS = ['none', 'anthropic', 'claude', 'openai', 'deepseek', 'openai-compatible'] as const;
 export const STT_PROVIDERS = ['none', 'local', 'cloud'] as const;
 export const STT_RESPONSE_FORMATS = ['json', 'verbose_json'] as const;
 export type SttResponseFormat = (typeof STT_RESPONSE_FORMATS)[number];
 export type AiProvider = (typeof AI_PROVIDERS)[number];
+export const AI_PROVIDER_INFO: Record<AiProvider, { label: string; protocol: 'anthropic' | 'openai' | 'none'; baseUrl?: string }> = {
+  none: { label: 'None', protocol: 'none' },
+  anthropic: { label: 'Anthropic API', protocol: 'anthropic', baseUrl: 'https://api.anthropic.com' },
+  claude: { label: 'Claude Platform', protocol: 'anthropic', baseUrl: 'https://api.anthropic.com' },
+  openai: { label: 'OpenAI', protocol: 'openai', baseUrl: 'https://api.openai.com/v1' },
+  deepseek: { label: 'DeepSeek Platform', protocol: 'openai', baseUrl: 'https://api.deepseek.com/v1' },
+  'openai-compatible': { label: 'OpenAI-compatible (self-hosted)', protocol: 'openai' },
+};
 export type SttProvider = (typeof STT_PROVIDERS)[number];
 /** Maximum secret token length in characters. */
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
@@ -347,6 +356,9 @@ export const HELP_TOPICS = ['repository', 'ai', 'stt', 'troubleshooting'] as con
 export type HelpTopic = (typeof HELP_TOPICS)[number];
 
 export interface HelpOpenResult { opened: boolean; url: string }
+
+export interface AiModelInfo { id: string }
+export interface AiModelsRequest { config?: OnboardingConfig; aiToken?: string }
 
 export interface SetupTestAiRequest {
   config: OnboardingConfig;
@@ -607,6 +619,7 @@ export interface SmartTerminalApi {
   onboardingSkip(): Promise<OnboardingSaveResult>;
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   setupTestAi(request: SetupTestAiRequest): Promise<SetupTestAiResult>;
+  aiModels(request?: AiModelsRequest): Promise<AiModelInfo[]>;
   helpOpen(topic: HelpTopic): Promise<HelpOpenResult>;
   /** Theme resolved by main before the window loads, so the first paint already matches it. */
   readonly initialTheme: TerminalTheme;

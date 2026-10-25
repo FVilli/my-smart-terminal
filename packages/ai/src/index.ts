@@ -76,7 +76,7 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
   if (!requestData.token) return skip('missing-token');
   if (requestData.provider === 'openai-compatible' && !requestData.baseUrl) return skip('unconfigured');
   try {
-    const adapter = requestData.provider === 'anthropic' ? anthropicAdapter : requestData.provider === 'openai' ? openAiAdapter : openAiCompatibleAdapter;
+    const adapter: AiProviderAdapter = { correct: (input, options) => requestCompletion({ ...options, provider: requestData.provider, user: buildCorrectionPrompt(input) }) };
     const corrected = await adapter.correct(original, { token: requestData.token, baseUrl: requestData.baseUrl, model: requestData.model, timeoutMs: requestData.timeoutMs, fetch: requestData.fetch });
     if (!corrected.trim()) return skip('empty');
     return { original, corrected, changed: corrected !== original, skipped: false };
@@ -88,6 +88,7 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
 }
 
 export { completeText, ProviderHttpError, type CompletionOptions, type CompletionResult } from './completion';
+export { listAiModels, type ListAiModelsOptions } from './models';
 export * from './actions';
 export * from './action-templates';
 export * from './placeholders';

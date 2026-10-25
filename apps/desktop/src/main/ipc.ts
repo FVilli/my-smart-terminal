@@ -31,6 +31,8 @@ import {
   type AiActionResult,
   type AiCorrectRequest,
   type AiStatus,
+  type AiModelInfo,
+  type AiModelsRequest,
   type AppRuntimeInfo,
   type ClipboardCaptureState,
   type ClipboardConfigureRequest,
@@ -170,6 +172,7 @@ export interface AiActionsGateway {
 
 export interface AiGateway {
   status(): AiStatus | Promise<AiStatus>;
+  models(request?: AiModelsRequest): AiModelInfo[] | Promise<AiModelInfo[]>;
   correct(request: AiCorrectRequest): CorrectionResult | Promise<CorrectionResult>;
   testConnection(request?: SetupTestAiRequest): SetupTestAiResult | Promise<SetupTestAiResult>;
   compose(request: AiComposeRequest): AiComposeResult | Promise<AiComposeResult>;
@@ -389,6 +392,13 @@ export const validateHelpTopic = singleRequest<{ topic: HelpTopic }>(
   (v) => hasExactKeys(v, ['topic']) && (v['topic'] === 'repository' || v['topic'] === 'ai' || v['topic'] === 'stt' || v['topic'] === 'troubleshooting'),
 );
 
+export const validateAiModels = singleRequest<AiModelsRequest>(
+  (v) =>
+    hasExactKeys(v, [], ['config', 'aiToken']) &&
+    (v['config'] === undefined || isPlainRecord(v['config'])) &&
+    (v['aiToken'] === undefined || (typeof v['aiToken'] === 'string' && v['aiToken'].length <= 4096 && !/[\u0000-\u001f\u007f]/.test(v['aiToken']))),
+);
+
 export const validateSetupTestAi = singleRequest<SetupTestAiRequest>(
   (v) =>
     hasExactKeys(v, ['config'], ['aiToken']) &&
@@ -491,6 +501,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.appRelaunch]: ChannelDefinition<[], void>;
   [IPC_CHANNELS.windowControl]: ChannelDefinition<[{ action: WindowControlAction }], void>;
   [IPC_CHANNELS.aiStatus]: ChannelDefinition<[], AiStatus>;
+  [IPC_CHANNELS.aiModels]: ChannelDefinition<[AiModelsRequest], AiModelInfo[]>;
   [IPC_CHANNELS.aiCorrect]: ChannelDefinition<[AiCorrectRequest], CorrectionResult>;
   [IPC_CHANNELS.aiCompose]: ChannelDefinition<[AiComposeRequest], AiComposeResult>;
   [IPC_CHANNELS.aiAction]: ChannelDefinition<[AiActionRequest], AiActionResult>;
@@ -647,11 +658,15 @@ function buildSetupChannels(services: IpcServices): Pick<IpcChannelMap, typeof I
   };
 }
 
-function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.aiCompose | typeof IPC_CHANNELS.aiAction | typeof IPC_CHANNELS.aiActionsList | typeof IPC_CHANNELS.aiActionsSave | typeof IPC_CHANNELS.aiActionsReset | typeof IPC_CHANNELS.aiActionsDelete | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
+function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_CHANNELS.aiStatus | typeof IPC_CHANNELS.aiModels | typeof IPC_CHANNELS.aiCorrect | typeof IPC_CHANNELS.aiCompose | typeof IPC_CHANNELS.aiAction | typeof IPC_CHANNELS.aiActionsList | typeof IPC_CHANNELS.aiActionsSave | typeof IPC_CHANNELS.aiActionsReset | typeof IPC_CHANNELS.aiActionsDelete | typeof IPC_CHANNELS.setupTestAi | typeof IPC_CHANNELS.sttStatus | typeof IPC_CHANNELS.sttModels | typeof IPC_CHANNELS.sttSaveDebugAudio | typeof IPC_CHANNELS.sttTranscribe> {
   return {
     [IPC_CHANNELS.aiStatus]: {
       validate: noArguments,
       handle: () => services.ai.status(),
+    },
+    [IPC_CHANNELS.aiModels]: {
+      validate: validateAiModels,
+      handle: (_sender, request) => services.ai.models(request),
     },
     [IPC_CHANNELS.aiCorrect]: {
       validate: validateAiCorrect,

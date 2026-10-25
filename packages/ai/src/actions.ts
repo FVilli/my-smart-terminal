@@ -1,4 +1,4 @@
-import type { AiActionDefinition, AiActionResult, CorrectionReason } from '@smart-terminal/contracts';
+import type { AiActionDefinition, AiActionResult, AiProvider, CorrectionReason } from '@smart-terminal/contracts';
 import { completeText } from './completion';
 import { assertRenderedPromptSize, renderTemplate, type PlaceholderValues } from './placeholders';
 
@@ -15,7 +15,7 @@ export interface RunAiActionRequest {
   actionId: string;
   system: string;
   user: string;
-  provider: 'anthropic' | 'openai' | 'openai-compatible' | 'none';
+  provider: AiProvider;
   token: string;
   baseUrl?: string;
   model?: string;

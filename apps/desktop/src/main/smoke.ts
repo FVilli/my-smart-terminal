@@ -50,6 +50,7 @@ const EXPECTED_KEYS = [
   'aiActionsSave',
   'aiCompose',
   'aiCorrect',
+  'aiModels',
   'aiStatus',
   'appRelaunch',
   'clipboardClear',
@@ -822,10 +823,16 @@ const AI_SETUP_SCRIPT = `(async () => {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   };
-  const provider = q('onboarding-ai-provider'); provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  const provider = q('onboarding-ai-provider'); provider.value = 'deepseek'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  result.deepseekPreset = await waitFor(() => q('onboarding-ai-url')?.value === 'https://api.deepseek.com/v1');
+  provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true }));
   setField('onboarding-ai-url', 'https://unsloth.example/v1');
-  setField('onboarding-ai-model', 'custom/model:v1');
   setField('onboarding-ai-token', 'smoke-ai-token');
+  click('onboarding-ai-refresh-models');
+  result.modelsLoaded = await waitFor(() => [...(q('onboarding-ai-model')?.options ?? [])].some((option) => option.value === 'gpt-test'), 8000);
+  const modelSelect = q('onboarding-ai-model');
+  if (modelSelect) { modelSelect.value = 'gpt-test'; modelSelect.dispatchEvent(new Event('change', { bubbles: true })); }
+  result.modelSelected = modelSelect?.value === 'gpt-test';
   result.button = await waitFor(() => !!q('onboarding-test-ai'));
   click('onboarding-test-ai');
   result.resultVisible = await waitFor(() => !!q('onboarding-ai-result'), 20000);
@@ -836,6 +843,7 @@ const AI_SETUP_SCRIPT = `(async () => {
   result.tokenPlaceholderMasked = q('onboarding-ai-token')?.placeholder === '••••••••••••';
   result.storedTokenHintVisible = !!q('onboarding-ai-token-stored');
   result.tokenFieldEmptyAfterReload = (q('onboarding-ai-token')?.value ?? '') === '';
+  result.modelPersisted = await waitFor(() => q('onboarding-ai-model')?.value === 'gpt-test', 8000);
   click('onboarding-cancel');
   if (q('onboarding-discard-confirm')) click('onboarding-discard');
   return result;

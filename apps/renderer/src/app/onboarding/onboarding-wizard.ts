@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, type ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import {
   AI_PROVIDERS,
+  AI_PROVIDER_INFO,
   STT_PROVIDERS,
   TERMINAL_FONTS,
   type TerminalFontId,
+  type AiModelInfo,
   type AiProvider,
   type OnboardingConfig,
   type OnboardingSaveResult,
@@ -100,9 +102,9 @@ type Step = 1 | 2 | 3 | 4;
               @case (2) {
                 <div data-testid="onboarding-step-2">
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">AI provider
-                    <select class="field-sm" data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="patch({ aiProvider: aiProvider($event) })">
+                    <select class="field-sm" data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="selectAiProvider($event)">
                       @for (provider of aiProviders; track provider) {
-                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ provider === 'openai-compatible' ? 'OpenAI-compatible (self-hosted)' : provider }}</option>
+                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ aiProviderInfo[provider].label }}</option>
                       }
                     </select>
                   </label>
@@ -112,10 +114,27 @@ type Step = 1 | 2 | 3 | 4;
                       <input class="field-sm" data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
                     @if (errors()['aiBaseUrl']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-ai-url">{{ message }}</p> }
-                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Model (optional)
-                      <span class="hint text-xs leading-[normal] text-muted">Custom model names may contain / and :.</span>
-                      <input class="field-sm" data-testid="onboarding-ai-model" [value]="config().aiModel ?? ''" (input)="patch({ aiModel: value($event) })" />
-                    </label>
+                    <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
+                      <span>Model (optional)</span>
+                      <div class="flex items-stretch gap-2">
+                        <label class="min-w-0 flex-1">
+                          <select class="field-sm w-full" aria-label="AI model" data-testid="onboarding-ai-model" (change)="selectAiModel($event)">
+                            <option value="" [selected]="config().aiModel === undefined || config().aiModel === ''">Provider default</option>
+                            @for (model of discoveredAiModels(); track model.id) { <option [value]="model.id" [selected]="model.id === config().aiModel">{{ model.id }}</option> }
+                            @if (aiModelSavedButUndiscovered()) { <option [value]="config().aiModel ?? ''" selected>{{ config().aiModel }}</option> }
+                            <option value="__custom__" [selected]="aiModelValue() === '__custom__'">Custom…</option>
+                          </select>
+                        </label>
+                        <button type="button" class="refresh-models field-sm w-[34px] flex-none cursor-pointer p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-ai-refresh-models" [attr.aria-label]="aiModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="aiModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="aiModelsLoading() || busy()" (click)="loadAiModels()">
+                          <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                      </div>
+                      @if (aiModelValue() === '__custom__') {
+                        <input class="field-sm" aria-label="Custom AI model" data-testid="onboarding-ai-model-custom" [value]="config().aiModel ?? ''" (input)="patchAiModel($event)" />
+                      }
+                      <span class="hint text-xs leading-[normal] text-muted">Leave blank to use the provider default; refresh to discover models. Custom names may contain / and :.</span>
+                      @if (aiModelsError(); as modelsError) { <p class="hint text-xs leading-[normal] text-muted" data-testid="onboarding-ai-models-error">{{ modelsError }}</p> }
+                    </div>
                     <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
                       <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
                       <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" [attr.aria-describedby]="storedToken() ? 'onboarding-ai-token-stored' : null" [value]="aiToken()" (input)="aiToken.set(value($event))" />
@@ -278,6 +297,7 @@ export class OnboardingWizard {
   protected readonly terminalFonts = TERMINAL_FONTS;
   readonly settingsTabs: readonly TabItem[] = SETTINGS_TABS;
   protected readonly aiProviders = AI_PROVIDERS;
+  protected readonly aiProviderInfo = AI_PROVIDER_INFO;
   protected readonly visible = signal(false);
   protected readonly step = signal<Step>(1);
   protected readonly state = signal<OnboardingState | null>(null);
@@ -369,6 +389,7 @@ export class OnboardingWizard {
       this.visible.set(true);
       this.restartNotice.set(false);
       this.confirmDiscard.set(false);
+      if (this.step() === 2) void this.loadAiModels();
       if (this.step() === 3) { this.enableSharedStt(); void this.loadSttModels(); }
       this.initialSnapshot = JSON.stringify(this.payload());
     } catch {
@@ -424,6 +445,51 @@ export class OnboardingWizard {
     return AI_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
   }
 
+  protected readonly discoveredAiModels = signal<AiModelInfo[]>([]);
+  protected readonly aiModelsLoading = signal(false);
+  protected readonly aiModelsError = signal<string | null>(null);
+
+  protected aiModelValue(): string {
+    const model = this.config().aiModel;
+    if (model === undefined || model === '') return '';
+    return this.discoveredAiModels().some((entry) => entry.id === model) ? model : '__custom__';
+  }
+
+  protected aiModelSavedButUndiscovered(): boolean {
+    const model = this.config().aiModel;
+    return model !== undefined && model !== '' && !this.discoveredAiModels().some((entry) => entry.id === model);
+  }
+
+  protected selectAiModel(event: Event): void {
+    const value = this.value(event);
+    if (value === '__custom__') {
+      this.discoveredAiModels.update((models) => models);
+      if (this.config().aiModel === undefined) this.patch({ aiModel: '' });
+      return;
+    }
+    this.patch({ aiModel: value });
+  }
+
+  protected patchAiModel(event: Event): void {
+    this.patch({ aiModel: this.value(event) });
+  }
+
+  protected async loadAiModels(): Promise<void> {
+    if (this.config().aiProvider === 'none') { this.discoveredAiModels.set([]); return; }
+    this.aiModelsLoading.set(true);
+    this.aiModelsError.set(null);
+    try {
+      const models = await this.api.aiModels({ config: this.config(), ...(this.aiToken() !== '' ? { aiToken: this.aiToken() } : {}) });
+      this.discoveredAiModels.set(models);
+      this.aiModelsError.set(models.length === 0 ? 'No models were returned by the provider; keep the custom or default value.' : null);
+    } catch {
+      this.discoveredAiModels.set([]);
+      this.aiModelsError.set('Could not load models. Check provider, base URL and token, then retry.');
+    } finally {
+      this.aiModelsLoading.set(false);
+    }
+  }
+
   protected setTheme(event: Event): void {
     const terminalTheme = this.value(event) === 'light' ? 'light' : 'dark';
     this.patch({ terminalTheme });
@@ -445,7 +511,17 @@ export class OnboardingWizard {
   protected selectTab(step: Step): void {
     this.errors.set({});
     this.step.set(step);
+    if (step === 2) void this.loadAiModels();
     if (step === 3) { this.enableSharedStt(); void this.loadSttModels(); }
+  }
+
+  protected selectAiProvider(event: Event): void {
+    const provider = this.aiProvider(event);
+    const preset = AI_PROVIDER_INFO[provider].baseUrl;
+    this.patch(preset !== undefined ? { aiProvider: provider, aiBaseUrl: preset } : { aiProvider: provider });
+    this.discoveredAiModels.set([]);
+    this.aiModelsError.set(null);
+    if (provider !== 'none') void this.loadAiModels();
   }
 
   protected checked(event: Event): boolean { return (event.target as HTMLInputElement).checked; }
@@ -803,6 +879,7 @@ export class OnboardingWizard {
       this.errors.set(errors);
       if (Object.keys(errors).length === 0 && current < 3) {
         this.step.set((current + 1) as Step);
+        if (current === 1) void this.loadAiModels();
         if (current === 2) { this.enableSharedStt(); void this.loadSttModels(); }
       }
     } catch {

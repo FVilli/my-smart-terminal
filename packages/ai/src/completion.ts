@@ -1,4 +1,4 @@
-import type { AiProvider, CorrectionReason } from '@smart-terminal/contracts';
+import { AI_PROVIDER_INFO, type AiProvider, type CorrectionReason } from '@smart-terminal/contracts';
 
 /** HTTP failure with a status only: never carries provider bodies or headers. */
 export class ProviderHttpError extends Error {
@@ -29,9 +29,10 @@ export interface CompletionResult {
 }
 
 function endpoint(provider: AiProvider, baseUrl?: string): string {
-  const base = (baseUrl || (provider === 'anthropic' ? 'https://api.anthropic.com' : provider === 'openai' ? 'https://api.openai.com/v1' : '')).replace(/\/$/, '');
+  const info = AI_PROVIDER_INFO[provider];
+  const base = (baseUrl || info.baseUrl || '').replace(/\/$/, '');
   if (!base) throw new Error('provider-error');
-  return provider === 'anthropic' ? `${base}/v1/messages` : `${base}/chat/completions`;
+  return info.protocol === 'anthropic' ? `${base}/v1/messages` : `${base}/chat/completions`;
 }
 
 /** One provider completion with optional system instruction; neither body nor token leaks out. */
@@ -42,7 +43,7 @@ export async function requestCompletion(options: CompletionOptions): Promise<str
     const call = options.fetch ?? fetch;
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     let body: unknown;
-    if (options.provider === 'anthropic') {
+    if (AI_PROVIDER_INFO[options.provider].protocol === 'anthropic') {
       headers['x-api-key'] = options.token;
       headers['anthropic-version'] = '2023-06-01';
       body = {
@@ -70,7 +71,7 @@ export async function requestCompletion(options: CompletionOptions): Promise<str
     });
     if (!response.ok) throw new ProviderHttpError(response.status);
     const data: unknown = await response.json();
-    if (options.provider === 'anthropic') {
+    if (AI_PROVIDER_INFO[options.provider].protocol === 'anthropic') {
       const content = (data as { content?: { text?: unknown }[] }).content;
       return content?.map((part) => (typeof part.text === 'string' ? part.text : '')).join('').trim() ?? '';
     }

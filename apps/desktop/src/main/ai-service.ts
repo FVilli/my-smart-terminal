@@ -5,12 +5,14 @@ import type {
   AiComposeRequest,
   AiComposeResult,
   AiCorrectRequest,
+  AiModelInfo,
+  AiModelsRequest,
   AiStatus,
   CorrectionResult,
   SetupTestAiRequest,
   SetupTestAiResult,
 } from '@smart-terminal/contracts';
-import { DEFAULT_AI_ACTIONS, composeAction, correctText, isShellCommand, runAiAction } from '@smart-terminal/ai';
+import { DEFAULT_AI_ACTIONS, composeAction, correctText, isShellCommand, listAiModels, runAiAction } from '@smart-terminal/ai';
 import type { AiActionsStore } from './ai-actions-store';
 import { isSensitiveText } from '@smart-terminal/data';
 import type { AppConfigStore } from './app-config';
@@ -121,7 +123,24 @@ export class AiService {
     };
   }
 
-  /** Renders the editable prompt body; no network and no token access. */
+  /** Lists provider models on demand; entered token wins over the stored one. */
+  async models(request?: AiModelsRequest): Promise<AiModelInfo[]> {
+    const config = request?.config ?? this.currentConfig();
+    if (config === undefined || config.aiProvider === 'none') return [];
+    if (this.testMode) return [{ id: 'gpt-test' }, { id: 'model-large' }];
+    const entered = request?.aiToken?.trim();
+    const token = entered !== undefined && entered.length > 0 ? entered : this.options.secrets.get(`ai:${config.aiProvider}`);
+    if (token === undefined) throw new Error('AI token is not configured.');
+    return listAiModels({
+      provider: config.aiProvider,
+      token,
+      timeoutMs: this.timeoutMs,
+      ...(config.aiBaseUrl !== undefined ? { baseUrl: config.aiBaseUrl } : {}),
+      ...(this.fetchFn !== undefined ? { fetch: this.fetchFn } : {}),
+    });
+  }
+
+  /** Renders the editable prompt body; clipboard is read here, never persisted. */
   async compose(request: AiComposeRequest): Promise<AiComposeResult> {
     const definition = this.options.aiActions.list().actions.find((item) => item.id === request.actionId) ?? DEFAULT_AI_ACTIONS.find((item) => item.id === request.actionId);
     if (definition === undefined) throw new Error('AI_ACTION_UNKNOWN');
