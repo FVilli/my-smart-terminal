@@ -758,6 +758,11 @@ const SETTINGS_SCRIPT = `(async () => {
     click('settings-open'); await waitFor(() => !!q('onboarding-overlay'));
     click('settings-tab-ai-actions'); await waitFor(() => !!q('ai-settings-action-suggest-command'));
     click('ai-settings-action-suggest-command'); click('ai-settings-reset');
+    result.aiResetConfirmation = await waitFor(() => !!q('ai-settings-reset-confirm') && !!q('ai-settings-reset-cancel'));
+    click('ai-settings-reset-cancel');
+    result.aiResetCancelUnchanged = await waitFor(() => (q('ai-settings-system')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'));
+    click('ai-settings-reset'); await waitFor(() => !!q('ai-settings-reset-confirm'));
+    click('ai-settings-reset-confirm');
     result.aiTemplateReset = await waitFor(() => !(q('ai-settings-system')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'), 4000);
     click('ai-settings-action-custom-smoke-action');
     await waitFor(() => !!q('ai-settings-delete'));
