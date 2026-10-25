@@ -126,7 +126,7 @@ Persisted per session in `session.md` as additive optional fields of `schema_ver
 - **Local**: from the main-process platform and the resolved shell command at session creation; `env_source: local`; always known.
 - **SSH**: one non-interactive probe on creation, outside the interactive PTY: `ssh -o BatchMode=yes -o ConnectTimeout=3 <alias> 'printf "%s;%s" "$(uname -s)" "$SHELL"'`, hard timeout 5 s, no retry. Success → `env_source: ssh-probe`; any failure (auth prompt, unreachable, unparsable) → `unknown`, silently, and the session remains fully usable. The modal offers **Detect again** for the active session, reusing the same probe.
 - The modal shows `session: <label> · <os> · <shell>`, or `environment unknown` with a hint that the answer may be generic.
-- Detection never blocks session creation or terminal input; older session files without fields stay valid and are shown as unknown.
+- Detection never blocks session creation or terminal input; older session files without fields stay valid and are shown as unknown. SSH sessions expose a **Detect again** control in the modal that re-runs the same validated, non-interactive probe and updates the persisted environment.
 
 ## Contracts and files (summary for T02/T03)
 
@@ -157,7 +157,7 @@ Persisted per session in `session.md` as additive optional fields of `schema_ver
 
 ## Implementation status (verified)
 
-- T02: `session.md` additive fields, local detection from the resolved shell, non-interactive SSH probe (BatchMode, 3 s connect / 5 s hard timeout) with `unknown` fallback, `terminal:environment` event and renderer update.
+- T02: `session.md` additive fields, local detection from the resolved shell, non-interactive SSH probe (BatchMode, 3 s connect / 5 s hard timeout) with `unknown` fallback, `terminal:environment` event, renderer update and the modal's `terminal:detect-environment` retry.
 - T03: `ai:compose` / `ai:action`, immutable system contracts in `packages/ai`, provider completion shared with the legacy correction path, strict IPC validation (16 KiB, exact keys, action ids, environment enums).
 - T04: modal with session/provider context, five actions, editable prompt, Ctrl/Cmd+Enter, focus trap/Escape/focus return, read-only selectable answer, Cancel/Use/Close, unconfigured warning with settings shortcut.
 - T05: `insertAtSelection` shared helper; `Use` inserts selection or full answer at the caret, restores focus and never submits; Cancel discards, Close keeps the prompt.

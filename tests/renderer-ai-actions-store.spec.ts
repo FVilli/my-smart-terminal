@@ -7,7 +7,7 @@ import { AiStore } from '../apps/renderer/src/app/ai/ai-store';
 
 describe('AiActionsStore',()=>{
  it('composes actions with draft and environment, sends and exposes selected text',async()=>{
-  const api={aiCompose:vi.fn(async ({action}:{action:string})=>({prompt:`${action} <user_body>draft</user_body>`})),aiAction:vi.fn(async()=>({text:'answer text',skipped:false,elapsedMs:1})),aiStatus:vi.fn(async()=>({configured:true,provider:'openai' as const,hasToken:true,secureStorage:true}))};
+  const api={aiCompose:vi.fn(async ({action}:{action:string})=>({prompt:`${action} <user_body>draft</user_body>`})),aiAction:vi.fn(async()=>({text:'answer text',skipped:false,elapsedMs:1})),detectSessionEnvironment:vi.fn(async()=>({os:'linux',shell:'bash',source:'local'})),aiStatus:vi.fn(async()=>({configured:true,provider:'openai' as const,hasToken:true,secureStorage:true}))};
   Object.assign(globalThis,{smartTerminal:api});
   const sessions={activeId:()=> 's1',activeDraft:()=> 'draft',activeSession:()=>({environment:{os:'linux',shell:'bash',source:'local'}})};
   const injector=createEnvironmentInjector([{provide:SessionsStore,useValue:sessions},{provide:AiActionsStore,useClass:AiActionsStore},{provide:AiStore,useClass:AiStore}], Injector.NULL as unknown as EnvironmentInjector);
@@ -16,6 +16,7 @@ describe('AiActionsStore',()=>{
   await store.selectAction('fix-message'); expect(store.prompt()).toContain('<user_body>'); await store.send(); expect(store.phase()).toBe('answered');
   store.selectedAnswer.set('answer'); expect(store.useText()).toBe('answer'); store.selectedAnswer.set(''); expect(store.useText()).toBe('answer text');
   store.requestInsert('answer text'); expect(store.pendingInsert()).toBe('answer text'); store.consumeInsert(); expect(store.pendingInsert()).toBeNull();
+  await store.detectEnvironment(); expect(api.detectSessionEnvironment).toHaveBeenCalledWith({ sessionId: 's1' });
  });
  it('keeps prompts on Close and discards them on Cancel',async()=>{
   const api={aiCompose:vi.fn(async()=>({prompt:'composed'})),aiAction:vi.fn()}; Object.assign(globalThis,{smartTerminal:api});

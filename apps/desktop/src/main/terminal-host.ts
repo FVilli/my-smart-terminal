@@ -8,6 +8,8 @@ import type { TerminalGateway } from './ipc';
 
 type SessionDataRuntime = Pick<DataRuntime, 'createSession' | 'endSession' | 'updateSessionEnvironment'>;
 type SessionExtras = Pick<TerminalSessionInfo, 'label' | 'machine' | 'sessionDirectory' | 'startedAt'> & {
+  kind: 'local' | 'ssh';
+  sshAlias?: string;
   environment: SessionEnvironment;
 };
 
@@ -72,6 +74,8 @@ export class TerminalHost implements TerminalGateway {
         machine,
         sessionDirectory: allocation.relativeDir,
         startedAt: allocation.startedAt,
+        kind: request.kind,
+        ...(request.kind === 'ssh' && request.sshAlias !== undefined ? { sshAlias: request.sshAlias } : {}),
         environment,
       };
       state.extras.set(info.sessionId, extras);
@@ -141,6 +145,22 @@ export class TerminalHost implements TerminalGateway {
     }
     this.windows.delete(senderId);
     this.webContentsById.delete(senderId);
+  }
+
+  /** Re-runs detection for an existing session (local is immediate; SSH re-probes outside the PTY). */
+  async detectEnvironment(senderId: number, sessionId: string): Promise<SessionEnvironment> {
+    const extras = this.windows.get(senderId)?.extras.get(sessionId);
+    if (extras === undefined) {
+      throw new TerminalError('TERMINAL_UNKNOWN_SESSION');
+    }
+    const environment: SessionEnvironment =
+      extras.kind === 'ssh' && extras.sshAlias !== undefined
+        ? await this.probeSsh(extras.sshAlias)
+        : { ...this.localEnvironment(), source: 'local', detectedAt: this.clock().toISOString() };
+    extras.environment = environment;
+    this.dataRuntime.updateSessionEnvironment(sessionId, environment);
+    this.sendTo(senderId, IPC_EVENTS.terminalEnvironment, { sessionId, environment });
+    return environment;
   }
 
   /** Fire-and-forget probe: updates extras + session.md and notifies only if the session still exists. */

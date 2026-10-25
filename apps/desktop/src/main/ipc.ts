@@ -44,6 +44,7 @@ import {
   type SearchFacetsResult,
   type SearchQueryRequest,
   type SearchRemoveRequest,
+  type SessionEnvironment,
   type SearchRemoveResult,
   type SearchQueryResult,
   type HelpTopic,
@@ -57,6 +58,7 @@ import {
   type SttTranscribeResult,
   type SyncStatusEvent,
   type TerminalCloseRequest,
+  type TerminalDetectEnvironmentRequest,
   type TerminalCreateRequest,
   type TerminalResizeRequest,
   type TerminalSessionInfo,
@@ -126,6 +128,7 @@ export interface TerminalGateway {
   resize(senderId: number, sessionId: string, cols: number, rows: number): void;
   close(senderId: number, sessionId: string): void;
   list(senderId: number): TerminalSessionInfo[];
+  detectEnvironment(senderId: number, sessionId: string): Promise<SessionEnvironment>;
 }
 
 export interface HistoryGateway {
@@ -267,6 +270,10 @@ export const validateTerminalResize = singleRequest<TerminalResizeRequest>(
 
 export const validateTerminalClose = singleRequest<TerminalCloseRequest>(
   (v) => hasExactKeys(v, ['sessionId']) && isSessionId(v['sessionId']),
+);
+
+export const validateTerminalDetectEnvironment = singleRequest<TerminalDetectEnvironmentRequest>(
+  (v) => hasExactKeys(v, ['sessionId']) && typeof v['sessionId'] === 'string' && v['sessionId'].length > 0 && v['sessionId'].length <= 64,
 );
 
 export const validateHistoryRecord = singleRequest<HistoryRecordRequest>(
@@ -421,6 +428,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.terminalResize]: ChannelDefinition<[TerminalResizeRequest], void>;
   [IPC_CHANNELS.terminalClose]: ChannelDefinition<[TerminalCloseRequest], void>;
   [IPC_CHANNELS.terminalList]: ChannelDefinition<[], TerminalSessionInfo[]>;
+  [IPC_CHANNELS.terminalDetectEnvironment]: ChannelDefinition<[TerminalDetectEnvironmentRequest], SessionEnvironment>;
   [IPC_CHANNELS.historyRecord]: ChannelDefinition<[HistoryRecordRequest], HistoryRecordResult>;
   [IPC_CHANNELS.clipboardConfigure]: ChannelDefinition<[ClipboardConfigureRequest], ClipboardCaptureState>;
   [IPC_CHANNELS.clipboardSetActive]: ChannelDefinition<[ClipboardSetActiveRequest], ClipboardCaptureState>;
@@ -478,7 +486,7 @@ function buildAppChannels(env: RuntimeEnvironment, services: IpcServices): Pick<
   };
 }
 
-function buildTerminalChannels(terminals: TerminalGateway): Pick<IpcChannelMap, typeof IPC_CHANNELS.terminalCreate | typeof IPC_CHANNELS.terminalWrite | typeof IPC_CHANNELS.terminalResize | typeof IPC_CHANNELS.terminalClose | typeof IPC_CHANNELS.terminalList> {
+function buildTerminalChannels(terminals: TerminalGateway): Pick<IpcChannelMap, typeof IPC_CHANNELS.terminalCreate | typeof IPC_CHANNELS.terminalWrite | typeof IPC_CHANNELS.terminalResize | typeof IPC_CHANNELS.terminalClose | typeof IPC_CHANNELS.terminalList | typeof IPC_CHANNELS.terminalDetectEnvironment> {
   return {
     [IPC_CHANNELS.terminalCreate]: {
       validate: validateTerminalCreate,
@@ -499,6 +507,10 @@ function buildTerminalChannels(terminals: TerminalGateway): Pick<IpcChannelMap, 
     [IPC_CHANNELS.terminalList]: {
       validate: noArguments,
       handle: (sender) => terminals.list(sender.senderId),
+    },
+    [IPC_CHANNELS.terminalDetectEnvironment]: {
+      validate: validateTerminalDetectEnvironment,
+      handle: (sender, request) => terminals.detectEnvironment(sender.senderId, request.sessionId),
     },
   };
 }

@@ -32,6 +32,7 @@ const gateway = {
   resize: vi.fn(),
   close: vi.fn(),
   list: vi.fn(() => []),
+  detectEnvironment: vi.fn(async () => ({ os: 'linux' as const, shell: 'bash' as const, source: 'local' as const, detectedAt: '2026-01-01T00:00:00.000Z' })),
 };
 const services: IpcServices = {
   search: { query: vi.fn(() => ({ entries: [] })), facets: vi.fn(() => ({ machines: ['host'] })), remove: vi.fn(() => ({ removed: true })) }, history: { record: vi.fn(() => ({ recorded: true })) },
@@ -268,7 +269,7 @@ describe('window controls', () => {
 
 describe('M04-T04 channels', () => {
   const run = (channel: (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS], ...args: unknown[]) =>
-    dispatchIpc(channels[channel as keyof typeof channels], sender, policy, args);
+    dispatchIpc(channels[channel as keyof typeof channels]!, sender, policy, args);
 
   it('answers search:facets and sync:get-status without arguments', async () => {
     await expect(run(IPC_CHANNELS.searchFacets)).resolves.toEqual({ machines: ['host'] });
@@ -288,7 +289,7 @@ describe('M04-T04 channels', () => {
 
 describe('M05 channels', () => {
   const run = (channel: (typeof IPC_CHANNELS)[keyof typeof IPC_CHANNELS], ...args: unknown[]) =>
-    dispatchIpc(channels[channel as keyof typeof channels], sender, policy, args);
+    dispatchIpc(channels[channel as keyof typeof channels]!, sender, policy, args);
 
   it('accepts ssh create requests only with a safe alias and no cwd', async () => {
     await expect(run(IPC_CHANNELS.terminalCreate, { kind: 'ssh', sshAlias: 'prod-1.example', cols: 80, rows: 24 })).resolves.toMatchObject({ kind: 'ssh', target: 'prod-1.example' });
@@ -394,4 +395,17 @@ describe('ai:compose and ai:action validation', () => {
     expect(services.ai.action).not.toHaveBeenCalled();
     expect(services.ai.compose).not.toHaveBeenCalled();
   });
+
+describe('terminal:detect-environment validation', () => {
+  const run = (...args: unknown[]) => dispatchIpc(channels[IPC_CHANNELS.terminalDetectEnvironment], sender, policy, args);
+  it('accepts a session id and delegates to the terminal gateway', async () => {
+    await expect(run({ sessionId: 'S1' })).resolves.toMatchObject({ os: 'linux' });
+    expect(gateway.detectEnvironment).toHaveBeenCalledWith(7, 'S1');
+  });
+  it('rejects missing, empty, oversized or extra fields', async () => {
+    for (const payload of [{}, { sessionId: '' }, { sessionId: 'x'.repeat(65) }, { sessionId: 'S1', extra: 1 }, { sessionId: 1 }]) {
+      await expect(run(payload)).rejects.toThrow('IPC_INVALID_PAYLOAD');
+    }
+  });
+});
 });

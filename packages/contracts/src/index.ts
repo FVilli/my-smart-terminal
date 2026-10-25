@@ -10,6 +10,7 @@ export const IPC_CHANNELS = {
   terminalResize: 'terminal:resize',
   terminalClose: 'terminal:close',
   terminalList: 'terminal:list',
+  terminalDetectEnvironment: 'terminal:detect-environment',
   historyRecord: 'history:record',
   clipboardConfigure: 'clipboard:configure',
   clipboardSetActive: 'clipboard:set-active',
@@ -135,6 +136,11 @@ export interface SessionEnvironment {
 export interface TerminalEnvironmentEvent {
   sessionId: string;
   environment: SessionEnvironment;
+}
+
+/** Re-runs environment detection for an existing session (the modal's "Detect again"). */
+export interface TerminalDetectEnvironmentRequest {
+  sessionId: string;
 }
 
 export interface TerminalSessionInfo {
@@ -577,6 +583,8 @@ export interface SmartTerminalApi {
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
   /** Late environment detection (for example, the SSH probe) for an existing session. */
   onTerminalEnvironment(listener: (event: TerminalEnvironmentEvent) => void): Unsubscribe;
+  /** Re-runs detection for one session; local sessions return immediately, SSH re-probes. */
+  detectSessionEnvironment(request: TerminalDetectEnvironmentRequest): Promise<SessionEnvironment>;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;
   onSyncStatus(listener: (event: SyncStatusEvent) => void): Unsubscribe;
   onSearchRefreshed(listener: (event: SearchRefreshedEvent) => void): Unsubscribe;

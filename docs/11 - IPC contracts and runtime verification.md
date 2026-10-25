@@ -29,6 +29,7 @@ This document describes the current main/preload/renderer contract. The shared n
 | `terminal:write` | `{ sessionId, data }` | `void` |
 | `terminal:resize` | `{ sessionId, cols, rows }` | `void` |
 | `terminal:close` | `{ sessionId }` | `void` |
+| `terminal:detect-environment` | `{ sessionId }` | `SessionEnvironment`; local sessions resolve immediately, SSH re-probes outside the PTY |
 | `terminal:list` | none | `TerminalSessionInfo[]` |
 | `history:record` | `{ sessionId, text, agent? }` | `{ recorded: boolean }` |
 | `clipboard:state` | none | clipboard state |
