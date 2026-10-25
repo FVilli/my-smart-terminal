@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { stubStores } from './testing/stores';
 import type { AppConfig } from './app-config';
 import { DEFAULT_AI_ACTIONS } from '@smart-terminal/ai';
-import { AiService, type AiServiceOptions } from './ai-service';
+import { AI_CLIPBOARD_MAX_CHARS, AiService, type AiServiceOptions } from './ai-service';
 
 const config = (overrides: Partial<AppConfig> = {}): AppConfig => ({
   machineName: 'host',
@@ -94,14 +94,37 @@ describe('AiService connection test', () => {
     await expect(make({ ...stubStores(config(), null) }).testConnection()).resolves.toMatchObject({ ok: false, error: 'AI token is not configured.' });
   });
 
-  it('composes prompts with the session environment and no network', () => {
+  it('composes prompts with the session environment and no network', async () => {
     const service = make({ ...stubStores(config(), 'secret-token') });
-    const result = service.compose({ actionId: 'assess-risk', composerText: 'rm -rf build', terminalInfo: 'S1 · local · linux · bash', consoleText: 'user@host:~$ ls', environment: { os: 'linux', shell: 'bash', source: 'local' } });
+    const result = await service.compose({ actionId: 'assess-risk', composerText: 'rm -rf build', terminalInfo: 'S1 · local · linux · bash', consoleText: 'user@host:~$ ls', environment: { os: 'linux', shell: 'bash', source: 'local' } });
     expect(result.system).toContain('Session: S1 · local · linux · bash');
     expect(result.system).toContain('user@host:~$ ls');
     expect(result.system).toContain('Risk: low|medium|high');
     expect(result.user).toContain('Command to assess:');
     expect(result.user).toContain('rm -rf build');
+  });
+
+  it('renders sanitized clipboard text in both templates and truncates to the safe cap', async () => {
+    const definition = { ...DEFAULT_AI_ACTIONS[0]!, systemTemplate: 'System {{clipboard}}', userTemplate: 'User {{clipboard}}' };
+    const actions = { list: () => ({ actions: [definition], placeholders: [] as const }) };
+    const text = 'clipboard text';
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), aiActions: actions, clipboard: { readText: () => text } });
+    expect(await service.compose({ actionId: definition.id, composerText: '', terminalInfo: '', consoleText: '' })).toEqual({ system: `System ${text}`, user: `User ${text}` });
+
+    const long = 'x'.repeat(AI_CLIPBOARD_MAX_CHARS + 10);
+    const truncated = await new AiService({ ...stubStores(config(), 'secret-token'), aiActions: actions, clipboard: { readText: () => long } })
+      .compose({ actionId: definition.id, composerText: '', terminalInfo: '', consoleText: '' });
+    const content = truncated.user.slice('User '.length);
+    expect(content.endsWith('\n[truncated]')).toBe(true);
+    expect(content.length).toBeLessThanOrEqual(AI_CLIPBOARD_MAX_CHARS + '\n[truncated]'.length);
+  });
+
+  it('uses an empty clipboard when unavailable and strips NUL characters', async () => {
+    const definition = { ...DEFAULT_AI_ACTIONS[0]!, systemTemplate: '{{clipboard}}', userTemplate: '{{clipboard}}' };
+    const actions = { list: () => ({ actions: [definition], placeholders: [] as const }) };
+    const request = { actionId: definition.id, composerText: '', terminalInfo: '', consoleText: '' };
+    expect(await new AiService({ ...stubStores(config(), 'secret-token'), aiActions: actions }).compose(request)).toEqual({ system: '', user: '' });
+    expect(await new AiService({ ...stubStores(config(), 'secret-token'), aiActions: actions, clipboard: { readText: () => 'a\0b\rc' } }).compose(request)).toEqual({ system: 'abc', user: 'abc' });
   });
 
   it('runs actions deterministically in test mode and skips when unconfigured', async () => {

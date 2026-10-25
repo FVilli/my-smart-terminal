@@ -16,10 +16,14 @@ import { isSensitiveText } from '@smart-terminal/data';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
 
+export const AI_CLIPBOARD_MAX_CHARS = 16000;
+const AI_CLIPBOARD_TRUNCATION_MARKER = '\n[truncated]';
+
 export interface AiServiceOptions {
   configStore: Pick<AppConfigStore, 'load'>;
   aiActions: Pick<AiActionsStore, 'list'>;
   secrets: Pick<SecretStore, 'isSecure' | 'has' | 'get'>;
+  clipboard?: { readText(): string | Promise<string> };
   fetch?: typeof fetch;
   timeoutMs?: number;
   /** AI action timeout (modal); defaults to 15 s. */
@@ -118,16 +122,24 @@ export class AiService {
   }
 
   /** Renders the editable prompt body; no network and no token access. */
-  compose(request: AiComposeRequest): AiComposeResult {
+  async compose(request: AiComposeRequest): Promise<AiComposeResult> {
     const definition = this.options.aiActions.list().actions.find((item) => item.id === request.actionId) ?? DEFAULT_AI_ACTIONS.find((item) => item.id === request.actionId);
     if (definition === undefined) throw new Error('AI_ACTION_UNKNOWN');
     const environment = request.environment;
+    let clipboardValue: unknown = '';
+    try { clipboardValue = await this.options.clipboard?.readText(); } catch { /* clipboard may be unavailable; compose must still work */ }
+    const rawClipboard = typeof clipboardValue === 'string' ? clipboardValue : '';
+    const clipboardText = rawClipboard.replace(/[\0\r]/g, '');
+    const clipboard = clipboardText.length > AI_CLIPBOARD_MAX_CHARS
+      ? `${clipboardText.slice(0, AI_CLIPBOARD_MAX_CHARS)}${AI_CLIPBOARD_TRUNCATION_MARKER}`
+      : clipboardText;
     return composeAction(definition, {
       action: definition.title,
       intent: definition.description,
       description: definition.description,
       composer: request.composerText,
       console: request.consoleText,
+      clipboard,
       terminalInfo: request.terminalInfo,
       os: environment?.os ?? 'unknown',
       shell: environment?.shell ?? 'unknown',

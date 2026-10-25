@@ -352,6 +352,7 @@ void app.whenReady().then(async () => {
     aiActions,
     configStore,
     secrets,
+    clipboard: electronClipboardSource,
     testMode: process.env['SMART_TERMINAL_AI_TEST_MODE'] === '1',
   });
   const stt = new SttService({

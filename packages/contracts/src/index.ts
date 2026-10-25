@@ -410,7 +410,7 @@ export const AI_ACTION_TITLE_MAX = 60;
 export const AI_ACTION_DESCRIPTION_MAX = 200;
 
 /** Placeholders available in System/User templates. Unknown placeholders stay literal. */
-export const AI_PLACEHOLDERS = ['os', 'shell', 'envSource', 'terminalInfo', 'console', 'composer', 'action', 'intent', 'description'] as const;
+export const AI_PLACEHOLDERS = ['os', 'shell', 'envSource', 'terminalInfo', 'console', 'composer', 'action', 'intent', 'description', 'clipboard'] as const;
 export type AiPlaceholder = (typeof AI_PLACEHOLDERS)[number];
 
 /** One AI action: built-in ids have fixed title/description; templates are editable. */

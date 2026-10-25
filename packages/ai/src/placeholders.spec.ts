@@ -16,7 +16,7 @@ describe('renderTemplate', () => {
     const result = renderTemplate(AI_PLACEHOLDERS.map((name) => `{{${name}}}`).join('|'), { composer: '{{os}}' });
     expect(result.text).toContain('{{os}}');
     expect(result.text).toContain('unknown');
-    expect(result.text).toBe('unknown|unknown|unknown|||{{os}}|||');
+    expect(result.text).toBe('unknown|unknown|unknown|||{{os}}||||');
   });
 
   it('enforces the combined rendered prompt limit', () => {

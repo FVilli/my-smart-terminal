@@ -40,7 +40,7 @@ export class AiActionsSettings {
   readonly customCount = computed(() => this.actions().filter(action => !action.builtIn).length);
   readonly selected = computed(() => this.actions().find(a => a.id === this.selectedId()) ?? null);
   readonly validation = computed(() => { const a = this.selected(); return a ? validateActionDraft(a, this.actions(), a.id) : { error: 'Select an action.', warnings: [] }; });
-  readonly placeholders = '{{os}}, {{shell}}, {{envSource}}, {{terminalInfo}}, {{console}}, {{composer}}, {{action}}, {{intent}}, {{description}}';
+  readonly placeholders = '{{os}}, {{shell}}, {{envSource}}, {{terminalInfo}}, {{console}}, {{composer}}, {{action}}, {{intent}}, {{description}}, {{clipboard}}';
   constructor() { void this.refresh(); }
   value(event: Event): string { return (event.target as HTMLInputElement | HTMLTextAreaElement).value; }
   bytes(text: string): number { return new TextEncoder().encode(text).length; }
