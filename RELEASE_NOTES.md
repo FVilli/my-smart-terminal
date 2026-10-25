@@ -1,6 +1,26 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.17
+
+Settings clarity and polish release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### Settings
+- **AI** fields now follow the natural order: **AI Provider → Base URL → Token → Model → Test AI**.
+- Provider list trimmed to **OpenAI Compatible**, **Claude Platform** and **DeepSeek Platform** (plus None). Existing OpenAI/Anthropic configurations still load as legacy values.
+- **STT** no longer offers **Local command**; specific STT providers are **DeepSeek Platform** and **OpenAI Compatible**. Existing local configurations keep working.
+
+### Interface polish
+- Byte counters under the template editors are right-aligned, muted and smaller.
+- **BUILT-IN / CUSTOM** counts align right inside the action list.
+- The AI Actions header is now inline, matching the AI Assistant.
+- In the assistant, the Answer starts aligned with **AI action** and ends with **User Prompt**; the Send row sits below.
+- **Save**, **Reset this action**, **Delete** and **Send** now use icons with proper spacing.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.16
 
 AI/STT usability release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).

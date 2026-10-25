@@ -45,4 +45,4 @@ Verdict: **OK with notes**, no findings. The reviewer verified field order and s
 
 - The zero-pixel alignment of Answer to select/User prompt and counter right-alignment should be confirmed visually at unusual zoom levels; automated checks cover the 1440×900 and 1024×700 layouts.
 - Legacy providers/configurations are supported but intentionally not offered for new setups; a future release may migrate them automatically.
-- These M28 changes are on `main` after v1.3.16 and would ship with the next release.
+- These M28 changes ship in v1.3.17 (v1.3.16 was published before M28).

@@ -1,6 +1,17 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.17
+### Changed
+- Settings/AI field order is AI Provider, Base URL, Token, Model, Test AI.
+- AI providers shown are OpenAI Compatible, Claude Platform and DeepSeek Platform (plus None); legacy OpenAI/Anthropic values remain selectable only when already saved.
+- Settings/STT no longer offers Local command; specific STT providers are DeepSeek Platform and OpenAI Compatible.
+- Byte counters are right-aligned, muted and smaller; BUILT-IN/CUSTOM counts align right; AI Actions header is inline; Answer spans the AI action and User prompt rows.
+- Save/Reset/Delete and Send use icons with flex gaps.
+### Notes
+- Existing local STT and OpenAI/Anthropic AI configurations keep loading; they are legacy options only.
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.16
 ### Added
 - `{{clipboard}}` placeholder for AI actions, read from the system clipboard at compose time (capped, never stored).
