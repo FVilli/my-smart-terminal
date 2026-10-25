@@ -30,13 +30,13 @@ import { MessageStore } from '../messages/message-store';
       <div class="actions flex w-[30px] flex-none flex-col items-center justify-center gap-[7px] min-w-0">
       <button
         type="button"
-        class="icon ai icon-btn h-[26px] w-[28px] p-0 flex-row gap-[2px] text-[10px] font-bold text-accent"
+        class="icon ai icon-btn h-[26px] w-[28px] p-0 text-accent"
         data-testid="ai-correction"
-        aria-label="AI correction"
+        aria-label="AI actions"
         [attr.title]="ai.status().warning ?? 'Open AI actions'"
         (click)="openAiActions()"
       >
-        @if (ai.busy()) { … } @else { <svg class="h-[15px] w-[15px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg><span>AI</span> }
+        @if (ai.busy()) { … } @else { <svg class="h-[15px] w-[15px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg> }
       </button>
       <div class="voice flex flex-col items-center gap-[2px]">
         <button
