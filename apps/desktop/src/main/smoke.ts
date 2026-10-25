@@ -563,6 +563,31 @@ const AI_SCRIPT = `(async () => {
     result.sensitiveBlocked = await waitFor(() => (document.querySelector('[data-testid="ai-answer"]')?.value ?? '').includes('sensitive content'), 4000);
     document.querySelector('[data-testid="ai-cancel"]').click();
     result.sensitiveDraftUnchanged = await waitFor(() => !modal() && textarea().value === 'password: hunter2', 3000);
+    const q = (id) => document.querySelector('[data-testid="' + id + '"]');
+    if (q('ai-modal-backdrop')) q('ai-cancel')?.click();
+    q('ai-actions-open')?.click();
+    result.aiManagerCounts = await waitFor(() => !!q('ai-actions-manager') && /BUILT-IN:5\\s+CUSTOM:0/.test(q('ai-settings-counts')?.textContent ?? ''), 8000);
+    q('ai-settings-add')?.click();
+    await waitFor(() => !!q('ai-settings-new-name') && !!q('ai-settings-new-description'), 2000);
+    const setInput = (id, value) => { const el = q(id); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, value); el.dispatchEvent(new Event('input', { bubbles: true })); };
+    setInput('ai-settings-new-name', 'Smoke action');
+    setInput('ai-settings-new-description', 'Created by AI smoke');
+    q('ai-settings-create')?.click();
+    q('ai-settings-save')?.click();
+    result.aiManagerCustomAdded = await waitFor(() => q('ai-settings-counts')?.textContent.includes('CUSTOM:1'), 4000);
+    const customAction = Array.from(document.querySelectorAll('[data-testid^="ai-settings-action-"]')).find((el) => el.textContent.includes('Smoke action'));
+    customAction?.click();
+    q('ai-settings-delete')?.click();
+    result.aiManagerDeleteCancelled = await waitFor(() => !!q('ai-settings-delete-confirm'), 2000);
+    q('ai-settings-delete-cancel')?.click();
+    result.aiManagerDeleteCancelled = result.aiManagerDeleteCancelled && await waitFor(() => q('ai-settings-counts')?.textContent.includes('CUSTOM:1'), 2000);
+    q('ai-settings-delete')?.click(); q('ai-settings-delete-confirm')?.click();
+    result.aiManagerCustomDeleted = await waitFor(() => q('ai-settings-counts')?.textContent.includes('CUSTOM:0'), 4000);
+    q('ai-actions-close')?.click();
+    result.aiManagerFocusReturned = await waitFor(() => !q('ai-actions-manager') && document.activeElement === q('ai-actions-open'), 2000);
+    q('settings-open')?.click();
+    result.aiNotInSettings = await waitFor(() => !!q('settings-tab-repository') && !!q('settings-tab-ai') && !!q('settings-tab-stt') && !!q('settings-tab-appearance'), 3000) && !q('ai-settings-add');
+    q('onboarding-cancel')?.click();
   } finally {
     // no cleanup required
   }

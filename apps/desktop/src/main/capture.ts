@@ -99,6 +99,11 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             click('settings-tab-appearance');
             await waitFor(() => q('settings-terminal-theme'));
           }
+          if (${JSON.stringify(scenario)} === 'ai-manager') {
+            await waitFor(() => q('ai-actions-open'));
+            click('ai-actions-open');
+            await waitFor(() => q('ai-actions-manager') && q('ai-settings-counts') && q('ai-settings-action-fix-message'));
+          }
           if (${JSON.stringify(scenario)} === 'ai-actions') {
             await waitFor(() => q('ai-correction'));
             click('ai-correction');
@@ -150,6 +155,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding') checks['onboardingVisible'] = !!q('onboarding-overlay');
           if (${JSON.stringify(scenario)} === 'onboarding-ai') checks['onboardingAiStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 2 of 3') && !!q('onboarding-ai-url');
           if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-model');
+          if (${JSON.stringify(scenario)} === 'ai-manager') checks['aiManagerVisible'] = !!q('ai-actions-manager') && !!q('ai-settings-counts') && !!q('ai-settings-add');
           if (${JSON.stringify(scenario)} === 'ai-actions') checks['aiModalOpen'] = !!q('ai-modal') && (q('ai-system-prompt')?.value ?? '').length > 0 && (q('ai-user-prompt')?.value ?? '').length > 0;
           if (${JSON.stringify(scenario)} === 'ai-settings') checks['aiSettingsVisible'] = !!q('settings-terminal-theme') && !!q('settings-tab-appearance');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
