@@ -331,7 +331,9 @@ export class OnboardingWizard {
       const state = await this.api.onboardingState();
       this.state.set(state);
       this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains', terminalTheme: state.config.terminalTheme ?? 'dark' });
-      this.savedTheme = state.config.terminalTheme ?? 'dark';
+      // Only a valid saved config owns the theme; a missing/env-override state keeps the
+      // main-resolved startup theme instead of forcing the default dark.
+      this.savedTheme = state.reason === 'valid' ? (state.config.terminalTheme ?? 'dark') : this.appearance.theme();
       this.appearance.setTheme(this.savedTheme);
       this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.visible.set(state.required);
@@ -355,7 +357,9 @@ export class OnboardingWizard {
       const state = await this.api.onboardingState();
       this.state.set(state);
       this.config.set({ ...state.config, terminalFont: state.config.terminalFont ?? 'jetbrains', terminalTheme: state.config.terminalTheme ?? 'dark' });
-      this.savedTheme = state.config.terminalTheme ?? 'dark';
+      // Only a valid saved config owns the theme; a missing/env-override state keeps the
+      // main-resolved startup theme instead of forcing the default dark.
+      this.savedTheme = state.reason === 'valid' ? (state.config.terminalTheme ?? 'dark') : this.appearance.theme();
       this.appearance.setTheme(this.savedTheme);
       this.appearance.set(state.config.terminalFont ?? 'jetbrains');
       this.errors.set({});

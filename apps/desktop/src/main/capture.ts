@@ -23,6 +23,7 @@ const METRICS_SCRIPT = `(() => {
   const activeTab = document.querySelector('[data-testid="session-tab"][aria-selected="true"]');
   return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth, sidebarOverflow, settingsWidth,
     theme: document.documentElement.dataset.theme ?? null,
+    initialTheme: window.smartTerminal?.initialTheme ?? null,
     ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow,
     headerHeight: box('app-header')?.height ?? 0,
     tabBarHeight: box('app-session-tabs')?.height ?? 0,
