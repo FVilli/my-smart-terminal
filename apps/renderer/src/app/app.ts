@@ -85,8 +85,8 @@ export class App {
     this.sync.start();
     this.search.start();
     const api = window.smartTerminal;
-    // Dark is applied immediately as the no-flash fallback; persisted preference takes authority when loaded.
-    this.appearance.setTheme('dark');
+    // Main passes the resolved theme as a startup argument, so the first paint already matches it.
+    this.appearance.setTheme(api.initialTheme);
     void api.onboardingState().then((state) => {
       this.appearance.setTheme(state.config.terminalTheme ?? 'dark');
       this.appearance.set(state.config.terminalFont ?? 'jetbrains');

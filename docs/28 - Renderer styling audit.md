@@ -80,7 +80,7 @@ Defined tokens (`styles.css:4–19`):
 
 Plus `color-scheme: dark` (`styles.css:20`). Runtime override: `appearance-store.ts:21` writes `--font-mono` via `document.documentElement.style.setProperty(...)` when the terminal font changes.
 
-**Undefined token**: `--border-soft` is used in `assisted-input.ts:61` but never defined, so `border: 1px solid var(--border-soft)` resolves to the initial border (effectively no visible border) until `:focus-within` applies `border-color` + box-shadow. Pre-existing defect; fix deliberately, not silently.
+`--border-soft` is defined in `styles.css`; the light appearance overrides it while preserving utility names.
 
 **Literal colors outside tokens** (triage during token migration):
 
@@ -114,8 +114,8 @@ Plus `color-scheme: dark` (`styles.css:20`). Runtime override: `appearance-store
 - Encapsulation: all components use default `ViewEncapsulation.Emulated`; only `styles.css` is global. No `::ng-deep`, `ViewEncapsulation.None`, or `host` metadata styling beyond the terminal display binding.
 - Animations/transitions: only `@keyframes mic-pulse` (`assisted-input.ts:81–85`); no transitions.
 - Platform/browser-specific: `-webkit-app-region: drag/no-drag` (`header:30,33`), `-webkit-font-smoothing` (`styles.css:40`), `scrollbar-gutter`, `font-variant-ligatures`, `font-feature-settings` (`assisted-input.ts:63`), `color-scheme` (`styles.css:20`), `color-mix()` (`header:36`).
-- Must stay component-scoped: `:host` flex layout roles, window drag regions, `.terminal-host` geometry, and the `TERMINAL_THEME` object.
-- xterm separation: `@import "@xterm/xterm/css/xterm.css"` (`styles.css:1`) is the only third-party CSS; `terminal-panel.css` and `TERMINAL_THEME` (`terminal-panel.ts:20–25`) are app chrome over xterm and duplicate `--terminal-bg` / `--text` / `--accent` values.
+- Must stay component-scoped: `:host` flex layout roles, window drag regions, and `.terminal-host` geometry. Theme token overrides belong in `styles.css`; xterm's per-theme literal map belongs in `appearance/terminal-theme.ts`.
+- xterm separation: `@import "@xterm/xterm/css/xterm.css"` (`styles.css:1`) is the only third-party CSS; `appearance/terminal-theme.ts` owns per-theme xterm literal palettes, the justified exception to semantic CSS token ownership.
 
 ## 5. Test/verification surface relevant to styling
 
@@ -166,14 +166,14 @@ Reproduce: `npm run test:layout` (requires a display; the script starts Xvfb on 
 Pre-migration state:
 - `npm run lint`, `npm run typecheck:node`, `npm run build` and `npx vitest run` (38 files / 408 tests) passed before the migration.
 - No `!important` and no template `style="..."` attributes existed, so the migration cannot hide behind them.
-- Pre-existing defect: `--border-soft` is used in `assisted-input.ts:61` but never defined; it stays visually border-less until `:focus-within`. T03 fixes it by defining a real token rather than preserving the accident.
+- Theme ownership: semantic tokens and light overrides are centralized in `styles.css`; literal xterm colors are limited to the per-theme palette map in `appearance/terminal-theme.ts`.
 - Zoom 50%/100%/200% is covered by `apps/desktop/src/main/zoom.spec.ts` (unit) and the Electron zoom path; no automated screenshot harness exists for zoom levels, so T06 compares 50%/100%/200% manually on the built app and records it as evidence.
 
 Pre-migration evidence observed here (only the allowed commands were run):
 - `npx tsc -p tsconfig.json --noEmit` → passed (node-side typecheck; root tsconfig excludes the renderer).
 - `npm test` (`vitest run`) → 38 files / 408 tests passed.
 - No `!important` usages and no template `style="..."` attributes.
-- `--border-soft` is undefined (`assisted-input.ts:61`) — pre-existing defect.
+- `--border-soft` is defined in the shared token source.
 - Not run: `capture-layout.mjs` / Electron smokes / `ng build renderer` (display/Electron build required; deferred to parent).
 
 ## Migration log and evidence (M20)

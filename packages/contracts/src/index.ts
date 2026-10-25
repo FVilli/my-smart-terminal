@@ -608,6 +608,8 @@ export interface SmartTerminalApi {
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   setupTestAi(request: SetupTestAiRequest): Promise<SetupTestAiResult>;
   helpOpen(topic: HelpTopic): Promise<HelpOpenResult>;
+  /** Theme resolved by main before the window loads, so the first paint already matches it. */
+  readonly initialTheme: TerminalTheme;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;

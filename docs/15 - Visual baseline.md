@@ -53,6 +53,10 @@ Horizontal split: terminal ends at x1443 of 1930 → **74.8% / 25.2%**, implemen
 
 Typography: monospace for terminal, assisted editor, session labels and tab targets; UI chrome may use the system sans-serif. Active tab is a filled `#384a5d` surface, not the terminal background.
 
+## Theme baseline and light appearance
+
+Dark remains the pixel baseline; all exact dark values above are unchanged. Light semantic overrides are selected by `:root[data-theme='light']` in `styles.css` and retain the same utility names. The light screenshot is `docs/assets/screenshots/11-terminal-light.png`. Layout capture checks run both themes at 1440×900 and 1024×700, with theme-specific expected colours as well as geometry/overflow checks. The capture seam selects the requested theme explicitly, independent of user preference. Determinism is limited to the fixed harness environment: platform font rasterization and antialiasing can vary, so screenshots are not universal pixel-perfect proofs.
+
 ## Method
 
 1. Capture 1440×900 and 1024×700 on Xvfb (content height is 872 at a 900 logical window because the window frame is excluded).

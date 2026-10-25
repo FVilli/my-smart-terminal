@@ -36,13 +36,17 @@ At first launch, the wizard offers three steps:
 2. **AI provider and token** — choose Anthropic, OpenAI, or OpenAI-compatible, optionally set the base URL/model, and save the token in the system keychain. On Linux, if the backend is `basic_text` or unavailable, the token is kept in memory for the session only: it is never written in plaintext.
 3. **STT and microphone** — choose local or cloud STT, configure the absolute local command or cloud provider, check the microphone, and grant permission. This step can be skipped.
 
-Non-secret configuration is in `userData/config/config.md` (typically under `~/.config/...` on Linux, `~/Library/Application Support/...` on macOS, and `%APPDATA%/...` on Windows). It is not synchronized. Tokens are managed by main through `safeStorage`/keychain and are not placed in Markdown; without a secure keyring there is no plaintext fallback. After first-run onboarding, the gear opens Settings with **Repository**, **AI**, **STT**, and **Appearance** tabs; see the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md) for font, title, menu, and zoom behavior.
+Non-secret configuration is in `userData/config/config.md` (typically under `~/.config/...` on Linux, `~/Library/Application Support/...` on macOS, and `%APPDATA%/...` on Windows). It is not synchronized. Tokens are managed by main through `safeStorage`/keychain and are not placed in Markdown; without a secure keyring there is no plaintext fallback. After first-run onboarding, the gear opens Settings with **Repository**, **AI**, **STT**, and **Appearance** tabs; see the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md) for title, menu, and zoom behavior.
 
 Configuration uses `schema_version: 1`. If it is unreadable or unknown, the app keeps a `.bak` backup of the last valid configuration or quarantines the corrupt one as `.corrupt`, then restarts with safe defaults.
 
+## Appearance
+
+Dark is the default. Choose Light explicitly in Settings → Appearance when desired; there is no operating-system-following mode.
+
 ## 4. Daily use
 
-The shell header is a 35 px full-window bar with a transparent icon and dynamic `Smart Terminal - Version <runtime version>` title. Session tabs are 38 px high. **History** and **Clipboard** are header toggles: selecting one shows that sidebar surface, and selecting the active one hides the sidebar. The assisted input is a single-border composer. Settings uses **Repository**, **AI**, **STT**, and **Appearance** tabs.
+The shell header is a 35 px full-window bar with a transparent icon and dynamic `Smart Terminal - Version <runtime version>` title. Session tabs are 38 px high. **History** and **Clipboard** are header toggles: selecting one shows that sidebar surface, and selecting the active one hides the sidebar. The assisted input is a single-border composer. Settings uses **Repository**, **AI**, **STT**, and **Appearance** tabs. Appearance provides a **Theme** selector (**Dark** or **Light**) and the existing terminal-font selector. Theme changes preview live; **Save** persists them, while **Cancel** restores the saved theme and font (discard confirmation may appear for unsaved edits). Both preferences are stored in the machine-local `config.md`, not synchronized. Light theme changes the interface and terminal palette; it does not alter terminal font selection. Older app versions reject unknown config keys and may warn/reject this configuration on downgrade; do not assume downgrade compatibility.
 
 ### Tabs and sessions
 

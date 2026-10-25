@@ -61,6 +61,7 @@ const EXPECTED_KEYS = [
   'createTerminal',
   'detectSessionEnvironment',
   'helpOpen',
+  'initialTheme',
   'listTerminals',
   'onRoleChanged',
   'onSearchRefreshed',

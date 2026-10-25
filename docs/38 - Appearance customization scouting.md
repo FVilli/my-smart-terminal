@@ -49,6 +49,10 @@ Top risks: (1) contrast, visible focus, and terminal legibility; validate WCAG A
 
 **Deferred:** UI font family, UI and terminal font size (assess separately from zoom), line height, density, user-selectable accent, terminal palette/cursor customization, and transparency.
 
+## Implemented scope
+
+See [Appearance customization design](39%20-%20Appearance%20customization%20design.md). Shipped scope: explicit Dark/Light theme with Dark default, local config preference, live preview with Save/Cancel restoration, retained terminal font selection, light semantic tokens, and per-theme xterm palettes. Deferred: OS/System-following mode, UI font family/size, terminal font size, line height, density, custom accent or terminal palette, and transparency. This is an implementation summary, not a platform or hardware validation claim.
+
 ## Open questions and limits
 
 - Should an OS-following preference be offered later, and how should OS changes interact with an explicit saved choice?

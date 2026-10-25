@@ -60,7 +60,7 @@ AppearanceStore is the renderer theme authority. Its theme signal/change effect 
 
 ## Startup, window, and settings behavior
 
-Apply saved theme before first visible renderer paint. The startup configuration path currently loads onboarding/config state asynchronously; T09 must arrange a pre-paint bootstrap (or equivalent gating) so the saved theme is set before display, with dark as immediate fallback if loading fails or no preference exists. Keep first-render deterministic and avoid a light-to-dark flash. Set Electron `BrowserWindow.backgroundColor` from the same selected theme before showing the window; dark fallback applies on failure. Do not introduce OS-following or a second independent theme authority.
+Theme is resolved in main before the window loads and passed as `--smart-terminal-theme=<dark|light>` (preload exposes it as `initialTheme`); the renderer applies it synchronously at bootstrap, so the first paint already matches and the asynchronous config refresh only confirms it. `BrowserWindow.backgroundColor` uses the same resolved theme before the window is shown; dark is the fallback when config loading fails. No OS-following and no second theme authority.
 
 In Settings > Appearance, add a Dark/Light control and retain the terminal font selector. Theme selection previews immediately. Save persists both edited preference(s); Cancel restores the previously saved theme and font, not merely closes the dialog. Preserve the existing 60%-wider fixed-height settings dialog exactly; verify controls fit without overflow at supported zoom levels.
 
@@ -75,6 +75,17 @@ In Settings > Appearance, add a Dark/Light control and retain the terminal font 
 - xterm: verify foreground, all 16 ANSI colors, cursor and selection for both themes, including inactive terminal instances and representative output.
 - Exercise keyboard navigation and `:focus-visible`; test app zoom 50–200%, clipping, dialog dimensions and no horizontal/vertical overflow at both viewport sizes.
 - Update related docs/05, docs/12, docs/15, docs/19, docs/28, and docs/38 for implemented contract, compatibility, palette ownership, baseline/capture policy, and deferred scope. Keep claims aligned with actual behavior.
+
+## Implementation status (verified)
+
+Implemented behavior verified against the renderer, config parser, settings wizard, and capture harness:
+
+- `terminal_theme` accepts `dark`/`light`, defaults to dark when absent, and is serialized to local config when set; invalid values are rejected by config validation. Existing schema version policy remains unchanged.
+- Theme selection applies immediately to root semantic tokens and `color-scheme`; settings Save persists the preference, while Cancel restores the previously saved theme. The terminal-font control remains available.
+- The typed theme palette map in `appearance/terminal-theme.ts` supplies each terminal panel's xterm palette, including ANSI colours; dark palette values preserve prior defaults.
+- Dual-theme layout capture checks pass at 1440×900 and 1024×700 (four checks OK); the light capture is `docs/assets/screenshots/11-terminal-light.png`.
+
+Deviation from the design's startup aspiration: theme application is in the renderer appearance/settings flow after asynchronous onboarding config loading, rather than a verified pre-first-paint bootstrap. Do not claim absence of startup flash or theme-aware native window background; dark remains the initial store fallback. Platform/hardware appearance validation and a contrast audit are not claimed here.
 
 ## Ordered T09 implementation steps
 

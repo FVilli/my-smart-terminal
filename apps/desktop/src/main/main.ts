@@ -113,7 +113,7 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
       sandbox: true,
       spellcheck: false,
-      additionalArguments: smokeTest || ptySmokeTest ? [TEST_IPC_ARGUMENT] : [],
+      additionalArguments: [`--smart-terminal-theme=${configuredTheme}`, ...(smokeTest || ptySmokeTest ? [TEST_IPC_ARGUMENT] : [])],
     },
   });
 

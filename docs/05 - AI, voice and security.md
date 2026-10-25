@@ -38,6 +38,10 @@ Tokens in the OS keychain, SSH through the OpenSSH client/agent and `~/.ssh/conf
 Unavailable AI/STT do not interrupt the terminal or local writing.
 
 
+## Appearance
+
+Appearance offers an explicit **Dark** or **Light** theme; Dark is the default, including when the local preference is absent. The existing terminal font selector is retained. Theme and font preferences are stored in the machine-local configuration and are not synchronized. The app does not follow the operating-system theme. UI font family/size, terminal font size, line height, density, custom accent or terminal palettes, transparency, and a System theme remain deferred.
+
 ## AI actions (M23)
 The composer `AI` button opens a modal with a select for built-in and custom actions and editable System Prompt and User Prompt fields. Both are composed from local templates and terminal context. Editing the System Prompt is supported; it is not immutable. `ai:compose` renders without network access; `ai:action` submits the displayed prompts on explicit Send (15 s timeout, temperature 0, no streaming).
 

@@ -30,6 +30,7 @@ import {
   type RoleChangedEvent,
   type SearchFacetsResult,
   type SearchRemoveResult,
+  type TerminalTheme,
   type SearchQueryResult,
   type SetupTestAiResult,
   type SearchRefreshedEvent,
@@ -58,7 +59,11 @@ function subscribe<T>(channel: string, listener: (event: T) => void): Unsubscrib
   };
 }
 
+const themeArgument = process.argv.find((argument) => argument.startsWith('--smart-terminal-theme='));
+const initialTheme: TerminalTheme = themeArgument?.endsWith('=light') ? 'light' : 'dark';
+
 const api: SmartTerminalApi = {
+  initialTheme,
   ping: () => ipcRenderer.invoke(IPC_CHANNELS.appPing) as Promise<AppPingResult>,
   runtimeInfo: () => ipcRenderer.invoke(IPC_CHANNELS.appRuntimeInfo) as Promise<AppRuntimeInfo>,
   createTerminal: (request) =>
