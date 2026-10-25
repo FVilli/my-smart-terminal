@@ -541,7 +541,7 @@ const AI_SCRIPT = `(async () => {
     result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer-rendered"]')?.textContent?.includes('Fixed message.') ?? false, 8000);
     document.querySelector('[data-testid="ai-answer-view-raw"]').click();
     result.rawAnswer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 2000);
-    result.useEnabled = document.querySelector('[data-testid="ai-use"]')?.disabled === false;
+    result.useEnabled = await waitFor(() => document.querySelector('[data-testid="ai-use"]')?.disabled === false, 4000);
     document.querySelector('[data-testid="ai-use"]').click();
     result.useInsertsAnswer = await waitFor(() => textarea().value.includes('Fixed message.'), 4000);
     result.useKeepsFocus = await waitFor(() => document.activeElement === textarea(), 2000);
