@@ -21,5 +21,4 @@ export const SETTINGS_TABS: readonly TabItem[] = [
   { id: 'ai', label: 'AI', testId: 'settings-tab-ai' },
   { id: 'stt', label: 'STT', testId: 'settings-tab-stt' },
   { id: 'appearance', label: 'Appearance', testId: 'settings-tab-appearance' },
-  { id: 'ai-actions', label: 'AI actions', testId: 'settings-tab-ai-actions' },
 ];

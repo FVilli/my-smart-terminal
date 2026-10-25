@@ -21,17 +21,16 @@ import { SttStore, normalizeAudioMime, sttNotice } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
-import { AiActionsSettings } from '../ai/ai-actions-settings';
 import { TabsContainer } from '../ui/tabs-container';
 import { SETTINGS_TABS, type TabItem } from '../ui/tabs.logic';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4;
 
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
-  imports: [AiActionsSettings, TabsContainer],
+  imports: [TabsContainer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
@@ -197,7 +196,6 @@ type Step = 1 | 2 | 3 | 4 | 5;
                   </table>
                 </div>
               }
-              @case (5) { @if (editMode()) { <app-ai-actions-settings /> } }
               @case (4) {
                 <div data-testid="settings-appearance">
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Theme
@@ -257,7 +255,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
     }
   `,
   styles: `
-    .settings-dialog { display: flex; flex-direction: column; width: min(832px, 92vw); height: min(620px, 90vh); overflow: hidden; }
+    .settings-dialog { display: flex; flex-direction: column; width: min(640px, 92vw); height: min(744px, 90vh); overflow: hidden; }
     .settings-dialog .dialog-body { flex: 1; min-height: 0; overflow: auto; }
     .settings-dialog footer { margin-top: auto; }
     .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--record); }

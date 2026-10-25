@@ -66,7 +66,7 @@ Dark remains the pixel baseline; all exact dark values above are unchanged. Ligh
 
 ## Settings dialog
 
-The edit-mode settings dialog is 832 px wide (capped at 92vw); its inner body scrolls while the footer remains pinned. Initial onboarding retains its 520 px width.
+The edit-mode settings dialog is `min(640px, 92vw)` wide and `min(744px, 90vh)` tall; its inner body scrolls while the footer remains pinned. Initial onboarding retains its 520 px width and 90vh maximum height.
 
 ## Zoom and terminal keyboard behavior
 

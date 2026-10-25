@@ -19,7 +19,6 @@ describe('settings tabs metadata', () => {
     expect(SETTINGS_TABS.map(({ id, label, testId }) => [id, label, testId])).toEqual([
       ['repository', 'Repository', 'settings-tab-repository'], ['ai', 'AI', 'settings-tab-ai'],
       ['stt', 'STT', 'settings-tab-stt'], ['appearance', 'Appearance', 'settings-tab-appearance'],
-      ['ai-actions', 'AI actions', 'settings-tab-ai-actions'],
     ]);
   });
 });
