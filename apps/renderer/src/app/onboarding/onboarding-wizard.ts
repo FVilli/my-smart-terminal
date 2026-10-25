@@ -22,13 +22,16 @@ import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
 import { AiActionsSettings } from '../ai/ai-actions-settings';
+import { TabsContainer } from '../ui/tabs-container';
+import { SETTINGS_TABS, type TabItem } from '../ui/tabs.logic';
 
 type Step = 1 | 2 | 3 | 4 | 5;
+
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
-  imports: [AiActionsSettings],
+  imports: [AiActionsSettings, TabsContainer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
@@ -53,15 +56,9 @@ type Step = 1 | 2 | 3 | 4 | 5;
             </div>
           } @else {
             @if (editMode()) {
-              <div role="tablist" aria-label="Settings sections" class="settings-tabs mt-2 mb-3 flex gap-1.5">
-                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 1" [class.text-accent]="step() === 1" role="tab" data-testid="settings-tab-repository" [attr.aria-selected]="step() === 1" (click)="selectTab(1)">Repository</button>
-                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 2" [class.text-accent]="step() === 2" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
-                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 3" [class.text-accent]="step() === 3" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
-                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 4" [class.text-accent]="step() === 4" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
-                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 5" [class.text-accent]="step() === 5" role="tab" data-testid="settings-tab-ai-actions" [attr.aria-selected]="step() === 5" (click)="selectTab(5)">AI actions</button>
-              </div>
+              <app-tabs-container class="settings-tabs mt-2 mb-3 block" label="Settings sections" [tabs]="settingsTabs" [activeId]="settingsTabId()" (selected)="selectTabId($event)" />
             }
-            <div class="dialog-body">
+            <div class="dialog-body" [attr.role]="editMode() ? 'tabpanel' : null" [attr.id]="editMode() ? 'panel-' + settingsTabId() : null" [attr.aria-labelledby]="editMode() ? 'tab-' + settingsTabId() : null">
             @if (state()?.reason === 'corrupt') {
               <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-corrupt">The previous configuration was invalid and has been set aside.</p>
             }
@@ -272,6 +269,7 @@ export class OnboardingWizard {
   private readonly appearance = inject(AppearanceStore);
   private readonly messages = inject(MessageStore);
   protected readonly terminalFonts = TERMINAL_FONTS;
+  readonly settingsTabs: readonly TabItem[] = SETTINGS_TABS;
   protected readonly aiProviders = AI_PROVIDERS;
   protected readonly visible = signal(false);
   protected readonly step = signal<Step>(1);
@@ -410,6 +408,14 @@ export class OnboardingWizard {
 
   protected terminalFont(event: Event): TerminalFontId {
     return TERMINAL_FONTS.find((font) => font.id === this.value(event))?.id ?? 'jetbrains';
+  }
+
+  protected settingsTabId(): string { return SETTINGS_TABS[this.step() - 1]?.id ?? 'repository'; }
+
+  protected selectTabId(id: string): void {
+    if (!this.editMode()) return;
+    const index = SETTINGS_TABS.findIndex((tab) => tab.id === id);
+    if (index >= 0) this.selectTab((index + 1) as Step);
   }
 
   protected selectTab(step: Step): void {
