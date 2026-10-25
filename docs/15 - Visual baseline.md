@@ -60,6 +60,10 @@ Typography: monospace for terminal, assisted editor, session labels and tab targ
 3. Sample screenshot colors and row/column transitions with a PNG decoder (Pillow or equivalent) at known regions.
 4. Record deltas against this document; do not use full-image pixel-perfect diffing because antialiasing and fonts vary by platform.
 
+## Settings dialog
+
+The edit-mode settings dialog is 832 px wide (capped at 92vw); its inner body scrolls while the footer remains pinned. Initial onboarding retains its 520 px width.
+
 ## Zoom and terminal keyboard behavior
 
 Ctrl/Cmd+- and Ctrl/Cmd+Plus (including Ctrl+=, Ctrl+Shift+=, and numpad add/subtract) adjust zoom in 10% steps from 50% to 200%; Ctrl/Cmd+0 resets to 100%. These zoom shortcuts are handled by Electron before input reaches xterm. Other keys are not intercepted; terminal applications may consume other Ctrl/Cmd shortcuts.

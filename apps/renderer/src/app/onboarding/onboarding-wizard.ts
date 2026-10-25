@@ -251,7 +251,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
     }
   `,
   styles: `
-    .settings-dialog { display: flex; flex-direction: column; height: min(620px, 90vh); overflow: hidden; }
+    .settings-dialog { display: flex; flex-direction: column; width: min(832px, 92vw); height: min(620px, 90vh); overflow: hidden; }
     .settings-dialog .dialog-body { flex: 1; min-height: 0; overflow: auto; }
     .settings-dialog footer { margin-top: auto; }
     .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--record); }

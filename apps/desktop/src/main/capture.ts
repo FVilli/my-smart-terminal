@@ -11,6 +11,8 @@ const METRICS_SCRIPT = `(() => {
   const clientWidth = root.clientWidth;
   const sidebarLeft = rect ? rect.left : 0;
   const sidebarWidth = rect ? rect.width : 0;
+  const settingsDialog = document.querySelector('.dialog.settings-dialog');
+  const settingsWidth = settingsDialog ? settingsDialog.getBoundingClientRect().width : 0;
   const panel = document.querySelector('app-sidebar-panel');
   const sidebarOverflow = !!sidebar && (sidebar.scrollWidth > sidebar.clientWidth ||
     (!!panel && (panel.scrollWidth > panel.clientWidth || panel.scrollHeight > panel.clientHeight)));
@@ -19,7 +21,7 @@ const METRICS_SCRIPT = `(() => {
   const box = (selector) => { const el = document.querySelector(selector); return el ? el.getBoundingClientRect() : null; };
   const bg = (selector) => { const el = document.querySelector(selector); return el ? getComputedStyle(el).backgroundColor : null; };
   const activeTab = document.querySelector('[data-testid="session-tab"][aria-selected="true"]');
-  return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth, sidebarOverflow,
+  return { viewportWidth, scrollWidth, clientWidth, sidebarLeft, sidebarWidth, sidebarOverflow, settingsWidth,
     ratio: viewportWidth ? sidebarLeft / viewportWidth : 0, overflow,
     headerHeight: box('app-header')?.height ?? 0,
     tabBarHeight: box('app-session-tabs')?.height ?? 0,

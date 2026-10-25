@@ -692,6 +692,8 @@ const SETTINGS_SCRIPT = `(async () => {
   result.windowControlsPresent = !!q('window-minimize') && !!q('window-maximize') && !!q('window-close');
   click('settings-open'); result.opened = await waitFor(() => !!q('onboarding-overlay'));
   result.noProgress = !q('onboarding-progress');
+  const dialogWidth = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().width ?? 0;
+  result.settingsWide = dialogWidth >= 832;
   const settingsHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
   result.githubHelpPresent = !!q('settings-github-help');
   click('settings-tab-repository');
