@@ -1,6 +1,27 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.16
+
+AI/STT usability release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### AI Assistant
+- The two prompt editors now fill the left column 50/50 and the Markdown answer fills the right column; the **Answer** label and **Rendered / Raw** toggles share one row.
+- The last used action is remembered and preselected when you reopen the assistant.
+
+### AI actions and providers
+- New **`{{clipboard}}`** placeholder: the current clipboard text is inserted when the prompt is composed (capped at 16,000 characters, never persisted).
+- **Claude Platform** and **DeepSeek Platform** providers set their base URL automatically.
+- **Model is now a select with refresh**: choose the provider default, a discovered model, or a custom name; refresh lists the provider's chat models.
+
+### Speech to Text
+- New **Use Specific Provider (OpenAI-compatible)** option with its own provider, base URL, keychain token and model refresh.
+- Local command and None remain available; shared mode keeps using the AI provider and token.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.15
 
 AI surfaces polish release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).

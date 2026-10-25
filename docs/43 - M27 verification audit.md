@@ -50,4 +50,4 @@ Verdict: **OK with notes**, no findings. The reviewer checked guarded clipboard 
 - Real clipboard behaviour across OSes (text formats, very large content) and real provider model lists (Claude/DeepSeek/OpenAI) remain manual; model endpoints can legitimately return an empty list, in which case the UI keeps the custom/default value.
 - Specific-provider STT transcription against a real OpenAI-compatible server and the exact DeepSeek audio support are environment-dependent: DeepSeek's chat models are not transcription models, so users must point STT at an audio-capable endpoint.
 - Rendered-selection `Use`, screen-reader navigation and zoom checks beyond the automated set remain manual.
-- These M27 changes are on `main` after v1.3.15 and would ship with the next release.
+- These M27 changes ship in v1.3.16 (v1.3.15 was published before M27).

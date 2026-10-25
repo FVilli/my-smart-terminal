@@ -1,6 +1,20 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.16
+### Added
+- `{{clipboard}}` placeholder for AI actions, read from the system clipboard at compose time (capped, never stored).
+- Claude Platform and DeepSeek Platform AI providers with automatic base URLs.
+- AI model discovery: the optional model is now a select with refresh (Provider default, discovered, Custom).
+- STT "Use Specific Provider (OpenAI-compatible)" with provider, base URL, keychain token and model refresh, plus Local command and None.
+### Changed
+- AI Assistant prompts fill their panes 50/50, the answer uses the full height, and the Answer label sits beside the Rendered/Raw toggle on one row.
+- The assistant preselects the last used action.
+### Fixed
+- Specific-provider STT uses its own base URL and `stt:cloud` token, never the AI token.
+### Notes
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.15
 ### Changed
 - The composer AI trigger shows only the sparkles glyph; the AI Assistant modal is 90% of the window (width and height) with a compact header and 50/50 columns (prompts left, answer right).
