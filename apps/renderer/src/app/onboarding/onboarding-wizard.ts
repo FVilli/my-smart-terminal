@@ -296,19 +296,6 @@ type Step = 1 | 2 | 3 | 4;
       </div>
     }
   `,
-  styles: `
-    .settings-dialog { display: flex; flex-direction: column; width: min(640px, 92vw); height: min(744px, 90vh); overflow: hidden; }
-    .settings-dialog .dialog-body { flex: 1; min-height: 0; overflow: auto; }
-    .settings-dialog footer { margin-top: auto; }
-    .rec-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--record); }
-    .stop-square { display: inline-block; flex: none; width: 9px; height: 9px; background: currentColor; }
-    .play-triangle { display: inline-block; flex: none; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid currentColor; }
-    .transcribe-icon { display: inline-block; flex: none; position: relative; width: 10px; height: 12px; border: 1px solid currentColor; border-radius: 1px; }
-    .transcribe-icon::after { content: ''; position: absolute; left: 2px; top: 3px; width: 5px; height: 1px; background: currentColor; box-shadow: 0 3px 0 currentColor; }
-    .stt-details { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 11px; }
-    .stt-details th { width: 100px; padding: 3px 8px 3px 0; text-align: left; font-weight: 400; color: var(--text-muted); vertical-align: top; }
-    .stt-details td { padding: 3px 0; overflow-wrap: anywhere; color: var(--text); }
-  `,
 })
 export class OnboardingWizard {
   private readonly api: SmartTerminalApi = (globalThis as unknown as { smartTerminal: SmartTerminalApi }).smartTerminal;

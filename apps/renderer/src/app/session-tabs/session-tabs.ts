@@ -9,9 +9,9 @@ import type { TerminalSessionView } from '../session.model';
     <div class="tabs flex h-[37px] min-w-0 items-stretch" role="tablist" aria-label="Terminal sessions">
       @for (session of sessions(); track session.id) {
         <div
-          class="tab group flex min-w-0 max-w-tab cursor-pointer items-center gap-2 whitespace-nowrap border-r border-line pl-4 pr-2 text-muted"
+          class="tab session-tab group flex min-w-0 max-w-tab cursor-pointer items-center gap-2 whitespace-nowrap border-r border-line pl-4 pr-2 text-muted"
           role="tab"
-          [class.tab--active]="session.id === activeId()"
+          [class.is-active]="session.id === activeId()"
           [class.tab--exited]="session.status === 'exited' || session.status === 'error'"
           [attr.aria-selected]="session.id === activeId()"
           data-testid="session-tab"
@@ -51,7 +51,7 @@ import type { TerminalSessionView } from '../session.model';
             <button
               type="button"
               role="menuitem"
-              [class]="menuItemClass"
+              class="menu-item"
               data-testid="session-new-local"
               (click)="menuOpen.set(false); createLocal.emit()"
             >
@@ -61,7 +61,7 @@ import type { TerminalSessionView } from '../session.model';
               <button
                 type="button"
                 role="menuitem"
-                [class]="menuItemClass"
+                class="menu-item"
                 data-testid="session-new-ssh"
                 [attr.data-alias]="alias"
                 (click)="menuOpen.set(false); createSsh.emit(alias)"
@@ -69,7 +69,7 @@ import type { TerminalSessionView } from '../session.model';
                 <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">{{ alias }}</small>
               </button>
             } @empty {
-              <button type="button" role="menuitem" [class]="menuItemClass" data-testid="session-new-ssh" disabled>
+              <button type="button" role="menuitem" class="menu-item" data-testid="session-new-ssh" disabled>
                 <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">No hosts in ~/.ssh/config</small>
               </button>
             }
@@ -78,16 +78,8 @@ import type { TerminalSessionView } from '../session.model';
       </div>
     </div>
   `,
-  styles: `
-    /* State rules that depend on Angular class bindings; everything else is a utility. */
-    .tab--active { background: var(--tab-active); color: var(--text); }
-    .tab:hover:not(.tab--active) { background: var(--border); color: var(--text); }
-    .tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
-  `,
 })
 export class SessionTabs {
-  /** Shared session-menu item styling; keeps Local, SSH hosts and the empty state identical. */
-  protected readonly menuItemClass = 'cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted';
   readonly sessions = input.required<readonly TerminalSessionView[]>();
   readonly activeId = input<string | null>(null);
   readonly selected = output<string>();

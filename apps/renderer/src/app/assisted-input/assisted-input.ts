@@ -14,7 +14,7 @@ import { MessageStore } from '../messages/message-store';
   template: `
     <div class="composer flex h-composer min-h-composer items-stretch gap-2 rounded-lg border border-line-soft bg-input py-[5px] pr-[6px] pl-2 focus-within:border-accent focus-within:shadow-[0_0_0_1px_var(--focus-ring)]">
       <textarea
-        class="editor block h-full w-full min-w-0 min-h-0 flex-1 resize-none border-0 bg-transparent p-0 px-[4px] py-[2px] pl-[2px] text-sm leading-[1.5] text-fg outline-0 font-mono overflow-y-auto overflow-x-hidden placeholder:text-muted disabled:opacity-[0.65]"
+        class="editor composer-editor block h-full w-full min-w-0 min-h-0 flex-1 resize-none border-0 bg-transparent p-0 px-[4px] py-[2px] pl-[2px] text-sm leading-[1.5] text-fg outline-0 font-mono overflow-y-auto overflow-x-hidden placeholder:text-muted disabled:opacity-[0.65]"
         data-testid="assisted-textarea"
         #textarea
         rows="2"
@@ -45,7 +45,7 @@ import { MessageStore } from '../messages/message-store';
           data-testid="assisted-mic"
           [attr.aria-label]="micLabel()"
           [attr.aria-pressed]="voice.phase() === 'recording'"
-          [class.listening]="voice.phase() === 'recording'"
+          [class.mic-listening]="voice.phase() === 'recording'"
           [class.text-fg]="voice.status().configured"
           [attr.title]="voice.notice() ?? voice.status().warning ?? (voice.phase() === 'recording' ? 'Stop recording' : 'Start dictation')"
           (click)="toggleRecording($event)"
@@ -57,15 +57,6 @@ import { MessageStore } from '../messages/message-store';
       <button type="button" class="icon send icon-btn h-[26px] w-[26px] rounded-full bg-accent p-0 text-[15px] font-bold text-terminal disabled:opacity-45" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg class="h-[17px] w-[17px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
-  `,
-  styles: `
-    .editor { font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; scrollbar-gutter: stable; }
-    .editor::placeholder { opacity: 1; }
-    .mic.listening { animation: mic-pulse 2s ease-in-out infinite; }
-    @keyframes mic-pulse {
-      0%, 100% { color: var(--record); opacity: 1; filter: drop-shadow(0 0 0 transparent); }
-      50% { color: var(--record-strong); opacity: 0.35; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--record) 70%, transparent)); }
-    }
   `,
 })
 export class AssistedInput implements OnDestroy {

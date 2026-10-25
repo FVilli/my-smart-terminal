@@ -20,13 +20,13 @@ export function shortTimestamp(timestamp: string): string {
   host: { class: 'flex h-full min-h-0 min-w-0 flex-col bg-sidebar' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs flex flex-none border-b border-line" role="tablist">
+    <div class="sidebar-tabs flex flex-none border-b border-line" role="tablist">
       <button
         type="button"
         role="tab"
         data-testid="sidebar-tab-clipboard"
         class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
-        [class.active]="activeTab() === 'clipboard'"
+        [class.is-active]="activeTab() === 'clipboard'"
         [attr.aria-selected]="activeTab() === 'clipboard'"
         (click)="tabChange.emit('clipboard')"
       >
@@ -37,7 +37,7 @@ export function shortTimestamp(timestamp: string): string {
         role="tab"
         data-testid="sidebar-tab-history"
         class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
-        [class.active]="activeTab() === 'history'"
+        [class.is-active]="activeTab() === 'history'"
         [attr.aria-selected]="activeTab() === 'history'"
         (click)="tabChange.emit('history')"
       >
@@ -133,10 +133,6 @@ export function shortTimestamp(timestamp: string): string {
         }
       }
     </div>
-  `,
-  styles: `
-    /* Active tab state depends on an Angular class binding. */
-    .tabs button.active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
   `,
 })
 export class SidebarPanel {
