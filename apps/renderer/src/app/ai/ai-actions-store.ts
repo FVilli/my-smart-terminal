@@ -16,6 +16,8 @@ export class AiActionsStore {
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
   readonly selectedAnswer = signal('');
+  /** Hand-off to the composer: non-null while a `Use` insertion is pending. */
+  readonly pendingInsert = signal<string | null>(null);
   readonly promptTooLong = computed(() => new TextEncoder().encode(this.prompt()).length > AI_ACTION_MAX_PROMPT_BYTES);
   private readonly keptPrompt = new Map<string, { action: AiActionId; prompt: string }>();
   private sequence = 0;
@@ -49,5 +51,8 @@ export class AiActionsStore {
     } catch { if(seq===this.sequence){this.error.set('The AI request failed.');this.phase.set('error');} }
   }
   useText(): string | null { const selected=this.selectedAnswer(); if(selected.length)return selected; const text=this.answer().trim(); return text||null; }
+  /** Queues the answer (selection or full text) for the composer; never submits it. */
+  requestInsert(text: string): void { this.pendingInsert.set(text); }
+  consumeInsert(): void { this.pendingInsert.set(null); }
   setPrompt(value:string):void { this.prompt.set(value); if(this.phase()!=='sending')this.phase.set('composing'); }
 }

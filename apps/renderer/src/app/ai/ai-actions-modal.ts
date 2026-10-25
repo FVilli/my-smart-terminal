@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, effect, inject, output, viewChild, type ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, effect, inject, viewChild, type ElementRef } from '@angular/core';
 import { AI_ACTION_IDS, AI_ACTION_MAX_PROMPT_BYTES, type AiActionId } from '@smart-terminal/contracts';
 import { AiActionsStore } from './ai-actions-store';
 import { SessionsStore } from '../sessions-store';
@@ -11,7 +11,7 @@ const ACTIONS: Record<AiActionId,{title:string;description:string}>={
  styles:`:host { display: contents; }`})
 export class AiActionsModal {
  readonly store=inject(AiActionsStore); private readonly sessions=inject(SessionsStore); private readonly settings=inject(SettingsStore);
- readonly useAnswer=output<string>(); private readonly dialog=viewChild<ElementRef<HTMLElement>>('dialog'); readonly actions=AI_ACTION_IDS; readonly maxPrompt=AI_ACTION_MAX_PROMPT_BYTES;
+ private readonly dialog=viewChild<ElementRef<HTMLElement>>('dialog'); readonly actions=AI_ACTION_IDS; readonly maxPrompt=AI_ACTION_MAX_PROMPT_BYTES;
  constructor(){effect(()=>{if(this.store.open())queueMicrotask(()=>this.dialog()?.nativeElement.querySelector<HTMLElement>('button')?.focus());});}
  context():string {const s=this.sessions.activeSession();return s?.environment?`${s.label} · ${s.environment.os} · ${s.environment.shell}`:'environment unknown';}
  draftEmpty():boolean{return !this.sessions.activeDraft().trim();} actionInfo(id:AiActionId){return ACTIONS[id];}
@@ -19,7 +19,7 @@ export class AiActionsModal {
  cancel():void{this.store.cancel();this.restoreFocus();}
  closeModal():void{this.store.keepAndClose();this.restoreFocus();}
  private restoreFocus():void{queueMicrotask(()=>document.querySelector<HTMLElement>('[data-testid="ai-correction"]')?.focus());}
- use():void{const value=this.store.useText();if(value){this.useAnswer.emit(value);this.store.keepAndClose();this.restoreFocus();}}
+ use():void{const value=this.store.useText();if(value){this.store.requestInsert(value);this.store.keepAndClose();this.restoreFocus();}}
  statusText():string{return this.store.phase()==='sending'?'AI is working':this.store.phase()==='answered'?'AI answer ready':this.store.error()?'AI request failed':'AI assistant';}
  actionKey(e:KeyboardEvent,id:AiActionId):void{const index=AI_ACTION_IDS.indexOf(id);if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;e.preventDefault();const next=e.key==='ArrowDown'?(index+1)%AI_ACTION_IDS.length:(index-1+AI_ACTION_IDS.length)%AI_ACTION_IDS.length;const target=document.querySelector<HTMLElement>('[data-testid="ai-action-'+AI_ACTION_IDS[next]+'"]');if(target&&!target.hasAttribute('disabled')){target.focus();void this.store.selectAction(AI_ACTION_IDS[next]!);}}
  promptKey(e:KeyboardEvent):void{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void this.store.send();}}

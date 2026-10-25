@@ -15,6 +15,7 @@ describe('AiActionsStore',()=>{
   await ai.load(); await store.show(); expect(api.aiCompose).toHaveBeenCalledWith(expect.objectContaining({action:'suggest-command',input:'draft',environment:{os:'linux',shell:'bash',source:'local'}}));
   await store.selectAction('fix-message'); expect(store.prompt()).toContain('<user_body>'); await store.send(); expect(store.phase()).toBe('answered');
   store.selectedAnswer.set('answer'); expect(store.useText()).toBe('answer'); store.selectedAnswer.set(''); expect(store.useText()).toBe('answer text');
+  store.requestInsert('answer text'); expect(store.pendingInsert()).toBe('answer text'); store.consumeInsert(); expect(store.pendingInsert()).toBeNull();
  });
  it('keeps prompts on Close and discards them on Cancel',async()=>{
   const api={aiCompose:vi.fn(async()=>({prompt:'composed'})),aiAction:vi.fn()}; Object.assign(globalThis,{smartTerminal:api});

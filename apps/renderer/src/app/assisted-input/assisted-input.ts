@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, type ElementRef, type OnDestroy, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { AiStore } from '../ai/ai-store';
 import { AiActionsStore } from '../ai/ai-actions-store';
+import { insertAtSelection } from './insert-at-selection';
 import { SttStore, voiceLabel } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
@@ -88,6 +89,16 @@ export class AssistedInput implements OnDestroy {
   constructor() {
     this.unsubscribe = this.voice.onTranscript((text) => this.insertTranscript(text));
     effect(() => {
+      const pending = this.aiActions.pendingInsert();
+      if (pending === null) return;
+      this.aiActions.consumeInsert();
+      if (pending.length > 100_000) {
+        this.messages.show('warning', 'The AI answer is too long to insert.');
+        return;
+      }
+      this.insertAtCaret(pending, false);
+    });
+    effect(() => {
       const message = this.voice.notice();
       if (message !== null) this.messages.show('warning', message);
     });
@@ -146,22 +157,24 @@ export class AssistedInput implements OnDestroy {
 
   /** Inserts dictated text at the caret (or replaces the current selection); never sends it. */
   private insertTranscript(text: string): void {
+    this.insertAtCaret(text.trim(), true);
+  }
+
+  /**
+   * Inserts text at the current caret/selection. Shared by dictated transcripts (word padding)
+   * and the AI `Use` action (verbatim). Never submits the draft.
+   */
+  private insertAtCaret(text: string, padWords: boolean): void {
     const value = this.draft();
     const element = this.textarea().nativeElement;
     const start = element.selectionStart ?? value.length;
     const end = element.selectionEnd ?? start;
-    const dictated = text.trim();
-    if (dictated.length === 0) return;
-    const before = value.slice(0, start);
-    const after = value.slice(end);
-    const prefix = before.length > 0 && !/\s$/.test(before) ? ' ' : '';
-    const suffix = after.length > 0 && !/^\s/.test(after) ? ' ' : '';
-    const next = `${before}${prefix}${dictated}${suffix}${after}`;
-    this.draftChange.emit(next);
+    const result = insertAtSelection(value, text, start, end, { padWords });
+    if (result === null) return;
+    this.draftChange.emit(result.value);
     queueMicrotask(() => {
-      const caret = before.length + prefix.length + dictated.length;
       element.focus();
-      element.setSelectionRange(caret, caret);
+      element.setSelectionRange(result.caret, result.caret);
     });
   }
 

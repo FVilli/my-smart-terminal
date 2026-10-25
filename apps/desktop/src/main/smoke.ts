@@ -526,12 +526,18 @@ const AI_SCRIPT = `(async () => {
     document.querySelector('[data-testid="ai-send"]').click();
     result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 8000);
     result.useEnabled = document.querySelector('[data-testid="ai-use"]')?.disabled === false;
+    document.querySelector('[data-testid="ai-use"]').click();
+    result.useInsertsAnswer = await waitFor(() => textarea().value.includes('Fixed message.'), 4000);
+    result.useKeepsFocus = await waitFor(() => document.activeElement === textarea(), 2000);
+    result.useDoesNotSend = (await api.search({ query: 'Fixed message' })).entries.length === 0;
+    setText('This is a sentance with a typo');
+    await sleep(100);
+    aiButton().click(); await waitFor(() => !!modal(), 3000);
     document.querySelector('[data-testid="ai-cancel"]').click();
-    result.cancelClosed = await waitFor(() => !modal(), 3000);
+    result.cancelKeepsDraft = await waitFor(() => !modal() && textarea().value === 'This is a sentance with a typo', 3000);
     aiButton().click(); await waitFor(() => !!modal(), 3000);
     document.querySelector('[data-testid="ai-close"]').click();
-    result.closeKeepsPrompt = await waitFor(() => !modal(), 3000);
-    result.noDraftChange = textarea().value === 'This is a sentance with a typo';
+    result.closeKeepsDraft = await waitFor(() => !modal() && textarea().value === 'This is a sentance with a typo', 3000);
     result.noAutoSend = (await api.search({ query: 'sentance' })).entries.length === 0;
   } finally {
     // no cleanup required
