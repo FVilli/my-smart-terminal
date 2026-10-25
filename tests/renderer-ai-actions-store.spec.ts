@@ -22,4 +22,23 @@ describe('AiActionsStore',()=>{
   const injector=createEnvironmentInjector([{provide:SessionsStore,useValue:{activeId:()=> 'one',activeDraft:()=>'',activeSession:()=>null}},{provide:AiActionsStore,useClass:AiActionsStore},{provide:AiStore,useClass:AiStore}], Injector.NULL as unknown as EnvironmentInjector);
   const s=injector.get(AiActionsStore); await s.show(); s.setPrompt('kept'); s.keepAndClose(); await s.show(); expect(s.prompt()).toBe('kept'); s.cancel(); await s.show(); expect(s.prompt()).toBe('composed');
  });
+
+ it('maps sensitive skips to the blocked state and ignores late answers', async()=>{
+  let resolveAction: (value: unknown) => void = () => undefined;
+  const api={aiCompose:vi.fn(async()=>({prompt:'p'})),aiAction:vi.fn(()=>new Promise((resolve)=>{resolveAction=resolve;})),aiStatus:vi.fn(async()=>({configured:true,provider:'openai' as const,hasToken:true,secureStorage:true}))};
+  Object.assign(globalThis,{smartTerminal:api});
+  const injector=createEnvironmentInjector([{provide:SessionsStore,useValue:{activeId:()=> 'one',activeDraft:()=> 'draft',activeSession:()=>null}},{provide:AiActionsStore,useClass:AiActionsStore},{provide:AiStore,useClass:AiStore}], Injector.NULL as unknown as EnvironmentInjector);
+  const store=injector.get(AiActionsStore); await injector.get(AiStore).load(); await store.show();
+  const pending=store.send();
+  store.keepAndClose();
+  resolveAction({text:'late',skipped:false,elapsedMs:1});
+  await pending;
+  expect(store.answer()).toBe('');
+  expect(store.open()).toBe(false);
+  api.aiAction.mockResolvedValueOnce({text:'',skipped:true,reason:'sensitive',elapsedMs:1});
+  await store.show(); await store.send();
+  expect(store.phase()).toBe('blocked');
+  expect(store.notice()).toContain('sensitive');
+  expect(store.answer()).toBe('');
+ });
 });

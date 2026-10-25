@@ -117,4 +117,22 @@ describe('AiService connection test', () => {
     expect(failed).toMatchObject({ skipped: true, reason: 'provider-error', error: 'HTTP 429' });
     expect(JSON.stringify(failed)).not.toContain('raw provider body');
   });
+
+  it('blocks prompts containing secrets before the provider or test mode', async () => {
+    const fetchMock = vi.fn();
+    const live = new AiService({ ...stubStores(config(), 'secret-token'), fetch: fetchMock as typeof fetch });
+    await expect(live.action({ action: 'fix-message', prompt: 'password: hunter2' })).resolves.toMatchObject({ skipped: true, reason: 'sensitive' });
+    const testMode = new AiService({ ...stubStores(config(), 'secret-token'), testMode: true });
+    await expect(testMode.action({ action: 'fix-message', prompt: '-----BEGIN PRIVATE KEY-----\nxxx' })).resolves.toMatchObject({ skipped: true, reason: 'sensitive' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps aborted provider requests to a timeout without leaking details', async () => {
+    const aborting = vi.fn(async () => {
+      throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+    });
+    const service = new AiService({ ...stubStores(config(), 'secret-token'), fetch: aborting as typeof fetch });
+    const result = await service.action({ action: 'explain-command', prompt: 'ls' });
+    expect(result).toMatchObject({ skipped: true, reason: 'timeout' });
+  });
 });

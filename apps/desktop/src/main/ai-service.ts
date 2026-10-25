@@ -10,6 +10,7 @@ import type {
   SetupTestAiResult,
 } from '@smart-terminal/contracts';
 import { buildActionBody, correctText, isShellCommand, runAiAction } from '@smart-terminal/ai';
+import { isSensitiveText } from '@smart-terminal/data';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
 
@@ -125,6 +126,11 @@ export class AiService {
     const config = this.currentConfig();
     if (config === undefined || config.aiProvider === 'none') {
       return { text: '', skipped: true, reason: 'unconfigured', elapsedMs: elapsed() };
+    }
+    // Authoritative secret gate: blocks the provider call before any network access, and before
+    // test mode, so the UI path can be exercised with the same rule.
+    if (isSensitiveText(request.prompt)) {
+      return { text: '', skipped: true, reason: 'sensitive', elapsedMs: elapsed() };
     }
     if (this.testMode) {
       return { text: TEST_ACTIONS[request.action], skipped: false, elapsedMs: elapsed() };

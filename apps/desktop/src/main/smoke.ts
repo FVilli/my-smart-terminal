@@ -539,6 +539,15 @@ const AI_SCRIPT = `(async () => {
     document.querySelector('[data-testid="ai-close"]').click();
     result.closeKeepsDraft = await waitFor(() => !modal() && textarea().value === 'This is a sentance with a typo', 3000);
     result.noAutoSend = (await api.search({ query: 'sentance' })).entries.length === 0;
+    setText('password: hunter2');
+    await sleep(100);
+    aiButton().click(); await waitFor(() => !!modal(), 3000);
+    document.querySelector('[data-testid="ai-action-fix-message"]').click();
+    await waitFor(() => (document.querySelector('[data-testid="ai-prompt"]')?.value ?? '').includes('password: hunter2'), 3000);
+    document.querySelector('[data-testid="ai-send"]').click();
+    result.sensitiveBlocked = await waitFor(() => (document.querySelector('[data-testid="ai-answer"]')?.value ?? '').includes('sensitive content'), 4000);
+    document.querySelector('[data-testid="ai-cancel"]').click();
+    result.sensitiveDraftUnchanged = await waitFor(() => !modal() && textarea().value === 'password: hunter2', 3000);
   } finally {
     // no cleanup required
   }
