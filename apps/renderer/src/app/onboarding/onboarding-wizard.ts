@@ -40,7 +40,7 @@ type Step = 1 | 2 | 3 | 4;
   template: `
     @if (visible()) {
       <div class="backdrop fixed inset-0 z-[100] flex items-center justify-center bg-backdrop" data-testid="onboarding-overlay">
-        <section class="dialog w-[min(520px,92vw)] max-h-[90vh] overflow-auto rounded-[10px] border border-line bg-surface p-5 text-fg font-sans" [class.settings-dialog]="editMode()" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
+        <section class="dialog w-[min(520px,92vw)] max-h-[90vh] overflow-auto rounded-panel border border-line bg-surface p-5 text-fg font-sans" [class.settings-dialog]="editMode()" role="dialog" aria-modal="true" [attr.aria-label]="editMode() ? 'Settings' : 'Initial setup'">
           <header class="flex items-baseline justify-between">
             <h2 class="mt-0 mb-3 text-[18px]">{{ editMode() ? 'Settings' : 'Initial setup' }}</h2>
             @if (!editMode()) { <span class="steps text-xs leading-[normal] text-muted" data-testid="onboarding-progress">Step {{ step() }} of 3</span> }
@@ -134,7 +134,7 @@ type Step = 1 | 2 | 3 | 4;
                             @if (aiModelSavedButUndiscovered()) { <option [value]="config().aiModel ?? ''" selected>{{ config().aiModel }}</option> }
                           </select>
                         </div>
-                        <button type="button" class="refresh-models field-sm w-[34px] flex-none cursor-pointer p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-ai-refresh-models" [attr.aria-label]="aiModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="aiModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="aiModelsLoading() || busy()" (click)="loadAiModels()">
+                        <button type="button" class="refresh-models icon-button h-refresh w-refresh flex-none" data-testid="onboarding-ai-refresh-models" [attr.aria-label]="aiModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="aiModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="aiModelsLoading() || busy()" (click)="loadAiModels()">
                           <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
                       </div>
@@ -202,7 +202,7 @@ type Step = 1 | 2 | 3 | 4;
                         @for (model of sttModelOptions(); track model.value) { <option [value]="model.value">{{ model.label }}</option> }
                       </select>
                     </label>
-                    <button type="button" class="refresh-models field-sm w-[34px] flex-none cursor-pointer p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
+                    <button type="button" class="refresh-models icon-button h-refresh w-refresh flex-none" data-testid="onboarding-stt-refresh-models" [attr.aria-label]="sttModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="sttModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="sttModelsLoading() || busy()" (click)="loadSttModels()">
                       <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                     </div>

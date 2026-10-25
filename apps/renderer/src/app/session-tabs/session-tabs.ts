@@ -6,7 +6,7 @@ import type { TerminalSessionView } from '../session.model';
   host: { class: 'block border-b border-line bg-tab' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="tabs flex h-[37px] min-w-0 items-stretch" role="tablist" aria-label="Terminal sessions">
+    <div class="tabs flex h-tabbar min-w-0 items-stretch" role="tablist" aria-label="Terminal sessions">
       @for (session of sessions(); track session.id) {
         <div
           class="tab session-tab group flex min-w-0 max-w-tab cursor-pointer items-center gap-2 whitespace-nowrap border-r border-line pl-4 pr-2 text-muted"
@@ -21,7 +21,7 @@ import type { TerminalSessionView } from '../session.model';
           (keydown.enter)="selected.emit(session.id)"
         >
           <span class="tab-label font-semibold group-[.tab--exited]:line-through">{{ session.label }}</span>
-          <span class="tab-target truncate text-xs leading-[normal]">{{ session.target }}</span>
+          <span class="tab-target truncate text-xs leading-normal">{{ session.target }}</span>
           <button
             type="button"
             class="tab-close icon-btn h-5 w-5 leading-none"
@@ -37,7 +37,7 @@ import type { TerminalSessionView } from '../session.model';
       <div class="plus-wrap relative flex">
         <button
           type="button"
-          class="plus h-[38px] w-[38px] cursor-pointer border-0 bg-transparent text-xl leading-[normal] text-muted hover:text-accent"
+          class="plus h-add-session w-add-session cursor-pointer border-0 bg-transparent text-xl leading-normal text-muted hover:text-accent"
           data-testid="session-plus"
           aria-label="New session"
           aria-haspopup="menu"
@@ -66,11 +66,11 @@ import type { TerminalSessionView } from '../session.model';
                 [attr.data-alias]="alias"
                 (click)="menuOpen.set(false); createSsh.emit(alias)"
               >
-                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">{{ alias }}</small>
+                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-tight tracking-wide">SSH</span><small class="ml-1.5 text-caption font-normal text-muted">{{ alias }}</small>
               </button>
             } @empty {
               <button type="button" role="menuitem" class="menu-item" data-testid="session-new-ssh" disabled>
-                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-[1.2] tracking-[.06em]">SSH</span><small class="ml-1.5 text-[10px] font-normal text-muted">No hosts in ~/.ssh/config</small>
+                <span class="menu-kind inline-block text-xs font-semibold uppercase leading-tight tracking-wide">SSH</span><small class="ml-1.5 text-caption font-normal text-muted">No hosts in ~/.ssh/config</small>
               </button>
             }
           </div>

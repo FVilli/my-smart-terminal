@@ -95,10 +95,21 @@
   --font-mono: var(--font-code);
   /* Measured chrome geometry from docs/15 - Visual baseline.md */
   --spacing-header: 35px;
-  --spacing-tabbar: 38px;
+  --spacing-tabbar: 37px;
+  --spacing-control: 30px;
+  --spacing-icon-sm: 18px;
+  --spacing-icon-xs: 15px;
+  --spacing-add-session: 38px;
+  --spacing-window-control: 38px;
+  --spacing-menu-item-y: 5px;
+  --spacing-refresh: 34px;
   --spacing-footer: 28px;
   --spacing-composer: 120px;
   --spacing-tab: 220px;
+  --radius-panel: 10px;
+  --text-caption: 10px;
+  --text-menu: 11px;
+  --text-window-control: 15px;
 }
 
 /* Shared controls. Only genuinely repeated patterns live here; layout and
@@ -119,6 +130,9 @@
 
   .icon-btn {
     @apply inline-flex cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-muted;
+  }
+  .icon-button {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-md border border-line bg-card p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:border-accent enabled:hover:text-accent;
   }
   .icon-btn:hover:not(:disabled) {
     @apply bg-line text-fg;
@@ -203,7 +217,7 @@
   app-session-tabs .session-tab.is-active { background: var(--tab-active); color: var(--text); }
   app-session-tabs .session-tab:hover:not(.is-active) { background: var(--border); color: var(--text); }
   app-session-tabs .session-tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
-  .menu-item { @apply cursor-pointer rounded-sm border-0 bg-transparent px-2 py-[5px] text-left text-[11px] enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted; }
+  .menu-item { @apply cursor-pointer rounded-sm border-0 bg-transparent px-2 py-menu-item-y text-left text-menu enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted; }
   app-sidebar-panel .sidebar-tabs button.is-active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
   .composer-editor { font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; scrollbar-gutter: stable; }
   .composer-editor::placeholder { opacity: 1; }
