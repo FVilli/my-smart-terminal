@@ -21,12 +21,14 @@ import { SttStore, normalizeAudioMime, sttNotice } from '../stt/stt-store';
 import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
+import { AiActionsSettings } from '../ai/ai-actions-settings';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
+  imports: [AiActionsSettings],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
@@ -56,6 +58,7 @@ type Step = 1 | 2 | 3 | 4;
                 <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 2" [class.text-accent]="step() === 2" role="tab" data-testid="settings-tab-ai" [attr.aria-selected]="step() === 2" (click)="selectTab(2)">AI</button>
                 <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 3" [class.text-accent]="step() === 3" role="tab" data-testid="settings-tab-stt" [attr.aria-selected]="step() === 3" (click)="selectTab(3)">STT</button>
                 <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 4" [class.text-accent]="step() === 4" role="tab" data-testid="settings-tab-appearance" [attr.aria-selected]="step() === 4" (click)="selectTab(4)">Appearance</button>
+                <button type="button" [class]="dialogButtonClass" [class.border-accent]="step() === 5" [class.text-accent]="step() === 5" role="tab" data-testid="settings-tab-ai-actions" [attr.aria-selected]="step() === 5" (click)="selectTab(5)">AI actions</button>
               </div>
             }
             <div class="dialog-body">
@@ -193,6 +196,7 @@ type Step = 1 | 2 | 3 | 4;
                   </table>
                 </div>
               }
+              @case (5) { @if (editMode()) { <app-ai-actions-settings /> } }
               @case (4) {
                 <div data-testid="settings-appearance">
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Terminal monospace font

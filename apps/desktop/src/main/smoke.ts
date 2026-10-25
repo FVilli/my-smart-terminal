@@ -695,7 +695,7 @@ const SETTINGS_SCRIPT = `(async () => {
   const settingsHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
   result.githubHelpPresent = !!q('settings-github-help');
   result.footerOrder = !!q('onboarding-cancel') && !!q('onboarding-save') && (q('onboarding-cancel').compareDocumentPosition(q('onboarding-save')) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-  result.tabs = ['repository','ai','stt','appearance'].every((tab) => !!q('settings-tab-' + tab));
+  result.tabs = ['repository','ai','stt','appearance','ai-actions'].every((tab) => !!q('settings-tab-' + tab));
   click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));
   click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
@@ -713,6 +713,56 @@ const SETTINGS_SCRIPT = `(async () => {
   result.savedValuesReloaded = q('onboarding-machine')?.value === 'settings-smoke';
   click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
   click('settings-open'); result.reopenedAfterSave = await waitFor(() => !!q('onboarding-overlay'));
+  const setField = (el, value) => {
+    if (!el) return false;
+    const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  };
+  click('settings-tab-ai-actions');
+    result.aiActionsTab = await waitFor(() => !!q('ai-settings-add') && !!q('ai-settings-action-suggest-command'));
+    click('ai-settings-action-suggest-command');
+    await waitFor(() => !!q('ai-settings-system'));
+    result.aiTemplateEdited = setField(q('ai-settings-system'), q('ai-settings-system').value + '\\nSMOKE_TEMPLATE_MARKER');
+    click('ai-settings-save');
+    await sleep(600);
+    result.aiTemplateSaved = await waitFor(() => !q('ai-settings-error') && q('ai-settings-save') && q('ai-settings-save').disabled === false, 4000);
+    const afterTemplateSave = await window.smartTerminal.aiActionsList();
+    result.aiTemplatePersisted = (afterTemplateSave.actions.find((action) => action.id === 'suggest-command')?.systemTemplate ?? '').includes('SMOKE_TEMPLATE_MARKER');
+    click('ai-settings-add');
+    await waitFor(() => !!q('ai-settings-new-name'));
+    setField(q('ai-settings-new-name'), 'Smoke action');
+    setField(q('ai-settings-new-description'), 'Smoke description');
+    click('ai-settings-create');
+    result.aiCustomDrafted = await waitFor(() => !!q('ai-settings-action-custom-smoke-action'));
+    click('ai-settings-save');
+    await sleep(600);
+    result.aiCustomSaved = await waitFor(() => !q('ai-settings-error') && q('ai-settings-save') && q('ai-settings-save').disabled === false, 4000);
+    const afterCustomSave = await window.smartTerminal.aiActionsList();
+    result.aiCustomPersisted = afterCustomSave.actions.some((action) => action.id === 'custom-smoke-action');
+    click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
+    click('ai-correction'); result.aiModalOpened = await waitFor(() => !!q('ai-action-select'), 4000);
+    const modalSelect = q('ai-action-select');
+    result.aiCustomInModal = !!modalSelect && Array.from(modalSelect.options).some((option) => option.textContent.includes('Smoke action'));
+    if (modalSelect) { modalSelect.value = 'suggest-command'; modalSelect.dispatchEvent(new Event('change', { bubbles: true })); }
+    result.aiTemplateInModal = await waitFor(() => (q('ai-system-prompt')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'), 4000);
+    click('ai-close'); await waitFor(() => !q('ai-modal'));
+    click('settings-open'); await waitFor(() => !!q('onboarding-overlay'));
+    click('settings-tab-ai-actions'); await waitFor(() => !!q('ai-settings-action-suggest-command'));
+    click('ai-settings-action-suggest-command'); click('ai-settings-reset');
+    result.aiTemplateReset = await waitFor(() => !(q('ai-settings-system')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'), 4000);
+    click('ai-settings-action-custom-smoke-action');
+    await waitFor(() => !!q('ai-settings-delete'));
+    click('ai-settings-delete');
+    result.aiCustomDeleted = await waitFor(() => !q('ai-settings-action-custom-smoke-action'), 4000);
+    click('onboarding-save'); await waitFor(() => !q('onboarding-overlay'));
+    click('ai-correction'); await waitFor(() => !!q('ai-action-select'), 4000);
+    const finalSelect = q('ai-action-select');
+    if (finalSelect) { finalSelect.value = 'suggest-command'; finalSelect.dispatchEvent(new Event('change', { bubbles: true })); }
+    result.aiResetInModal = await waitFor(() => !(q('ai-system-prompt')?.value ?? '').includes('SMOKE_TEMPLATE_MARKER'), 4000);
+    result.aiCustomGoneFromModal = !!finalSelect && !Array.from(finalSelect.options).some((option) => option.textContent.includes('Smoke action'));
+    click('ai-cancel'); await waitFor(() => !q('ai-modal'));
   return result;
 })()`;
 /** Settings/reversible-wizard smoke, enabled by SMART_TERMINAL_SETTINGS_SMOKE=1. */

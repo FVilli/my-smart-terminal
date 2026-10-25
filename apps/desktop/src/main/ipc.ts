@@ -327,7 +327,8 @@ const isActionTextField = (value: unknown, max: number): boolean =>
 
 const isActionDefinition = (value: unknown): value is AiActionDefinition =>
   isPlainRecord(value) &&
-  hasExactKeys(value, ['id', 'title', 'description', 'systemTemplate', 'userTemplate']) &&
+  hasExactKeys(value, ['id', 'title', 'description', 'systemTemplate', 'userTemplate'], ['builtIn']) &&
+  (value['builtIn'] === undefined || typeof value['builtIn'] === 'boolean') &&
   typeof value['id'] === 'string' &&
   value['id'].length > 0 &&
   value['id'].length <= 64 &&
