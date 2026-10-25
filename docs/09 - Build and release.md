@@ -23,7 +23,7 @@ For iterative testing do not wait for GitHub Actions:
 
 ```bash
 npm run package:deb
-sudo apt install --reinstall ./release/Smart.Terminal-1.3.17-linux-amd64.deb
+sudo apt install --reinstall ./release/Smart.Terminal-1.4.0-linux-amd64.deb
 ```
 
 For UI-only iterations, `npm run package:dir` and run `release/linux-unpacked/smart-terminal`; for renderer hot reload use `npm run dev`. GitHub Actions is only for publishing/CI, not required for local feedback.
@@ -35,15 +35,15 @@ For UI-only iterations, `npm run package:dir` and run `release/linux-unpacked/sm
 4. Compare the UI with the approved mockup, including monospace and the 75/25 layout.
 5. Release notes: features, limitations, data migration, and installation instructions.
 
-## v1.3.17 implementation
-- Version `1.3.17` in root/desktop/renderer; `electron-builder` in `electron-builder.yml` with:
+## v1.4.0 implementation
+- Version `1.4.0` in root/desktop/renderer; `electron-builder` in `electron-builder.yml` with:
   - Linux: AppImage and `.deb` (`npm run package:linux`), icon `apps/desktop/build/icon-linux.png`, `executableName smart-terminal`, `syncDesktopName`.
   - macOS: `.dmg`; Windows: NSIS installer. Built by the respective native pipelines (the local Linux build produces Linux artifacts only).
   - `asar: true`, `node-pty` in `asarUnpack`, native rebuild for Electron, `artifactName` with name/version/os/arch.
 - `npm run package:dir` for a quick check; `npm run checksums` generates `release/SHA256SUMS` excluding update metadata.
 - CI: `.github/workflows/ci.yml` (Linux/macOS/Windows matrix, `npm ci`, lint, typecheck, test, coordinator, build, native rebuild, Linux smoke on Xvfb, package, checksums, artifact upload). `.github/workflows/release.yml` on `v*` tags publishes artifacts and `SHA256SUMS` with `GITHUB_TOKEN`; no release from PRs.
 - Linux smoke artifact verified with AppImage `--appimage-extract-and-run` and `SMART_TERMINAL_SMOKE=1` on a virtual display.
-- V1 artifacts are **unsigned**; no auto-update. Always publish `SHA256SUMS` and the unsigned notice. App version is `1.3.17`, expected tag `v1.3.17`.
+- V1 artifacts are **unsigned**; no auto-update. Always publish `SHA256SUMS` and the unsigned notice. App version is `1.4.0`, expected tag `v1.4.0`.
 
 ## Updates and compatibility
 The Markdown frontmatter schema has a `schema_version` field; a new app version must read previous schemas or perform explicit migrations with backup. Do not destructively modify synchronized content during automatic upgrades.

@@ -1,6 +1,18 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.4.0
+### Added
+- Minimal design system documented in `docs/45`: token-only form, panel, icon-button, composer, status and modal primitives.
+- Style guard that rejects component `styles:` blocks, inline styles, `!important`, colour literals outside the xterm palette and arbitrary design utilities.
+### Changed
+- AI model select has no Custom entry; AI discovery excludes audio/transcription ids, STT discovery keeps audio-only ids.
+- All component-owned styles are centralized in `styles.css`; header, tabs, composer, sidebar, messages, markdown and AI modals use tokens/primitives.
+- AI Actions panes and the AI Assistant answer fill their height; settings fields use the shared form rhythm.
+### Notes
+- Structural allowlist remains: session-tabs 220px, onboarding dialog min(520px,92vw)/90vh, min-w 180px, header 45%.
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.17
 ### Changed
 - Settings/AI field order is AI Provider, Base URL, Token, Model, Test AI.

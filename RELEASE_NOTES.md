@@ -1,6 +1,23 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.4.0
+
+Design-system release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### Design system
+- New documented design system (`docs/45`) with semantic tokens and reusable form, panel, icon-button, composer, status and modal primitives.
+- All component-local `styles:` blocks, inline styles and colour literals were removed from the renderer; components now compose the design system and Tailwind layout utilities.
+- A guard test prevents regressions (component styles, inline styles, `!important`, palette literals, arbitrary design utilities); only documented structural constraints are allowed.
+
+### AI and STT
+- AI model discovery lists chat models only (no Custom entry); STT discovery keeps audio/transcription models.
+- AI Actions panes and the AI Assistant answer fill the available height; settings fields share the same label/help/control rhythm.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.17
 
 Settings clarity and polish release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).

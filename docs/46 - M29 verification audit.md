@@ -53,4 +53,4 @@ The independent review initially returned **BLOCK** with one MAJOR and one MINOR
 - Confirm Answer alignment and the template-editor fill visually at zoom levels beyond the automated 1440×900/1024×700 set.
 - The audio heuristic can filter a chat model whose id contains words like `audio`/`speech`; documented and covered by tests, but acceptable only as a heuristic.
 - Adoption of the primitives is intentionally scoped to AI Assistant, AI Actions and Settings AI/STT; remaining legacy label classes elsewhere migrate incrementally under docs/45 governance.
-- These M29 changes are on `main` after v1.3.17 and would ship with the next release.
+- These M29 changes ship in v1.4.0 (v1.3.17 was published before M29).

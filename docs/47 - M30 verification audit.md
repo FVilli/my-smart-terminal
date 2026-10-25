@@ -6,7 +6,7 @@ created: 2026-10-25
 ---
 # M30 verification audit
 
-Design-system adoption sweep. Baseline `08c3214`.
+Design-system adoption sweep. Baseline `08c3214`; ships in v1.4.0.
 
 - Removed all seven component `styles:` blocks; centralized state rules, drag regions, markdown typography, composer mic animation and settings geometry into named token-only primitives.
 - Added `@theme` tokens for tabbar/control/icon/add-session/window-control/menu/refresh spacing, panel radius, caption/menu/window-control typography, composer geometry, status rhythm and modal shells.
