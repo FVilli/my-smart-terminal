@@ -99,6 +99,11 @@
   --spacing-control: 30px;
   --spacing-icon-sm: 18px;
   --spacing-icon-xs: 15px;
+  --spacing-icon-gap: 7px;
+  --spacing-icon-md: 17px;
+  --spacing-composer-control: 26px;
+  --spacing-composer-primary: 28px;
+  --spacing-composer-width: 30px;
   --spacing-add-session: 38px;
   --spacing-window-control: 38px;
   --spacing-menu-item-y: 5px;
@@ -108,8 +113,30 @@
   --spacing-tab: 220px;
   --radius-panel: 10px;
   --text-caption: 10px;
+  --text-title: 18px;
   --text-menu: 11px;
   --text-window-control: 15px;
+  --leading-composer: 1.5;
+  --leading-copy: 1.45;
+  --leading-status: 1.2;
+  --tracking-meta: .04em;
+  --opacity-disabled: .65;
+  --shadow-focus: 0 0 0 1px var(--focus-ring);
+  --shadow-tab-active: inset 0 -2px 0 var(--accent);
+  --spacing-composer-padding-y: 5px;
+  --spacing-composer-padding-right: 6px;
+  --spacing-composer-editor-x: 4px;
+  --spacing-composer-editor-y: 2px;
+  --spacing-audio-control: 34px;
+  --spacing-sidebar-tab-y: 12px;
+  --spacing-sidebar-preview-y: 6px;
+  --spacing-sidebar-actions-top: 4px;
+  --spacing-sidebar-entry-control: 24px;
+  --spacing-modal-assistant-width: 90vw;
+  --spacing-modal-assistant-height: 90vh;
+  --spacing-modal-manager-width: min(1000px, 94vw);
+  --spacing-modal-manager-height: min(792px, 90vh);
+  --spacing-modal-max-height: 90vh;
 }
 
 /* Shared controls. Only genuinely repeated patterns live here; layout and
@@ -218,8 +245,27 @@
   app-session-tabs .session-tab:hover:not(.is-active) { background: var(--border); color: var(--text); }
   app-session-tabs .session-tab:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
   .menu-item { @apply cursor-pointer rounded-sm border-0 bg-transparent px-2 py-menu-item-y text-left text-menu enabled:hover:bg-line disabled:cursor-not-allowed disabled:text-muted; }
-  app-sidebar-panel .sidebar-tabs button.is-active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
-  .composer-editor { font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; scrollbar-gutter: stable; }
+  .sidebar-tab { @apply flex-1 cursor-pointer border-0 bg-transparent px-3 text-muted; padding-block: var(--spacing-sidebar-tab-y); }
+  .sidebar-tab.is-active { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+  .status-message { @apply flex min-h-footer items-center gap-2 bg-transparent px-2 text-xs text-muted; line-height: var(--leading-status); }
+  .status-message.is-warning { color: var(--warning); }
+  .status-message.is-critical { color: var(--danger); }
+  .status-message-icon { @apply flex-none; }
+  .status-message-text { @apply min-w-0 flex-1 truncate; }
+  .status-message-dismiss { @apply flex-none cursor-pointer border-0 bg-transparent px-0.5 text-sm leading-none text-muted hover:text-fg; }
+  .sidebar-status { @apply m-0 text-xs text-muted; line-height: normal; }
+  .sidebar-preview { @apply font-mono text-xs wrap-anywhere; margin-block: var(--spacing-sidebar-preview-y); line-height: normal; }
+  .sidebar-actions { margin-top: var(--spacing-sidebar-actions-top); }
+  .sidebar-entry-control { width: var(--spacing-sidebar-entry-control); height: var(--spacing-sidebar-entry-control); }
+  .composer { padding: var(--spacing-composer-padding-y) var(--spacing-composer-padding-right) var(--spacing-composer-padding-y) .5rem; }
+  .composer-control { width: var(--spacing-composer-control); height: var(--spacing-composer-control); }
+  .composer-primary { width: var(--spacing-composer-primary); height: var(--spacing-composer-control); }
+  .composer-icon-sm { width: var(--spacing-icon-xs); height: var(--spacing-icon-xs); }
+  .composer-icon-md { width: var(--spacing-icon-md); height: var(--spacing-icon-md); }
+  .composer-editor { font-variant-ligatures: none; font-feature-settings: "liga" 0; letter-spacing: 0; scrollbar-gutter: stable; padding: var(--spacing-composer-editor-y) var(--spacing-composer-editor-x); padding-left: 2px; line-height: var(--leading-composer); }
+  .composer-editor:disabled { opacity: var(--opacity-disabled); }
+  .ai-modal-assistant { width: var(--spacing-modal-assistant-width); height: var(--spacing-modal-assistant-height); border-radius: var(--radius-panel); }
+  .ai-modal-manager { width: var(--spacing-modal-manager-width); height: var(--spacing-modal-manager-height); max-height: var(--spacing-modal-max-height); border-radius: var(--radius-panel); }
   .composer-editor::placeholder { opacity: 1; }
   .mic-listening { animation: mic-pulse 2s ease-in-out infinite; }
   @keyframes mic-pulse {

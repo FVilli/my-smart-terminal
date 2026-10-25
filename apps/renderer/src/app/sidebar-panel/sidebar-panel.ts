@@ -25,7 +25,7 @@ export function shortTimestamp(timestamp: string): string {
         type="button"
         role="tab"
         data-testid="sidebar-tab-clipboard"
-        class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
+        class="sidebar-tab"
         [class.is-active]="activeTab() === 'clipboard'"
         [attr.aria-selected]="activeTab() === 'clipboard'"
         (click)="tabChange.emit('clipboard')"
@@ -36,7 +36,7 @@ export function shortTimestamp(timestamp: string): string {
         type="button"
         role="tab"
         data-testid="sidebar-tab-history"
-        class="flex-1 cursor-pointer border-0 bg-transparent px-3 py-3 text-muted"
+        class="sidebar-tab"
         [class.is-active]="activeTab() === 'history'"
         [attr.aria-selected]="activeTab() === 'history'"
         (click)="tabChange.emit('history')"
@@ -61,7 +61,7 @@ export function shortTimestamp(timestamp: string): string {
             <option [value]="machine" [selected]="machine === machineFilter()">{{ machine }}</option>
           }
         </select>
-        <button type="button" class="refresh btn flex-none px-2.5 py-0" data-testid="sidebar-refresh" aria-label="Refresh" title="Refresh" (click)="refresh.emit()">↻</button>
+        <button type="button" class="refresh btn h-refresh flex-none py-0" data-testid="sidebar-refresh" aria-label="Refresh" title="Refresh" (click)="refresh.emit()">↻</button>
       </div>
     </div>
     @if (activeTab() === 'clipboard') {
@@ -87,7 +87,7 @@ export function shortTimestamp(timestamp: string): string {
           </button>
           <button type="button" class="btn" data-testid="clipboard-clear-dedupe" (click)="clearClipboard.emit()">Clear dedupe</button>
         </div>
-        <p class="capture-status m-0 wrap-anywhere text-xs leading-[normal] text-muted" data-testid="clipboard-status">
+        <p class="capture-status sidebar-status wrap-anywhere" data-testid="clipboard-status">
           {{ captureLabel() }}@if (clipboardState().lastEventAt; as last) { · last: {{ last }} }
         </p>
         @if (clipboardError()) {
@@ -96,7 +96,7 @@ export function shortTimestamp(timestamp: string): string {
       </div>
     }
     @if (notice(); as message) {
-      <p class="notice m-0 flex-none px-3 pb-2 text-xs leading-[normal] text-accent" role="status" data-testid="sidebar-notice">{{ message }}</p>
+      <p class="notice sidebar-status flex-none px-3 pb-2 text-accent" role="status" data-testid="sidebar-notice">{{ message }}</p>
     }
     <div class="list min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3" data-testid="sidebar-list">
       @if (error()) {
@@ -104,24 +104,24 @@ export function shortTimestamp(timestamp: string): string {
       }
       @for (entry of entries(); track $index) {
         <article class="entry card border-l-2 border-l-transparent hover:border-l-accent" data-testid="sidebar-entry" [attr.data-kind]="entry.kind">
-          <header class="meta flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-muted wrap-anywhere">
+          <header class="meta flex flex-wrap gap-x-2 gap-y-1 text-menu text-muted wrap-anywhere">
             <time data-testid="entry-time">{{ time(entry) }}</time>
             <span class="machine text-accent" data-testid="entry-machine">{{ entry.machine }}</span>
             <span data-testid="entry-session">{{ entry.sessionId }}</span>
             @if (entry.source) {
-              <span class="source uppercase tracking-[.04em]" data-testid="entry-source">{{ entry.source }}</span>
+              <span class="source uppercase tracking-meta" data-testid="entry-source">{{ entry.source }}</span>
             }
           </header>
-          <p class="preview my-1.5 font-mono text-xs leading-[normal] wrap-anywhere" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
-          <div class="entry-actions mt-1 flex justify-end gap-1">
-            <button type="button" class="icon-btn h-6 w-6" data-testid="entry-copy" aria-label="Copy entry" title="Copy" (click)="copyText.emit(entry.text)">
-              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4H5.5A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          <p class="preview sidebar-preview" data-testid="entry-preview" [title]="entry.text">{{ preview(entry) }}</p>
+          <div class="entry-actions sidebar-actions flex justify-end gap-1">
+            <button type="button" class="icon-btn sidebar-entry-control" data-testid="entry-copy" aria-label="Copy entry" title="Copy" (click)="copyText.emit(entry.text)">
+              <svg class="size-icon-xs" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4H5.5A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
             </button>
-            <button type="button" class="icon-btn h-6 w-6" data-testid="entry-insert" aria-label="Insert entry" title="Insert" (click)="insertText.emit(entry.text)">
-              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v8m0 0-3-3m3 3 3-3M4 15h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <button type="button" class="icon-btn sidebar-entry-control" data-testid="entry-insert" aria-label="Insert entry" title="Insert" (click)="insertText.emit(entry.text)">
+              <svg class="size-icon-xs" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v8m0 0-3-3m3 3 3-3M4 15h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button type="button" class="icon-btn h-6 w-6 hover:text-danger" data-testid="entry-delete" aria-label="Delete entry" title="Delete" (click)="removeEntry.emit(entry)">
-              <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6 0 .7 9.1A1.5 1.5 0 0 0 8.2 16.5h3.6a1.5 1.5 0 0 0 1.5-1.4L14 6M8.5 9v4.5m3-4.5v4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <button type="button" class="icon-btn sidebar-entry-control hover:text-danger" data-testid="entry-delete" aria-label="Delete entry" title="Delete" (click)="removeEntry.emit(entry)">
+              <svg class="size-icon-xs" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6m-6 0 .7 9.1A1.5 1.5 0 0 0 8.2 16.5h3.6a1.5 1.5 0 0 0 1.5-1.4L14 6M8.5 9v4.5m3-4.5v4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
         </article>

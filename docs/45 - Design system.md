@@ -152,3 +152,14 @@ Token changes belong in `styles.css`: update dark and light semantic values toge
 Review checklist: semantic token only; both themes considered; keyboard focus and disabled/selected states intact; labels/names/status accessible; responsive layout and scrolling work; stable test ids preserved; no unrelated contract changes; links and examples remain accurate.
 
 Current adoption (observed in the renderer styling work): AI Assistant; AI Actions manager and settings; Settings AI/STT provider fields. Adoption is incremental, not universal. Remaining legacy areas include older settings/provider/config templates and bespoke one-off controls/panels; migrate them opportunistically without changing their contracts. Treat this list as a scoped snapshot, not a claim that every field in those screens is converted.
+
+### Batch 2 primitives
+
+- Composer controls and icon geometry now use semantic composer/icon tokens.
+- Sidebar tabs, status messages, and repeated entry rhythm use shared primitives.
+- AI modal shells and compact markdown controls consume centralized geometry/typography tokens.
+
+### Batch 3 adoption guard
+
+- Remaining app-template design literals were replaced with semantic typography, rhythm, focus-shadow, and audio-control tokens; structural dialog/layout constraints remain explicit exceptions.
+- `tests/renderer-style-guard.spec.ts` rejects arbitrary typography, spacing, radius, opacity, shadow, and small icon/button dimensions while documenting the current structural allowlist.

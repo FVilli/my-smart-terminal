@@ -9,8 +9,8 @@ import { renderMarkdown } from './markdown.logic';
     <div class="flex flex-none items-center justify-between gap-1" role="group" aria-label="Answer view">
       @if (label()) { <span class="form-label">{{ label() }}</span> } @else { <span></span> }
       <div class="flex items-center gap-1">
-      <button type="button" class="btn px-2 py-0.5 text-[11px]" data-testid="ai-answer-view-rendered" [attr.aria-pressed]="mode() === 'rendered'" (click)="setMode('rendered')">Rendered</button>
-      <button type="button" class="btn px-2 py-0.5 text-[11px]" data-testid="ai-answer-view-raw" [attr.aria-pressed]="mode() === 'raw'" (click)="setMode('raw')">Raw</button>
+      <button type="button" class="btn px-2 py-0.5 text-caption" data-testid="ai-answer-view-rendered" [attr.aria-pressed]="mode() === 'rendered'" (click)="setMode('rendered')">Rendered</button>
+      <button type="button" class="btn px-2 py-0.5 text-caption" data-testid="ai-answer-view-raw" [attr.aria-pressed]="mode() === 'raw'" (click)="setMode('raw')">Raw</button>
       </div>
     </div>
     <div

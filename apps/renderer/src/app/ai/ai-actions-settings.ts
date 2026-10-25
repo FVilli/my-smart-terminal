@@ -15,13 +15,13 @@ import { defaultCustomTemplates, toCustomId, validateActionDraft } from './ai-ac
               <button type="button" class="card block w-full text-left" [class.border-accent]="action.id === selectedId()" [attr.data-testid]="'ai-settings-action-' + action.id" [attr.aria-pressed]="action.id === selectedId()" (click)="select(action.id)">
                 <span class="block font-semibold">{{ action.title }}</span>
                 <span class="block text-xs text-muted">{{ action.description }}</span>
-                <span class="text-[10px] uppercase tracking-wide text-muted">{{ action.builtIn ? 'Built-in' : 'Custom' }}</span>
+                <span class="text-caption uppercase tracking-meta text-muted">{{ action.builtIn ? 'Built-in' : 'Custom' }}</span>
               </button>
             }
           </div>
           <div class="mt-2 flex flex-none items-center gap-2 border-t border-line pt-2">
             <button type="button" class="btn" (click)="adding.update(value => !value)" data-testid="ai-settings-add" aria-label="Add action">+</button>
-            <span class="ml-auto text-right text-[10px] uppercase tracking-wide text-muted" data-testid="ai-settings-counts">BUILT-IN:{{ builtInCount() }} CUSTOM:{{ customCount() }}</span>
+            <span class="ml-auto text-right text-caption uppercase tracking-meta text-muted" data-testid="ai-settings-counts">BUILT-IN:{{ builtInCount() }} CUSTOM:{{ customCount() }}</span>
           </div>
           @if (adding()) {
             <div class="form-stack mt-2 rounded-md border border-line p-2">

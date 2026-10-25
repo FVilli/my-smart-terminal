@@ -5,7 +5,7 @@ import { MessageCenter } from '../messages/message-center';
 @Component({
   selector: 'app-status-footer',
   imports: [MessageCenter],
-  host: { class: 'flex h-footer flex-none items-center justify-between border-t border-line bg-terminal px-3 text-xs leading-[normal] text-muted' },
+  host: { class: 'flex h-footer flex-none items-center justify-between border-t border-line bg-terminal px-3 text-xs leading-normal text-muted' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="badge group inline-flex items-center gap-1.5" data-testid="sync-badge" [attr.data-state]="badge().state">

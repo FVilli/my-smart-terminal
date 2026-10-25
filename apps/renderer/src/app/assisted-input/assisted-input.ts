@@ -12,9 +12,9 @@ import { MessageStore } from '../messages/message-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block flex-none border-t border-line bg-terminal px-4 py-2' },
   template: `
-    <div class="composer flex h-composer min-h-composer items-stretch gap-2 rounded-lg border border-line-soft bg-input py-[5px] pr-[6px] pl-2 focus-within:border-accent focus-within:shadow-[0_0_0_1px_var(--focus-ring)]">
+    <div class="composer flex h-composer min-h-composer items-stretch gap-2 rounded-lg border border-line-soft bg-input focus-within:border-accent focus-within:shadow-focus">
       <textarea
-        class="editor composer-editor block h-full w-full min-w-0 min-h-0 flex-1 resize-none border-0 bg-transparent p-0 px-[4px] py-[2px] pl-[2px] text-sm leading-[1.5] text-fg outline-0 font-mono overflow-y-auto overflow-x-hidden placeholder:text-muted disabled:opacity-[0.65]"
+        class="editor composer-editor block h-full w-full min-w-0 min-h-0 flex-1 resize-none border-0 bg-transparent p-0 text-sm text-fg outline-0 font-mono overflow-y-auto overflow-x-hidden placeholder:text-muted"
         data-testid="assisted-textarea"
         #textarea
         rows="2"
@@ -27,21 +27,21 @@ import { MessageStore } from '../messages/message-store';
         (input)="draftChange.emit($any($event.target).value)"
         (keydown)="onKeydown($event)"
       ></textarea>
-      <div class="actions flex w-[30px] flex-none flex-col items-center justify-center gap-[7px] min-w-0">
+      <div class="actions flex w-composer-width flex-none flex-col items-center justify-center gap-icon-gap min-w-0">
       <button
         type="button"
-        class="icon ai icon-btn h-[26px] w-[28px] p-0 text-accent"
+        class="icon ai icon-btn composer-control w-composer-primary p-0 text-accent"
         data-testid="ai-correction"
         aria-label="AI actions"
         [attr.title]="ai.status().warning ?? 'Open AI actions'"
         (click)="openAiActions()"
       >
-        @if (ai.busy()) { … } @else { <svg class="h-[15px] w-[15px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg> }
+        @if (ai.busy()) { … } @else { <svg class="composer-icon-sm" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5 12 7l5.5 2-5.5 2-2 5.5L8 11 2.5 9 8 7z" fill="currentColor"/><path d="m16 13 .9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z" fill="currentColor"/></svg> }
       </button>
-      <div class="voice flex flex-col items-center gap-[2px]">
+      <div class="voice flex flex-col gap-0.5">
         <button
           type="button"
-          class="icon mic icon-btn h-[26px] w-[28px] p-0"
+          class="icon mic icon-btn composer-control w-composer-primary p-0"
           data-testid="assisted-mic"
           [attr.aria-label]="micLabel()"
           [attr.aria-pressed]="voice.phase() === 'recording'"
@@ -50,11 +50,11 @@ import { MessageStore } from '../messages/message-store';
           [attr.title]="voice.notice() ?? voice.status().warning ?? (voice.phase() === 'recording' ? 'Stop recording' : 'Start dictation')"
           (click)="toggleRecording($event)"
         >
-          <svg class="h-[17px] w-[17px]" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="2" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <svg class="composer-icon-md" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="2" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         </button>
         <span class="voice-label sr-only" data-testid="voice-label" role="status">{{ voice.status().configured ? micLabel() : '' }}</span>
       </div>
-      <button type="button" class="icon send icon-btn h-[26px] w-[26px] rounded-full bg-accent p-0 text-[15px] font-bold text-terminal disabled:opacity-45" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg class="h-[17px] w-[17px]" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" class="icon send icon-btn composer-primary rounded-full bg-accent p-0 text-window-control font-bold text-terminal disabled:opacity-45" data-testid="assisted-send" aria-label="Send" [disabled]="!canSend()" (click)="send()"><svg class="composer-icon-md" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m-5 5 5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
   `,

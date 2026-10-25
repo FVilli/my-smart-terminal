@@ -12,7 +12,7 @@ import { nextTabIndex, type TabItem } from './tabs.logic';
           [attr.aria-selected]="activeId() === tab.id"
           [disabled]="tab.disabled" [tabIndex]="activeId() === tab.id ? 0 : -1"
           class="cursor-pointer border-0 border-b-2 border-transparent bg-transparent px-3 py-2 text-sm text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          [class.text-fg]="activeId() === tab.id" [class.shadow-[inset_0_-2px_0_var(--accent)]]="activeId() === tab.id"
+          [class.text-fg]="activeId() === tab.id" [class.shadow-tab-active]="activeId() === tab.id"
           (click)="selected.emit(tab.id)" (keydown)="onKeydown($event, tab.id)">{{ tab.label }}</button>
       }
     </div>
