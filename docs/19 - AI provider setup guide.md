@@ -10,7 +10,7 @@ created: 2026-10-23
 
 ![Initial setup, step 2: AI provider, model and token](assets/screenshots/07-onboarding-ai.png)
 
-AI actions are optional. They suggest, explain, risk-assess, correct or rewrite text in a reviewable modal, preserve code, paths, URLs, commands and flags, and never execute or submit anything automatically. The same provider powers both the legacy correction channel and the five actions; each action makes one request with a 15 s timeout. Shell/PTY use is unaffected when no provider is configured.
+AI actions are optional. In the reviewable modal, select an action and edit both its System Prompt and User Prompt before explicit Send. Settings → AI actions allows template editing and custom actions; changes are stored locally and are not synced. The same provider powers these actions and legacy correction; an action makes one request with a 15 s timeout. Nothing executes or submits automatically. Shell/PTY use is unaffected when no provider is configured.
 
 ## Provider choices
 

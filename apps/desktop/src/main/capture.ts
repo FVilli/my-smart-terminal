@@ -88,6 +88,13 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             if (provider) { provider.value = 'shared'; provider.dispatchEvent(new Event('change', { bubbles: true })); }
             await waitFor(() => q('onboarding-stt-model'));
           }
+          if (${JSON.stringify(scenario)} === 'ai-settings') {
+            await waitFor(() => q('settings-open'));
+            click('settings-open');
+            await waitFor(() => q('settings-tab-ai-actions'));
+            click('settings-tab-ai-actions');
+            await waitFor(() => q('ai-settings-add'));
+          }
           if (${JSON.stringify(scenario)} === 'ai-actions') {
             await waitFor(() => q('ai-correction'));
             click('ai-correction');
@@ -140,6 +147,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
           if (${JSON.stringify(scenario)} === 'onboarding-ai') checks['onboardingAiStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 2 of 3') && !!q('onboarding-ai-url');
           if (${JSON.stringify(scenario)} === 'onboarding-stt') checks['onboardingSttStep'] = (q('onboarding-progress')?.textContent ?? '').includes('Step 3 of 3') && !!q('onboarding-stt-model');
           if (${JSON.stringify(scenario)} === 'ai-actions') checks['aiModalOpen'] = !!q('ai-modal') && (q('ai-system-prompt')?.value ?? '').length > 0 && (q('ai-user-prompt')?.value ?? '').length > 0;
+          if (${JSON.stringify(scenario)} === 'ai-settings') checks['aiSettingsVisible'] = !!q('ai-settings-add') && !!q('ai-settings-system') && !!q('ai-settings-user');
           if (${JSON.stringify(scenario)} === 'tabs') checks['twoTabs'] = document.querySelectorAll('[data-testid="session-tab"]').length >= 2;
           if (${JSON.stringify(scenario)} === 'ssh-menu') {
             checks['sshMenuOpen'] = !!q('session-new-ssh') && !q('session-new-ssh').disabled;

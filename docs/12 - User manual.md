@@ -55,9 +55,9 @@ The shell header is a 35 px full-window bar with a transparent icon and dynamic 
 
 Each tab has an independent draft. **Enter** deliberately sends the text to the PTY; **Shift+Enter** inserts a newline. The draft is cleared only after a successful submission. The xterm terminal remains directly usable: keys and TUI prompts are not intercepted by the editor.
 
-![AI actions modal with the five actions, editable prompt and answer](assets/screenshots/09-ai-actions.png)
+![AI actions modal with an action select and editable System and User prompts](assets/screenshots/09-ai-actions.png)
 
-**AI actions** are enabled with an explicit click on the composer `AI` button, which opens a modal with five choices: suggest a command, explain a command, assess risk, fix a message for an agent, or rewrite a dictated message. The prompt is pre-filled with the session's operating system and shell and can be edited before **Send**; for SSH sessions a **Detect again** button re-runs environment detection when the first probe could not identify the remote shell. The answer appears below and is selectable: **Use** inserts the selected text (or the whole answer) at the caret in the draft, **Cancel** closes and discards, **Close** closes and keeps the prompt for reopening. Nothing is executed, sent or saved automatically, and prompts containing secrets are blocked before leaving the app. Always review the result before submitting it to the shell.
+**AI actions** open from the composer `AI` button. Choose an action from the select; the System Prompt and User Prompt are both editable and shown as sent. The Settings → AI actions tab lets you edit/reset built-in templates and create or delete custom actions. Templates can include terminal context such as the on-demand console excerpt. **Send** is explicit; answers are reviewable, and **Use** only inserts into the draft. Nothing is executed or submitted automatically. See [AI prompt templates and storage](36%20-%20AI%20prompt%20templates%20and%20storage.md) for limits and privacy details.
 
 ### Microphone
 

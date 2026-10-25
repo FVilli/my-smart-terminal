@@ -116,6 +116,7 @@ const scenarios = [
   { name: '07-onboarding-ai.png', scenario: 'onboarding-ai', userData: onboardingUserData, extra: {} },
   { name: '08-onboarding-stt.png', scenario: 'onboarding-stt', userData: onboardingUserData, extra: {} },
   { name: '09-ai-actions.png', scenario: 'ai-actions', userData, extra: { SMART_TERMINAL_AI_TEST_MODE: '1' } },
+  { name: '10-ai-settings.png', scenario: 'ai-settings', userData, extra: {} },
 ];
 
 const baseEnv = { ...process.env };

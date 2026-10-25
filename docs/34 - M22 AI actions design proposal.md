@@ -145,6 +145,10 @@ Persisted per session in `session.md` as additive optional fields of `schema_ver
 - Session ends or switches while the modal is open: modal closes, answer discarded; the composer draft is untouched.
 - Zoom 50–200 %: dialog stays within the viewport, footer reachable, textareas scroll internally.
 
+## M23 update
+
+M23 supersedes the M22 radio-list/single-editable-body presentation: the implemented modal uses one action select and two editable fields, System Prompt and User Prompt. Templates may use `{{console}}` for an on-demand excerpt from the active terminal buffer. Settings → AI actions edits the two templates for built-ins and supports custom actions (title, description and templates); custom-action intent is its description. Details and limits are specified in [36 - AI prompt templates and storage](36%20-%20AI%20prompt%20templates%20and%20storage.md). This update records the later implementation without rewriting the M22 design history above.
+
 ## Decisions log
 
 1. One modal with five actions replaces the direct correction click; the correction prompt builder is shared.
