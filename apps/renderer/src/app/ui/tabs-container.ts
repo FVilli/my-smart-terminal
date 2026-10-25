@@ -9,7 +9,7 @@ import { nextTabIndex, type TabItem } from './tabs.logic';
     <div role="tablist" [attr.aria-label]="label()" class="flex border-b border-line">
       @for (tab of tabs(); track tab.id) {
         <button type="button" role="tab" [id]="tabId(tab.id)" [attr.data-testid]="tab.testId"
-          [attr.aria-selected]="activeId() === tab.id" [attr.aria-controls]="panelId(tab.id)"
+          [attr.aria-selected]="activeId() === tab.id"
           [disabled]="tab.disabled" [tabIndex]="activeId() === tab.id ? 0 : -1"
           class="cursor-pointer border-0 border-b-2 border-transparent bg-transparent px-3 py-2 text-sm text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           [class.text-fg]="activeId() === tab.id" [class.shadow-[inset_0_-2px_0_var(--accent)]]="activeId() === tab.id"

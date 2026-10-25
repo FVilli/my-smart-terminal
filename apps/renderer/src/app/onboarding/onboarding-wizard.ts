@@ -119,7 +119,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
                     </label>
                     <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
                       <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
-                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" aria-describedby="onboarding-ai-token-stored" [value]="aiToken()" (input)="aiToken.set(value($event))" />
+                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" [attr.aria-describedby]="storedToken() ? 'onboarding-ai-token-stored' : null" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
                     @if (storedToken()) { <p id="onboarding-ai-token-stored" class="hint text-xs" data-testid="onboarding-ai-token-stored">Token stored in the keychain — type to replace.</p> }
                     @if (!state()?.secureStorage) {
