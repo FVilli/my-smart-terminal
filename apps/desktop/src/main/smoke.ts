@@ -528,8 +528,9 @@ const AI_SCRIPT = `(async () => {
     aiButton().click();
     const modal = () => document.querySelector('[data-testid="ai-modal-backdrop"]');
     result.modalOpened = await waitFor(() => !!modal(), 4000);
-    const action = document.querySelector('[data-testid="ai-action-fix-message"]');
-    action.click();
+    const action = document.querySelector('[data-testid="ai-action-select"]');
+    action.value = 'fix-message';
+    action.dispatchEvent(new Event('change', { bubbles: true }));
     const systemPrompt = () => document.querySelector('[data-testid="ai-system-prompt"]');
     const userPrompt = () => document.querySelector('[data-testid="ai-user-prompt"]');
     result.consoleInSystemPrompt = await waitFor(() => (systemPrompt()?.value ?? '').includes('AI_CONSOLE_MARKER'), 4000);
@@ -553,7 +554,9 @@ const AI_SCRIPT = `(async () => {
     setText('password: hunter2');
     await sleep(100);
     aiButton().click(); await waitFor(() => !!modal(), 3000);
-    document.querySelector('[data-testid="ai-action-fix-message"]').click();
+    const sensitiveAction = document.querySelector('[data-testid="ai-action-select"]');
+    sensitiveAction.value = 'fix-message';
+    sensitiveAction.dispatchEvent(new Event('change', { bubbles: true }));
     await waitFor(() => (document.querySelector('[data-testid="ai-user-prompt"]')?.value ?? '').includes('password: hunter2'), 3000);
     document.querySelector('[data-testid="ai-send"]').click();
     result.sensitiveBlocked = await waitFor(() => (document.querySelector('[data-testid="ai-answer"]')?.value ?? '').includes('sensitive content'), 4000);
