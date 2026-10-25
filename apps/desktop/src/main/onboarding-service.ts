@@ -4,6 +4,7 @@ import path from 'node:path';
 import { normalizeMachine } from '@smart-terminal/data';
 import {
   AI_PROVIDERS,
+  STT_AI_PROVIDERS,
   STT_PROVIDERS,
   TERMINAL_FONT_IDS,
   type TerminalFontId,
@@ -109,6 +110,7 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['aiModel'], configValidators.modelName)) fail('aiModel');
   if (!STT_PROVIDERS.some((p) => p === c['sttProvider'])) fail('sttProvider');
   if (c['sttUseAiProvider'] !== undefined && typeof c['sttUseAiProvider'] !== 'boolean') errors['sttUseAiProvider'] = 'Invalid setting.';
+  if (c['sttApiProvider'] !== undefined && c['sttApiProvider'] !== '' && !STT_AI_PROVIDERS.some((p) => p === c['sttApiProvider'])) errors['sttApiProvider'] = 'Invalid setting.';
   if (!isOptionalText(c['sttModel'], configValidators.modelName)) fail('sttModel');
   if (!isOptionalText(c['sttBaseUrl'], configValidators.aiBaseUrl)) fail('sttBaseUrl');
   if (c['sttResponseFormat'] !== undefined && c['sttResponseFormat'] !== 'json' && c['sttResponseFormat'] !== 'verbose_json') fail('sttResponseFormat');
@@ -116,7 +118,7 @@ export function validateOnboardingConfig(config: unknown, fieldChecks = true): O
   if (!isOptionalText(c['sttCommand'], configValidators.sttCommand)) fail('sttCommand');
   if (c['terminalFont'] !== undefined && c['terminalFont'] !== '' && !TERMINAL_FONT_IDS.some((id) => id === c['terminalFont'])) fail('terminalFont');
   if (c['terminalTheme'] !== undefined && c['terminalTheme'] !== '' && c['terminalTheme'] !== 'dark' && c['terminalTheme'] !== 'light') fail('terminalTheme');
-  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont', 'terminalTheme'].includes(key));
+  const extra = Object.keys(c).filter((key) => !['machineName', 'dataRepoPath', 'dataRepoRemote', 'aiProvider', 'aiBaseUrl', 'aiModel', 'sttProvider', 'sttUseAiProvider', 'sttApiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand', 'terminalFont', 'terminalTheme'].includes(key));
   if (extra.length > 0) errors['config'] = 'Invalid configuration.';
   return { ok: Object.keys(errors).length === 0, errors };
 }
@@ -163,6 +165,7 @@ export class OnboardingService {
       ...(config.aiModel !== undefined && { aiModel: config.aiModel }),
       sttProvider: config.sttProvider,
       ...(config.sttUseAiProvider === true && { sttUseAiProvider: true }),
+      ...(config.sttApiProvider !== undefined && { sttApiProvider: config.sttApiProvider }),
       ...(config.sttModel !== undefined && { sttModel: config.sttModel }),
       ...(config.sttBaseUrl !== undefined && { sttBaseUrl: config.sttBaseUrl }),
       ...(config.sttResponseFormat !== undefined && { sttResponseFormat: config.sttResponseFormat }),
@@ -240,13 +243,14 @@ export class OnboardingService {
       terminalFont: (input.terminalFont ?? 'jetbrains') as TerminalFontId,
       terminalTheme: input.terminalTheme ?? 'dark',
     } as AppConfig;
-    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttUseAiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
+    for (const key of ['dataRepoRemote', 'aiBaseUrl', 'aiModel', 'sttUseAiProvider', 'sttApiProvider', 'sttModel', 'sttBaseUrl', 'sttResponseFormat', 'sttLanguage', 'sttCommand'] as const) {
       delete next[key];
     }
     if (baseRemote !== undefined) next.dataRepoRemote = baseRemote;
     if (baseUrl !== undefined) next.aiBaseUrl = baseUrl;
     if (aiModel !== undefined) next.aiModel = aiModel;
     if (input.sttUseAiProvider === true) next.sttUseAiProvider = true;
+    if (input.sttProvider === 'cloud' && input.sttUseAiProvider !== true && input.sttApiProvider !== undefined) next.sttApiProvider = input.sttApiProvider;
     if (sttModel !== undefined) next.sttModel = sttModel;
     if (sttBaseUrl !== undefined) next.sttBaseUrl = sttBaseUrl;
     if (input.sttResponseFormat !== undefined) next.sttResponseFormat = input.sttResponseFormat;

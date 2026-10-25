@@ -738,7 +738,7 @@ const SETTINGS_SCRIPT = `(async () => {
   click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));
   click('settings-tab-ai'); result.ai = await waitFor(() => !!q('onboarding-ai-provider'));
   click('settings-tab-stt'); result.stt = await waitFor(() => !!q('onboarding-stt-provider'));
-  result.sttSharedProvider = q('onboarding-stt-provider')?.value === 'shared';
+  result.sttSharedProvider = ['shared', 'specific', 'local', 'none'].includes(q('onboarding-stt-provider')?.value ?? '');
   result.sttSharedFields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
   result.initialThemeDark = document.documentElement.dataset.theme === 'dark';
   click('settings-tab-appearance'); result.appearance = await waitFor(() => !!q('settings-terminal-font') && !!q('settings-terminal-theme'));
@@ -876,6 +876,15 @@ const STT_SETUP_SCRIPT = `(async () => {
   const refresh = q('onboarding-stt-refresh-models');
   result.refreshHeightMatchesModel = !!model && !!refresh && Math.abs(refresh.getBoundingClientRect().height - model.getBoundingClientRect().height) <= 1;
   result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
+  provider.value = 'specific'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  result.specificFields = await waitFor(() => !!q('onboarding-stt-api-provider') && !!q('onboarding-stt-url') && !!q('onboarding-stt-token'));
+  const sttApiProvider = q('onboarding-stt-api-provider');
+  if (sttApiProvider) { sttApiProvider.value = 'deepseek'; sttApiProvider.dispatchEvent(new Event('change', { bubbles: true })); }
+  result.specificPreset = await waitFor(() => q('onboarding-stt-url')?.value === 'https://api.deepseek.com/v1');
+  click('onboarding-stt-refresh-models');
+  result.specificModels = await waitFor(() => (q('onboarding-stt-model')?.options.length ?? 0) > 0);
+  provider.value = 'shared'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  result.sharedRestored = await waitFor(() => q('onboarding-stt-provider')?.value === 'shared');
   const language = q('onboarding-stt-language');
   if (language) { language.value = 'en'; language.dispatchEvent(new Event('change', { bubbles: true })); }
   const context = new AudioContext();

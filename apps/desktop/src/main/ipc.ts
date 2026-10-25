@@ -63,6 +63,7 @@ import {
   type SetupTestAiResult,
   type SttStatus,
   type SttModelInfo,
+  type SttModelsRequest,
   type SttSaveDebugAudioRequest,
   type SttSaveDebugAudioResult,
   type SttTranscribeRequest,
@@ -181,7 +182,7 @@ export interface AiGateway {
 
 export interface SttGateway {
   status(): SttStatus | Promise<SttStatus>;
-  models(): SttModelInfo[] | Promise<SttModelInfo[]>;
+  models(request?: SttModelsRequest): SttModelInfo[] | Promise<SttModelInfo[]>;
   transcribe(request: SttTranscribeRequest): SttTranscribeResult | Promise<SttTranscribeResult>;
   saveDebugAudio(request: SttSaveDebugAudioRequest): SttSaveDebugAudioResult | Promise<SttSaveDebugAudioResult>;
 }
@@ -392,6 +393,13 @@ export const validateHelpTopic = singleRequest<{ topic: HelpTopic }>(
   (v) => hasExactKeys(v, ['topic']) && (v['topic'] === 'repository' || v['topic'] === 'ai' || v['topic'] === 'stt' || v['topic'] === 'troubleshooting'),
 );
 
+export const validateSttModels = singleRequest<SttModelsRequest>(
+  (v) =>
+    hasExactKeys(v, [], ['config', 'sttToken']) &&
+    (v['config'] === undefined || isPlainRecord(v['config'])) &&
+    (v['sttToken'] === undefined || (typeof v['sttToken'] === 'string' && v['sttToken'].length <= 4096 && !/[\u0000-\u001f\u007f]/.test(v['sttToken']))),
+);
+
 export const validateAiModels = singleRequest<AiModelsRequest>(
   (v) =>
     hasExactKeys(v, [], ['config', 'aiToken']) &&
@@ -512,7 +520,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
   [IPC_CHANNELS.helpOpen]: ChannelDefinition<[{ topic: HelpTopic }], HelpOpenResult>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
-  [IPC_CHANNELS.sttModels]: ChannelDefinition<[], SttModelInfo[]>;
+  [IPC_CHANNELS.sttModels]: ChannelDefinition<[SttModelsRequest], SttModelInfo[]>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
   [IPC_CHANNELS.sttSaveDebugAudio]: ChannelDefinition<[SttSaveDebugAudioRequest], SttSaveDebugAudioResult>;
 }
@@ -709,8 +717,8 @@ function buildAiChannels(services: IpcServices): Pick<IpcChannelMap, typeof IPC_
       handle: () => services.stt.status(),
     },
     [IPC_CHANNELS.sttModels]: {
-      validate: noArguments,
-      handle: () => services.stt.models(),
+      validate: validateSttModels,
+      handle: (_sender, request) => services.stt.models(request),
     },
     // Audio travels as Uint8Array (structured clone): the limit increases to 10 MiB plus overhead for the JSON wrapper.
     [IPC_CHANNELS.sttSaveDebugAudio]: {

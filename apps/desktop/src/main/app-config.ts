@@ -10,7 +10,7 @@ import {
   writeFileAtomic,
   type FrontmatterData,
 } from '@smart-terminal/data';
-import { AI_PROVIDERS, STT_PROVIDERS, STT_RESPONSE_FORMATS, TERMINAL_FONT_IDS, type SttResponseFormat, type TerminalFontId, type AiProvider, type SttProvider, type TerminalTheme } from '@smart-terminal/contracts';
+import { AI_PROVIDERS, STT_AI_PROVIDERS, STT_PROVIDERS, STT_RESPONSE_FORMATS, TERMINAL_FONT_IDS, type SttAiProvider, type SttResponseFormat, type TerminalFontId, type AiProvider, type SttProvider, type TerminalTheme } from '@smart-terminal/contracts';
 
 export const CONFIG_SCHEMA_VERSION = 1;
 
@@ -24,6 +24,7 @@ export interface AppConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttUseAiProvider?: boolean;
+  sttApiProvider?: SttAiProvider;
   sttModel?: string;
   sttBaseUrl?: string;
   sttResponseFormat?: SttResponseFormat;
@@ -157,6 +158,8 @@ export function parseAppConfig(content: string): AppConfig {
   const aiModel = optionalString(known, 'ai_model', configValidators.modelName);
   const sttUseAiProvider = known['stt_use_ai_provider'];
   if (sttUseAiProvider !== undefined && sttUseAiProvider !== null && typeof sttUseAiProvider !== 'boolean') throw new AppConfigError('stt_use_ai_provider');
+  const sttApiProvider = known['stt_api_provider'];
+  if (sttApiProvider !== undefined && sttApiProvider !== null && !STT_AI_PROVIDERS.some((p) => p === sttApiProvider)) throw new AppConfigError('stt_api_provider');
   const sttModel = optionalString(known, 'stt_model', configValidators.modelName);
   const sttBaseUrl = optionalString(known, 'stt_base_url', configValidators.aiBaseUrl);
   const sttResponseFormat = optionalString(known, 'stt_response_format', (v) => STT_RESPONSE_FORMATS.some((format) => format === v));
@@ -176,6 +179,7 @@ export function parseAppConfig(content: string): AppConfig {
     ...(aiModel !== undefined && { aiModel }),
     sttProvider: provider(known, 'stt_provider', STT_PROVIDERS),
     ...(sttUseAiProvider === true && { sttUseAiProvider: true }),
+    ...(sttApiProvider !== undefined && sttApiProvider !== null && { sttApiProvider: sttApiProvider as SttAiProvider }),
     ...(sttModel !== undefined && { sttModel }),
     ...(sttBaseUrl !== undefined && { sttBaseUrl }),
     ...(sttResponseFormat !== undefined && { sttResponseFormat: sttResponseFormat as SttResponseFormat }),
@@ -199,6 +203,7 @@ export function serializeAppConfig(config: AppConfig): string {
     ...(config.aiModel !== undefined && { ai_model: config.aiModel }),
     stt_provider: config.sttProvider,
     ...(config.sttUseAiProvider === true && { stt_use_ai_provider: true }),
+    ...(config.sttApiProvider !== undefined && { stt_api_provider: config.sttApiProvider }),
     ...(config.sttModel !== undefined && { stt_model: config.sttModel }),
     ...(config.sttBaseUrl !== undefined && { stt_base_url: config.sttBaseUrl }),
     ...(config.sttResponseFormat !== undefined && { stt_response_format: config.sttResponseFormat }),

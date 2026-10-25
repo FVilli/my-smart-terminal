@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { SttModelInfo, SttSaveDebugAudioRequest, SttSaveDebugAudioResult, SttStatus, SttTranscribeRequest, SttTranscribeResult } from '@smart-terminal/contracts';
+import { AI_PROVIDER_INFO, type SttModelInfo, type SttModelsRequest, type SttSaveDebugAudioRequest, type SttSaveDebugAudioResult, type SttStatus, type SttTranscribeRequest, type SttTranscribeResult } from '@smart-terminal/contracts';
 import { isAudioMimeType, isValidSttAudio, transcribeAudio, type SttProcessRunner } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
@@ -41,16 +41,17 @@ export class SttService {
     this.debugDirectory = options.debugDirectory;
   }
 
-  async models(): Promise<SttModelInfo[]> {
+  async models(request?: SttModelsRequest): Promise<SttModelInfo[]> {
     if (this.testMode) return [{ id: 'qwen3-asr-0.6b', loaded: true }, { id: 'qwen3-asr-1.7b', loaded: false }];
-    const config = this.currentConfig();
+    const config = request?.config ?? this.currentConfig();
     if (config === undefined || config.sttProvider !== 'cloud') return [];
     const shared = config.sttUseAiProvider === true;
     if (shared && config.aiProvider !== 'openai' && config.aiProvider !== 'openai-compatible') return [];
     const tokenKey = shared ? aiTokenKey(config.aiProvider) : CLOUD_TOKEN_KEY;
-    const token = this.options.secrets.get(tokenKey);
+    const entered = request?.sttToken?.trim();
+    const token = entered !== undefined && entered.length > 0 ? entered : this.options.secrets.get(tokenKey);
     if (token === undefined) throw new Error('STT token is not configured.');
-    const baseUrl = ((shared ? config.aiBaseUrl : config.sttBaseUrl) ?? 'https://api.openai.com/v1').replace(/\/$/, '');
+    const baseUrl = this.cloudBaseUrl(config).replace(/\/$/, '');
     const call = this.options.fetch ?? fetch;
     const response = await call(`${baseUrl}/models`, {
       headers: { authorization: `Bearer ${token}` },
@@ -145,7 +146,7 @@ export class SttService {
       ...(token !== undefined ? { token } : {}),
       ...(config.sttProvider === 'local' && config.sttCommand !== undefined ? { command: config.sttCommand } : {}),
       ...(config.sttProvider === 'cloud' ? { model: config.sttModel ?? '' } : config.sttModel !== undefined ? { model: config.sttModel } : {}),
-      ...((shared ? config.aiBaseUrl : config.sttBaseUrl) !== undefined ? { baseUrl: shared ? config.aiBaseUrl : config.sttBaseUrl } : {}),
+      ...(config.sttProvider === 'cloud' ? { baseUrl: this.cloudBaseUrl(config) } : {}),
       ...(config.sttResponseFormat !== undefined ? { responseFormat: config.sttResponseFormat } : {}),
       ...(config.sttLanguage !== undefined ? { language: config.sttLanguage } : {}),
       ...(request.durationMs !== undefined ? { durationMs: request.durationMs } : {}),
@@ -153,6 +154,13 @@ export class SttService {
       ...(this.options.fetch !== undefined ? { fetch: this.options.fetch } : {}),
       ...(this.options.run !== undefined ? { run: this.options.run } : {}),
     });
+  }
+
+  private cloudBaseUrl(config: { sttUseAiProvider?: boolean; aiBaseUrl?: string; sttBaseUrl?: string; sttApiProvider?: string; aiProvider?: string }): string {
+    if (config.sttUseAiProvider === true) {
+      return config.aiBaseUrl ?? (config.aiProvider !== undefined ? AI_PROVIDER_INFO[config.aiProvider as keyof typeof AI_PROVIDER_INFO]?.baseUrl : undefined) ?? 'https://api.openai.com/v1';
+    }
+    return config.sttBaseUrl ?? (config.sttApiProvider !== undefined ? AI_PROVIDER_INFO[config.sttApiProvider as keyof typeof AI_PROVIDER_INFO]?.baseUrl : undefined) ?? 'https://api.openai.com/v1';
   }
 
   private currentConfig() {

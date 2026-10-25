@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, type ElementRef, computed, effect, 
 import {
   AI_PROVIDERS,
   AI_PROVIDER_INFO,
+  STT_AI_PROVIDERS,
   STT_PROVIDERS,
   TERMINAL_FONTS,
   type TerminalFontId,
@@ -24,6 +25,7 @@ import { SettingsStore } from '../settings/settings-store';
 import { AppearanceStore } from '../appearance/appearance-store';
 import { MessageStore } from '../messages/message-store';
 import { TabsContainer } from '../ui/tabs-container';
+import { ProviderFields } from '../ui/provider-fields';
 import { SETTINGS_TABS, type TabItem } from '../ui/tabs.logic';
 
 type Step = 1 | 2 | 3 | 4;
@@ -32,7 +34,7 @@ type Step = 1 | 2 | 3 | 4;
 /** Three-step first-run wizard (data repository, AI, STT): non-blocking overlay for the underlying terminal. */
 @Component({
   selector: 'app-onboarding-wizard',
-  imports: [TabsContainer],
+  imports: [TabsContainer, ProviderFields],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'onEscape()' },
   template: `
@@ -164,12 +166,43 @@ type Step = 1 | 2 | 3 | 4;
               @case (3) {
                 <div data-testid="onboarding-step-3">
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Speech to Text provider
-                    <select class="field-sm" data-testid="onboarding-stt-provider" [value]="'shared'" (change)="enableSharedStt()">
+                    <select class="field-sm" data-testid="onboarding-stt-provider" [value]="sttProviderValue()" (change)="selectSttProvider($event)">
                       <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
+                      <option value="specific">Use Specific Provider (OpenAI-compatible)</option>
+                      <option value="local">Local command</option>
+                      <option value="none">None</option>
                     </select>
                   </label>
-                  @if (!canUseAiProvider()) {
-                    <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI or OpenAI-compatible in the AI tab first.</p>
+                  @if (sttProviderValue() === 'shared' && !canUseAiProvider()) {
+                    <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI, DeepSeek or OpenAI-compatible in the AI tab first.</p>
+                  }
+                  @if (sttProviderValue() === 'shared') {
+                    <p class="hint text-xs leading-[normal] text-muted">Reuses the AI provider, base URL and token from the AI tab.</p>
+                  }
+                  @if (sttProviderValue() === 'specific') {
+                    <app-provider-fields
+                      [provider]="config().sttApiProvider ?? 'openai-compatible'"
+                      [baseUrl]="config().sttBaseUrl ?? ''"
+                      [token]="sttToken()"
+                      [storedToken]="sttStoredToken()"
+                      [providers]="sttAiProviderOptions"
+                      providerTestId="onboarding-stt-api-provider"
+                      urlTestId="onboarding-stt-url"
+                      tokenTestId="onboarding-stt-token"
+                      storedTestId="onboarding-stt-token-stored"
+                      (providerChange)="selectSttApiProvider($event)"
+                      (baseUrlChange)="patch({ sttBaseUrl: $event })"
+                      (tokenChange)="sttToken.set($event)"
+                    />
+                    @if (!state()?.secureStorage) {
+                      <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
+                    }
+                  }
+                  @if (sttProviderValue() === 'local') {
+                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Local command
+                      <span class="hint text-xs leading-[normal] text-muted">Absolute path to the local transcription executable.</span>
+                      <input class="field-sm" data-testid="onboarding-stt-command" [value]="config().sttCommand ?? ''" (input)="patch({ sttCommand: value($event) })" />
+                    </label>
                   }
                   <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
                     <span>Model</span>
@@ -390,7 +423,7 @@ export class OnboardingWizard {
       this.restartNotice.set(false);
       this.confirmDiscard.set(false);
       if (this.step() === 2) void this.loadAiModels();
-      if (this.step() === 3) { this.enableSharedStt(); void this.loadSttModels(); }
+      if (this.step() === 3) void this.loadSttModels();
       this.initialSnapshot = JSON.stringify(this.payload());
     } catch {
       this.settings.close();
@@ -512,7 +545,7 @@ export class OnboardingWizard {
     this.errors.set({});
     this.step.set(step);
     if (step === 2) void this.loadAiModels();
-    if (step === 3) { this.enableSharedStt(); void this.loadSttModels(); }
+    if (step === 3) void this.loadSttModels();
   }
 
   protected selectAiProvider(event: Event): void {
@@ -535,12 +568,54 @@ export class OnboardingWizard {
     return model !== undefined && model.loaded !== true ? 'This model is not declared loaded. The provider may need to load it before transcription.' : null;
   });
 
-  protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible'; }
+  protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible' || this.config().aiProvider === 'deepseek'; }
+
+  protected readonly sttAiProviderOptions = STT_AI_PROVIDERS.map((provider) => ({ id: provider, label: AI_PROVIDER_INFO[provider].label }));
+
+  protected sttStoredToken(): boolean { return this.state()?.storedSecrets.includes('stt:cloud') ?? false; }
+
+  protected sttProviderValue(): 'shared' | 'specific' | 'local' | 'none' {
+    const config = this.config();
+    if (config.sttProvider === 'local') return 'local';
+    if (config.sttProvider === 'cloud') return config.sttUseAiProvider === true ? 'shared' : 'specific';
+    return 'none';
+  }
+
+  protected selectSttProvider(event: Event): void {
+    const value = this.value(event);
+    if (value === 'shared') { this.enableSharedStt(); return; }
+    if (value === 'specific') {
+      const provider = this.config().sttApiProvider ?? 'openai-compatible';
+      this.patch({
+        sttProvider: 'cloud',
+        sttUseAiProvider: false,
+        sttApiProvider: provider,
+        sttBaseUrl: this.config().sttBaseUrl ?? AI_PROVIDER_INFO[provider].baseUrl ?? '',
+        sttModel: this.config().sttModel,
+        sttLanguage: this.config().sttLanguage ?? this.autoSttLanguage(),
+      });
+      void this.loadSttModels();
+      return;
+    }
+    if (value === 'local') {
+      this.patch({ sttProvider: 'local', sttUseAiProvider: false, sttCommand: this.config().sttCommand ?? '' });
+      return;
+    }
+    this.patch({ sttProvider: 'none', sttUseAiProvider: false });
+  }
+
+  protected selectSttApiProvider(provider: string): void {
+    const value = STT_AI_PROVIDERS.find((entry) => entry === provider) ?? 'openai-compatible';
+    const preset = AI_PROVIDER_INFO[value].baseUrl;
+    this.patch({ sttApiProvider: value, ...(preset !== undefined ? { sttBaseUrl: preset } : {}) });
+    void this.loadSttModels();
+  }
 
   protected enableSharedStt(): void {
     this.patch({
       sttProvider: 'cloud',
       sttUseAiProvider: true,
+      sttApiProvider: undefined,
       sttModel: this.config().sttModel,
       sttLanguage: this.config().sttLanguage ?? this.autoSttLanguage(),
     });
@@ -614,7 +689,7 @@ export class OnboardingWizard {
     this.sttModelsLoading.set(true);
     this.sttModelsError.set(null);
     try {
-      const models = await this.api.sttModels();
+      const models = await this.api.sttModels({ config: this.config(), ...(this.sttToken() !== '' ? { sttToken: this.sttToken() } : {}) });
       this.discoveredSttModels.set(models);
       if (models.length === 0) {
         this.sttModelsError.set('No audio transcription models were returned by the provider.');
@@ -880,7 +955,7 @@ export class OnboardingWizard {
       if (Object.keys(errors).length === 0 && current < 3) {
         this.step.set((current + 1) as Step);
         if (current === 1) void this.loadAiModels();
-        if (current === 2) { this.enableSharedStt(); void this.loadSttModels(); }
+        if (current === 2) { if (this.config().sttProvider === 'none') this.enableSharedStt(); void this.loadSttModels(); }
       }
     } catch {
       this.errors.set({ config: 'Validation failed.' });

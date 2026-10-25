@@ -301,6 +301,8 @@ export const AI_PROVIDER_INFO: Record<AiProvider, { label: string; protocol: 'an
   deepseek: { label: 'DeepSeek Platform', protocol: 'openai', baseUrl: 'https://api.deepseek.com/v1' },
   'openai-compatible': { label: 'OpenAI-compatible (self-hosted)', protocol: 'openai' },
 };
+export const STT_AI_PROVIDERS = ['openai', 'deepseek', 'openai-compatible'] as const;
+export type SttAiProvider = (typeof STT_AI_PROVIDERS)[number];
 export type SttProvider = (typeof STT_PROVIDERS)[number];
 /** Maximum secret token length in characters. */
 export const SECRET_TOKEN_MAX_LENGTH = 4096;
@@ -319,6 +321,7 @@ export interface OnboardingConfig {
   aiModel?: string;
   sttProvider: SttProvider;
   sttUseAiProvider?: boolean;
+  sttApiProvider?: SttAiProvider;
   sttModel?: string;
   sttBaseUrl?: string;
   sttResponseFormat?: SttResponseFormat;
@@ -552,6 +555,7 @@ export interface SttDiagnostics {
   providerMessage?: string;
 }
 
+export interface SttModelsRequest { config?: OnboardingConfig; sttToken?: string }
 export interface SttModelInfo {
   id: string;
   label?: string;
@@ -645,7 +649,7 @@ export interface SmartTerminalApi {
   /** Deletes a custom action. */
   aiActionsDelete(request: AiActionsDeleteRequest): Promise<AiActionsState>;
   sttStatus(): Promise<SttStatus>;
-  sttModels(): Promise<SttModelInfo[]>;
+  sttModels(request?: SttModelsRequest): Promise<SttModelInfo[]>;
   sttTranscribe(request: SttTranscribeRequest): Promise<SttTranscribeResult>;
   sttSaveDebugAudio(request: SttSaveDebugAudioRequest): Promise<SttSaveDebugAudioResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
