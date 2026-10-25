@@ -65,7 +65,7 @@ The composer AI trigger shows only sparkles and has the accessible name **AI act
 
 ### AI/STT provider settings
 
-In Settings → AI, refresh the optional model list or use **Provider default**/**Custom**. Claude Platform and DeepSeek Platform presets fill their base URLs. Settings → STT offers the shared AI provider, a specific OpenAI-compatible provider (OpenAI, DeepSeek, or compatible; base URL, keychain token, and refreshed model list), a local command, or **None**. Both cloud choices support model refresh; the specific provider's token is managed through the keychain.
+In Settings → AI, fields appear in this order: **AI Provider**, **Base URL**, **Token**, **Model**, **Test AI**. The provider choices are **OpenAI Compatible**, **Claude Platform**, and **DeepSeek Platform**, plus **None**; legacy **OpenAI** and **Anthropic** values appear only when already saved. Claude Platform and DeepSeek Platform presets fill their base URLs. Settings → STT offers **Use same AI provider**, **Use Specific Provider** (provider choices **DeepSeek Platform** and **OpenAI Compatible**), or **None**. Existing local configurations remain visible/selectable as legacy, but Local command is not offered as a new option.
 
 ### Microphone
 

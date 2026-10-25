@@ -22,9 +22,9 @@ The base URL and token are taken from the AI tab, so configure and test AI first
 
 ## Specific cloud provider
 
-In Settings → **STT**, choose **Use Specific Provider (OpenAI-compatible)**, then select OpenAI, DeepSeek, or OpenAI-compatible and enter its base URL, token, and model. For example, DeepSeek's documented example base URL is `https://api.deepseek.com/v1`; OpenAI or a self-hosted OpenAI-compatible endpoint can also be configured. Enter tokens only in the token field: they are handled through the system keychain, never Markdown. Use model refresh to discover available models. Exact endpoint compatibility depends on the service; verify it with TEST.
+In Settings → **STT**, choose **Use Specific Provider**, then select **DeepSeek Platform** or **OpenAI Compatible** and enter its base URL, token, and model. For example, DeepSeek's documented example base URL is `https://api.deepseek.com/v1`; an OpenAI-compatible endpoint can also be configured. Enter tokens only in the token field: they are handled through the system keychain, never Markdown. Use model refresh to discover available models. Exact endpoint compatibility depends on the service; verify it with TEST.
 
-Alternatively, choose **Use same AI provider** to retain the existing shared AI URL and key. **Local command** configures a local transcription command; **None** disables STT. The shared-provider mode remains unchanged.
+Alternatively, choose **Use same AI provider** to retain the existing shared AI URL and key; **None** disables STT. Existing local configurations still load, but Local command is no longer offered as a new option. The shared-provider mode remains unchanged.
 
 ## TEST
 

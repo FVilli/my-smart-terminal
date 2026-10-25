@@ -20,15 +20,18 @@ AI actions are optional. In the reviewable modal, select an action and edit both
 
 | Provider | Configuration |
 | --- | --- |
-| Anthropic | Provider, optional model, API token. |
-| OpenAI | Provider, optional model, API token. |
-| OpenAI-compatible | Provider, base URL, model, API token. The endpoint must expose an OpenAI-compatible chat-completions API. |
+| OpenAI Compatible | Provider, base URL, token, optional model. The endpoint must expose an OpenAI-compatible chat-completions API. |
+| Claude Platform | Provider, optional base URL, token, optional model. |
+| DeepSeek Platform | Provider, optional base URL, token, optional model. |
+| None | Leaves AI unconfigured. |
+
+Settings → AI field order is **AI Provider**, **Base URL**, **Token**, **Model**, **Test AI**. Legacy **OpenAI** and **Anthropic** values appear only when already saved.
 
 The base URL must be `http(s)`, without credentials or query parameters. The model name is provider-specific. The model selector can refresh/discover chat models; **Provider default** omits a model, while **Custom** allows a manually entered model when discovery is unavailable or incomplete. Claude Platform and DeepSeek Platform presets auto-fill their base URLs.
 
 ## Self-hosted OpenAI-compatible / Unsloth
 
-For a self-hosted OpenAI-compatible service, open the **AI** Settings tab (or the AI onboarding step), select **OpenAI-compatible (self-hosted)**, and use these fields:
+For a self-hosted OpenAI-compatible service, open the **AI** Settings tab (or the AI onboarding step), select **OpenAI Compatible**, and use these fields:
 
 - **Base URL:** `https://unsloth.fvsg.mqu.it/v1`
 - **Model:** `unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_XL`

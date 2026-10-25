@@ -823,7 +823,13 @@ const AI_SETUP_SCRIPT = `(async () => {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   };
-  const provider = q('onboarding-ai-provider'); provider.value = 'deepseek'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  const provider = q('onboarding-ai-provider');
+  result.aiProviderOptionsTrimmed = [...(provider?.options ?? [])].map((option) => option.textContent?.trim()).join('|') === 'OpenAI Compatible|Claude Platform|DeepSeek Platform|None';
+  const aiOrder = q('onboarding-ai-token') && q('onboarding-ai-model') ? q('onboarding-ai-token').compareDocumentPosition(q('onboarding-ai-model')) : 0;
+  result.aiFieldOrder = !!(aiOrder & Node.DOCUMENT_POSITION_FOLLOWING);
+  provider.value = 'claude'; provider.dispatchEvent(new Event('change', { bubbles: true }));
+  result.claudePreset = await waitFor(() => q('onboarding-ai-url')?.value === 'https://api.anthropic.com');
+  provider.value = 'deepseek'; provider.dispatchEvent(new Event('change', { bubbles: true }));
   result.deepseekPreset = await waitFor(() => q('onboarding-ai-url')?.value === 'https://api.deepseek.com/v1');
   provider.value = 'openai-compatible'; provider.dispatchEvent(new Event('change', { bubbles: true }));
   setField('onboarding-ai-url', 'https://unsloth.example/v1');
@@ -876,8 +882,10 @@ const STT_SETUP_SCRIPT = `(async () => {
   const refresh = q('onboarding-stt-refresh-models');
   result.refreshHeightMatchesModel = !!model && !!refresh && Math.abs(refresh.getBoundingClientRect().height - model.getBoundingClientRect().height) <= 1;
   result.fields = !!q('onboarding-stt-model') && !!q('onboarding-stt-language') && !!q('onboarding-stt-rec') && !!q('onboarding-stt-stop') && !!q('onboarding-stt-play') && !!q('onboarding-stt-transcribe');
+  result.sttNoLocal = ![...(provider?.options ?? [])].some((option) => option.value === 'local' || (option.textContent ?? '').includes('Local command'));
   provider.value = 'specific'; provider.dispatchEvent(new Event('change', { bubbles: true }));
   result.specificFields = await waitFor(() => !!q('onboarding-stt-api-provider') && !!q('onboarding-stt-url') && !!q('onboarding-stt-token'));
+  result.sttProviderOptionsTrimmed = [...(q('onboarding-stt-api-provider')?.options ?? [])].map((option) => option.textContent?.trim()).join('|') === 'DeepSeek Platform|OpenAI Compatible';
   const sttApiProvider = q('onboarding-stt-api-provider');
   if (sttApiProvider) { sttApiProvider.value = 'deepseek'; sttApiProvider.dispatchEvent(new Event('change', { bubbles: true })); }
   result.specificPreset = await waitFor(() => q('onboarding-stt-url')?.value === 'https://api.deepseek.com/v1');
