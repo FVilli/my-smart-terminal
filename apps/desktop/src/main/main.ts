@@ -266,7 +266,8 @@ void app.whenReady().then(async () => {
   const configStore = new AppConfigStore(resolveConfigPath(userDataPath));
   const configLoad = configStore.load();
   const config = configLoad.status === 'valid' ? configLoad.config : undefined;
-  configuredTheme = config?.terminalTheme ?? 'dark';
+  const envTheme = process.env['SMART_TERMINAL_THEME'];
+  configuredTheme = envTheme === 'light' || envTheme === 'dark' ? envTheme : (config?.terminalTheme ?? 'dark');
   const runtime = new CoordinatorRuntime({ userDataPath, clipboardSource: electronClipboardSource, config });
   if (syncUiSmokeTest) {
     seedSyncUiSmokeData(runtime.paths.dataRepoPath);

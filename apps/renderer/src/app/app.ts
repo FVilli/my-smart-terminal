@@ -88,9 +88,13 @@ export class App {
     // Main passes the resolved theme as a startup argument, so the first paint already matches it.
     this.appearance.setTheme(api.initialTheme);
     void api.onboardingState().then((state) => {
-      this.appearance.setTheme(state.config.terminalTheme ?? 'dark');
-      this.appearance.set(state.config.terminalFont ?? 'jetbrains');
-    }).catch(() => this.appearance.setTheme('dark'));
+      // Only a valid saved config overrides the theme resolved by main for this startup;
+      // a missing/corrupt config keeps the initial (possibly capture-overridden) theme.
+      if (state.reason === 'valid') {
+        this.appearance.setTheme(state.config.terminalTheme ?? 'dark');
+        this.appearance.set(state.config.terminalFont ?? 'jetbrains');
+      }
+    }).catch(() => undefined);
     void api.runtimeInfo().then((info) => this.isPrimary.set(info.isPrimary));
     api.onRoleChanged((event) => this.isPrimary.set(event.isPrimary));
   }
