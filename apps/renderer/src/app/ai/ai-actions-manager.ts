@@ -33,8 +33,21 @@ export class AiActionsManager {
   protected readonly manager = inject(AiActionsManagerStore);
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
+  /** Tracks the open transition so focus returns to the opener on any store-driven close. */
+  private wasOpen = false;
+
   constructor() {
-    effect(() => { if (this.manager.open()) this.focusFirst(); });
+    effect(() => {
+      if (this.manager.open()) {
+        this.wasOpen = true;
+        this.focusFirst();
+        return;
+      }
+      if (this.wasOpen) {
+        this.wasOpen = false;
+        queueMicrotask(() => document.querySelector<HTMLElement>('[data-testid="ai-actions-open"]')?.focus());
+      }
+    });
   }
 
   private focusFirst(): void {
@@ -47,7 +60,6 @@ export class AiActionsManager {
 
   protected close(): void {
     this.manager.close();
-    queueMicrotask(() => document.querySelector<HTMLElement>('[data-testid="ai-actions-open"]')?.focus());
   }
   protected backdrop(event: MouseEvent): void { if (event.target === event.currentTarget) this.close(); }
 

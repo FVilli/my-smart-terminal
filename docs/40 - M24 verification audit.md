@@ -53,6 +53,10 @@ Verdict: **OK with notes** (no blocker/major). Two MINOR ARIA findings were fixe
 
 Re-verification after fixes: lint, typecheck, 473 tests, build, settings smoke and dual-theme layout green.
 
+## M25 update
+
+AI Actions editing moved from Settings to a dedicated header-launched modal. Settings is resized; the AI Actions list now has footer counts and custom deletion confirmation, with bulk Reset removed. See `docs/41 - M25 verification audit.md`.
+
 ## Manual / residual
 
 - Real browser opening, screen-reader navigation and measured light-theme ANSI/cursor/selection contrast were not independently verified; the design lists the WCAG targets and the light values are contrast-computed but an automated audit is still desirable.

@@ -44,6 +44,7 @@ No SCSS/Less, CSS framework, or Tailwind is present yet. The only third-party CS
 | Status footer + messages | `app-status-footer` + `app-message-center` | `:host`, `.badge`, `.dot`, `.primary`, `.message` |
 | Right sidebar (Clipboard/History) | `app-sidebar-panel` (+ `.sidebar` in `app.css:5`) | `.tabs`, `.filters`, `.list`, `.entry`, `.meta`, `.preview` |
 | Settings tabs | `app-onboarding-wizard` | `.settings-tabs`, `[role='tab']` |
+| AI Actions manager | `ai-actions-manager.ts` wrapping `ai-actions-settings.ts` | Dedicated header-launched modal; owns action editing UI |
 | Onboarding modal | `app-onboarding-wizard` | `.backdrop`, `.dialog`, `.dialog-body`, `footer` |
 | App shell notices / empty state | `App` | `.shell`, `.main-column`, `.notice`, `.empty-state` |
 
