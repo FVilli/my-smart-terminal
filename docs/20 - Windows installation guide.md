@@ -16,25 +16,25 @@ This guide is for people installing Smart Terminal on a Windows PC, including pe
 - An internet connection to download the installer.
 - You do not need administrator permission: the installer installs for your Windows user.
 
-The v1.3.12 installer is `Smart.Terminal-1.3.12-win-x64.exe`. It is unsigned, so Windows SmartScreen may show a warning. Smart Terminal has no automatic updater.
+The v1.3.13 installer is `Smart.Terminal-1.3.13-win-x64.exe`. It is unsigned, so Windows SmartScreen may show a warning. Smart Terminal has no automatic updater.
 
 ## Download and verify (optional)
 
-Download the installer from the [Smart Terminal v1.3.12 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.12). Download `Smart.Terminal-1.3.12-win-x64.exe` from that page. To check its integrity, also download `SHA256SUMS` from that same release and save both files in your Downloads folder.
+Download the installer from the [Smart Terminal v1.3.13 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.13). Download `Smart.Terminal-1.3.13-win-x64.exe` from that page. To check its integrity, also download `SHA256SUMS` from that same release and save both files in your Downloads folder.
 
 You can compare the installer with the published checksum using PowerShell. This block downloads both files from the same release and stops with a clear error if the expected checksum is missing or does not match:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$release = 'https://github.com/FVilli/my-smart-terminal/releases/download/v1.3.12'
+$release = 'https://github.com/FVilli/my-smart-terminal/releases/download/v1.3.13'
 $folder = Join-Path $HOME 'Downloads'
-$installer = Join-Path $folder 'Smart.Terminal-1.3.12-win-x64.exe'
+$installer = Join-Path $folder 'Smart.Terminal-1.3.13-win-x64.exe'
 $checksums = Join-Path $folder 'SHA256SUMS'
 
-Invoke-WebRequest "$release/Smart.Terminal-1.3.12-win-x64.exe" -OutFile $installer
+Invoke-WebRequest "$release/Smart.Terminal-1.3.13-win-x64.exe" -OutFile $installer
 Invoke-WebRequest "$release/SHA256SUMS" -OutFile $checksums
 
-$installerName = 'Smart.Terminal-1.3.12-win-x64.exe'
+$installerName = 'Smart.Terminal-1.3.13-win-x64.exe'
 $pattern = '(^|\s)' + [regex]::Escape($installerName) + '$'
 $line = Get-Content $checksums | Where-Object { $_ -match $pattern } | Select-Object -First 1
 if (-not $line -or $line -notmatch ('^\s*([0-9a-fA-F]{64})\s+\*?' + [regex]::Escape($installerName) + '$')) {
@@ -52,9 +52,9 @@ A checksum match verifies that the file matches the checksum file you downloaded
 
 ## Install and start
 
-1. Double-click `Smart.Terminal-1.3.12-win-x64.exe` in Downloads.
+1. Double-click `Smart.Terminal-1.3.13-win-x64.exe` in Downloads.
 2. Follow the setup wizard. It installs for your Windows user, does not require administrator permission, and lets you change the installation folder. A desktop shortcut is offered/created.
-3. If SmartScreen warns that the app is unrecognized, continue only after you have checked that the installer came from the v1.3.12 release page above and, if using the optional check, its checksum matches. Then choose **More info** and **Run anyway**. If you cannot verify the source, cancel the warning. Do not disable SmartScreen or other security protections.
+3. If SmartScreen warns that the app is unrecognized, continue only after you have checked that the installer came from the v1.3.13 release page above and, if using the optional check, its checksum matches. Then choose **More info** and **Run anyway**. If you cannot verify the source, cancel the warning. Do not disable SmartScreen or other security protections.
 4. Start **Smart Terminal** from the Start menu or desktop shortcut.
 
 On first launch, setup asks for a data repository location and machine name; AI and voice setup are optional. See the [post-install onboarding guide](14%20-%20Post-install%20onboarding.md), [repository setup guide](18%20-%20Repository%20setup%20guide.md), and [user manual](12%20-%20User%20manual.md). You can use the terminal without configuring AI, voice, Git, or a network connection after installation.

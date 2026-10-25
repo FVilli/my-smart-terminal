@@ -1,6 +1,19 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.13
+### Added
+- AI actions modal with five actions (suggest, explain, risk, fix, rewrite) and session OS/shell context persisted in `session.md` (local exact, SSH best-effort with `unknown` fallback).
+- Editable System/User prompt templates per action and custom actions in Settings → AI actions (local `ai-actions.json`), placeholders including bounded terminal console context.
+- Explicit Dark/Light themes (dark default) in Settings → Appearance, applied before first paint; terminal font selection retained.
+- Reusable accessible TabsContainer for settings; card-based AI Actions list with add and confirmed built-in reset.
+### Fixed
+- GitHub guide links now copy the URL when no browser can be opened; wider settings dialog (+60%); masked stored-token hint; "Speech to Text provider" label and aligned model refresh button; tab/token ARIA fixes.
+- AI template store now persists before publishing state, so failed writes never become authoritative.
+### Notes
+- `terminal_theme` is local config; older versions may warn/reject the new key.
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published together with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.12
 ### Added
 - Dynamic STT model discovery from the audio endpoint, with loaded state and model test details.

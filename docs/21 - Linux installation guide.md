@@ -8,7 +8,7 @@ created: 2026-10-23
 
 # Install Smart Terminal on Linux
 
-Smart Terminal v1.3.12 supports 64-bit x86_64 Linux. The installer chooses the `.deb` package on Debian or Ubuntu and the AppImage on other distributions. You need an internet connection and a normal user account.
+Smart Terminal v1.3.13 supports 64-bit x86_64 Linux. The installer chooses the `.deb` package on Debian or Ubuntu and the AppImage on other distributions. You need an internet connection and a normal user account.
 
 Release artifacts are unsigned. The installer verifies the SHA-256 checksum published with the release; this checks download integrity, but does not prove who built or signed the files. There are no automatic updates.
 
@@ -17,15 +17,15 @@ Release artifacts are unsigned. The installer verifies the SHA-256 checksum publ
 The simplest method is:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.12/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.13/install.sh | sh
 ```
 
-This downloads the v1.3.12 release, verifies the SHA-256 checksum of the downloaded artifact, and installs it. On Debian or Ubuntu, it uses `sudo` only when `apt-get` installs the `.deb` package. On other distributions, it installs a per-user AppImage in `~/.local/bin` and creates a per-user XDG applications-menu entry and icon. The icon uses the new Smart Terminal branding.
+This downloads the v1.3.13 release, verifies the SHA-256 checksum of the downloaded artifact, and installs it. On Debian or Ubuntu, it uses `sudo` only when `apt-get` installs the `.deb` package. On other distributions, it installs a per-user AppImage in `~/.local/bin` and creates a per-user XDG applications-menu entry and icon. The icon uses the new Smart Terminal branding.
 
 This command downloads and immediately executes a remote script. Run it only if you trust the repository and its release process. To inspect the script first, use:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.12/install.sh -o /tmp/smart-terminal-install.sh
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.13/install.sh -o /tmp/smart-terminal-install.sh
 less /tmp/smart-terminal-install.sh
 sh /tmp/smart-terminal-install.sh
 ```
@@ -37,8 +37,8 @@ The script refuses to run as root and supports Linux x86_64 only.
 Auto mode is the default: it chooses `.deb` on Debian or Ubuntu, and AppImage otherwise. You can choose explicitly:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.12/install.sh | sh -s -- --deb
-curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.12/install.sh | sh -s -- --appimage
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.13/install.sh | sh -s -- --deb
+curl -fsSL https://raw.githubusercontent.com/FVilli/my-smart-terminal/v1.3.13/install.sh | sh -s -- --appimage
 ```
 
 `--deb` requires Debian or Ubuntu with `apt-get` and `dpkg`. `--appimage` is for x86_64 Linux and installs the AppImage for your user. Do not use `--appimage` while the `my-smart-terminal` `.deb` package is installed.
@@ -90,12 +90,12 @@ There is no automatic updater. After a newer release is published, rerun the ins
 
 ## Manual fallback for troubleshooting
 
-If the script cannot run, use the [Smart Terminal v1.3.12 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.12). Download the matching x86_64 `.deb` and `SHA256SUMS`, verify the package's SHA-256 checksum, then install it on Debian or Ubuntu:
+If the script cannot run, use the [Smart Terminal v1.3.13 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.13). Download the matching x86_64 `.deb` and `SHA256SUMS`, verify the package's SHA-256 checksum, then install it on Debian or Ubuntu:
 
 ```bash
-grep -F "  Smart.Terminal-1.3.12-linux-amd64.deb" SHA256SUMS > expected.sha256
+grep -F "  Smart.Terminal-1.3.13-linux-amd64.deb" SHA256SUMS > expected.sha256
 sha256sum -c expected.sha256
-sudo apt install -y ./Smart.Terminal-1.3.12-linux-amd64.deb
+sudo apt install -y ./Smart.Terminal-1.3.13-linux-amd64.deb
 ```
 
 For another distribution, download the matching x86_64 AppImage, verify it with `SHA256SUMS`, make it executable with `chmod +x`, and run it. This manual path does not create the script's per-user menu entry and icon automatically.
@@ -123,10 +123,10 @@ If you use a custom `XDG_CONFIG_HOME`, the folder is under that location instead
 ## Troubleshooting
 
 - **No applications-menu entry:** for the `.deb`, confirm installation completed. For the AppImage, log out and back in to refresh the menu; also check the per-user XDG applications directory and `~/.local/share/icons`.
-- **Permission denied when running an AppImage:** the script normally sets the installed file executable. For the manually downloaded v1.3.12 artifact, run `chmod +x ./Smart.Terminal-1.3.12-linux-x86_64.AppImage` from the directory containing that file.
-- **`apt` reports dependency errors:** run `sudo apt install -y ./Smart.Terminal-1.3.12-linux-amd64.deb` from the folder containing the downloaded package so `apt` can resolve dependencies.
+- **Permission denied when running an AppImage:** the script normally sets the installed file executable. For the manually downloaded v1.3.13 artifact, run `chmod +x ./Smart.Terminal-1.3.13-linux-x86_64.AppImage` from the directory containing that file.
+- **`apt` reports dependency errors:** run `sudo apt install -y ./Smart.Terminal-1.3.13-linux-amd64.deb` from the folder containing the downloaded package so `apt` can resolve dependencies.
 - **FUSE or AppImage sandbox error:** try `"$HOME/.local/bin/smart-terminal" --appimage-extract-and-run` for the script-installed AppImage, or add `--appimage-extract-and-run` to the manually downloaded file command. Do not disable system security settings to work around it.
-- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [Smart Terminal v1.3.12 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.12), and verify again. If it still fails, do not use that download.
+- **Checksum mismatch:** do not install or run the file. Delete the download, try again from the [Smart Terminal v1.3.13 release page](https://github.com/FVilli/my-smart-terminal/releases/tag/v1.3.13), and verify again. If it still fails, do not use that download.
 - **Missing data or settings:** check whether you selected an external data repository during setup. The default data is under `~/.config/my-smart-terminal/data`; external data is at the path you chose.
 - **Remote-script caution:** `curl | sh` runs code received from the network and the artifacts are not signed. Inspect the script first if that trust decision is not acceptable.
 

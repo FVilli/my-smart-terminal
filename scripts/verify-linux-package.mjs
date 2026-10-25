@@ -8,7 +8,8 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const version = packageJson.version;
 const releaseFiles = fs.readdirSync(release);
 const debArg = process.argv.slice(2).find((arg) => !arg.startsWith('--'));
-const deb = debArg ?? releaseFiles.find((name) => name.endsWith('.deb'));
+const preferredDeb = `Smart.Terminal-${version}-linux-amd64.deb`;
+const deb = debArg ?? (releaseFiles.includes(preferredDeb) ? preferredDeb : releaseFiles.find((name) => name.endsWith('.deb')));
 const debOnly = process.argv.includes('--deb-only');
 const appImage = releaseFiles.find((name) => name === `Smart.Terminal-${version}-linux-x86_64.AppImage`);
 if (!deb) {

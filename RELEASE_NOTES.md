@@ -1,6 +1,32 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.13
+
+AI assistant, settings and appearance release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### AI assistant
+- The composer **AI** button opens one modal with five actions: suggest a command, explain a command, assess risk, fix a message for an interactive agent, and rewrite a dictated message.
+- Every session records its OS and shell in `session.md` (local sessions exactly; SSH through one non-interactive probe with an `unknown` fallback and a "Detect again" control).
+- Choose the action from a select, then edit both **System Prompt** and **User Prompt**. Templates support `{{os}}`, `{{shell}}`, `{{terminalInfo}}`, `{{console}}` (last visible terminal output), `{{composer}}`, `{{intent}}` and more.
+- **Settings → AI actions** lets you edit/reset the five built-in templates and add custom actions (name, description, both templates) with local persistence in `ai-actions.json`.
+- The reviewed answer can be applied with **Use** (selection or whole answer inserted at the caret); nothing is ever executed or submitted automatically, and prompts containing secrets are blocked before leaving the app.
+
+### Settings
+- GitHub guide links copy to the clipboard with a clear message when the system cannot open a browser.
+- The edit-mode settings dialog is 60% wider, with reusable accessible tabs for Repository/AI/STT/Appearance/AI actions.
+- The AI token field shows a masked stored-token hint; the first STT label reads "Speech to Text provider"; the model refresh button matches the select height.
+- AI Actions use the History/Clipboard card pattern, with `+` and a confirmed Reset of the built-in templates (custom actions are kept).
+
+### Appearance
+- Explicit **Dark / Light** theme selection (dark remains the default and pixel baseline) in Settings → Appearance, alongside the terminal font. The saved theme is applied before the first paint; light theme includes a matching terminal palette.
+- Deferred for a later release: OS-following theme, accent and ANSI customization, UI/terminal font size, density and transparency.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- `terminal_theme` lives in the local config; older app versions may warn about or reject the new key.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.12
 
 STT model discovery release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
