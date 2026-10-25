@@ -105,8 +105,8 @@ type Step = 1 | 2 | 3 | 4;
                 <div data-testid="onboarding-step-2">
                   <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">AI provider
                     <select class="field-sm" data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="selectAiProvider($event)">
-                      @for (provider of aiProviders; track provider) {
-                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ aiProviderInfo[provider].label }}</option>
+                      @for (provider of aiProviderOptions(); track provider) {
+                        <option [value]="provider" [selected]="provider === config().aiProvider">{{ aiProviderLabel(provider) }}</option>
                       }
                     </select>
                   </label>
@@ -116,6 +116,14 @@ type Step = 1 | 2 | 3 | 4;
                       <input class="field-sm" data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
                     @if (errors()['aiBaseUrl']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-ai-url">{{ message }}</p> }
+                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
+                      <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
+                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" [attr.aria-describedby]="storedToken() ? 'onboarding-ai-token-stored' : null" [value]="aiToken()" (input)="aiToken.set(value($event))" />
+                    </label>
+                    @if (storedToken()) { <p id="onboarding-ai-token-stored" class="hint text-xs" data-testid="onboarding-ai-token-stored">Token stored in the keychain — type to replace.</p> }
+                    @if (!state()?.secureStorage) {
+                      <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
+                    }
                     <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
                       <span>Model (optional)</span>
                       <div class="flex items-stretch gap-2">
@@ -137,14 +145,6 @@ type Step = 1 | 2 | 3 | 4;
                       <span class="hint text-xs leading-[normal] text-muted">Leave blank to use the provider default; refresh to discover models. Custom names may contain / and :.</span>
                       @if (aiModelsError(); as modelsError) { <p class="hint text-xs leading-[normal] text-muted" data-testid="onboarding-ai-models-error">{{ modelsError }}</p> }
                     </div>
-                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
-                      <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
-                      <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" [attr.aria-describedby]="storedToken() ? 'onboarding-ai-token-stored' : null" [value]="aiToken()" (input)="aiToken.set(value($event))" />
-                    </label>
-                    @if (storedToken()) { <p id="onboarding-ai-token-stored" class="hint text-xs" data-testid="onboarding-ai-token-stored">Token stored in the keychain — type to replace.</p> }
-                    @if (!state()?.secureStorage) {
-                      <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
-                    }
                     <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
                       <button type="button" [class]="dialogButtonClass" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
                         {{ testingAi() ? 'Testing…' : 'Test AI' }}
@@ -169,7 +169,7 @@ type Step = 1 | 2 | 3 | 4;
                     <select class="field-sm" data-testid="onboarding-stt-provider" [value]="sttProviderValue()" (change)="selectSttProvider($event)">
                       <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
                       <option value="specific">Use Specific Provider (OpenAI-compatible)</option>
-                      <option value="local">Local command</option>
+                      @if (sttProviderValue() === 'local') { <option value="local">Local command (existing)</option> }
                       <option value="none">None</option>
                     </select>
                   </label>
@@ -197,12 +197,6 @@ type Step = 1 | 2 | 3 | 4;
                     @if (!state()?.secureStorage) {
                       <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
-                  }
-                  @if (sttProviderValue() === 'local') {
-                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Local command
-                      <span class="hint text-xs leading-[normal] text-muted">Absolute path to the local transcription executable.</span>
-                      <input class="field-sm" data-testid="onboarding-stt-command" [value]="config().sttCommand ?? ''" (input)="patch({ sttCommand: value($event) })" />
-                    </label>
                   }
                   <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
                     <span>Model</span>
@@ -478,6 +472,23 @@ export class OnboardingWizard {
     return AI_PROVIDERS.find((provider) => provider === this.value(event)) ?? 'none';
   }
 
+  protected aiProviderOptions(): readonly AiProvider[] {
+    const base: AiProvider[] = ['openai-compatible', 'claude', 'deepseek', 'none'];
+    const current = this.config().aiProvider;
+    return current === 'openai' || current === 'anthropic' ? [...base, current] : base;
+  }
+
+  protected aiProviderLabel(provider: AiProvider): string {
+    switch (provider) {
+      case 'openai-compatible': return 'OpenAI Compatible';
+      case 'claude': return 'Claude Platform';
+      case 'deepseek': return 'DeepSeek Platform';
+      case 'openai': return 'OpenAI';
+      case 'anthropic': return 'Anthropic API';
+      default: return 'None';
+    }
+  }
+
   protected readonly discoveredAiModels = signal<AiModelInfo[]>([]);
   protected readonly aiModelsLoading = signal(false);
   protected readonly aiModelsError = signal<string | null>(null);
@@ -570,7 +581,7 @@ export class OnboardingWizard {
 
   protected canUseAiProvider(): boolean { return this.config().aiProvider === 'openai' || this.config().aiProvider === 'openai-compatible' || this.config().aiProvider === 'deepseek'; }
 
-  protected readonly sttAiProviderOptions = STT_AI_PROVIDERS.map((provider) => ({ id: provider, label: AI_PROVIDER_INFO[provider].label }));
+  protected readonly sttAiProviderOptions = (['deepseek', 'openai-compatible'] as const).map((provider) => ({ id: provider, label: this.aiProviderLabel(provider) }));
 
   protected sttStoredToken(): boolean { return this.state()?.storedSecrets.includes('stt:cloud') ?? false; }
 
@@ -595,10 +606,6 @@ export class OnboardingWizard {
         sttLanguage: this.config().sttLanguage ?? this.autoSttLanguage(),
       });
       void this.loadSttModels();
-      return;
-    }
-    if (value === 'local') {
-      this.patch({ sttProvider: 'local', sttUseAiProvider: false, sttCommand: this.config().sttCommand ?? '' });
       return;
     }
     this.patch({ sttProvider: 'none', sttUseAiProvider: false });
