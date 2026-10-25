@@ -161,7 +161,7 @@ packages/ai/        AI and STT providers
 
 ## Status and known limitations
 
-v1.3.14 is a complete desktop release published for Linux (AppImage, .deb), macOS (arm64 .dmg) and Windows (x64); the CI pipeline builds and tests all three platforms. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
+v1.3.15 is a complete desktop release published for Linux (AppImage, .deb), macOS (arm64 .dmg) and Windows (x64); the CI pipeline builds and tests all three platforms. Declared limitations: native shell history is not covered, secret filters are heuristic, Windows named pipes lack dedicated ACLs, artifact signing is unavailable, and there is no auto-update.
 
 ## License
 

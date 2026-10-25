@@ -1,6 +1,23 @@
 <!-- gsynchro:v1 id=049deca4-b206-4a13-b4dc-da86368ac628 registered=2026-10-23T09:58:42.364Z -->
 # Release notes
 
+## v1.3.15
+
+AI surfaces polish release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).
+
+### AI Assistant
+- The modal now uses 90% of the window width and height, with a single compact header (title, session context, provider/model, Detect again) and two 50/50 columns: action select plus System/User prompts on the left, the answer on the right.
+- Answers are rendered as **Markdown** (headings, lists, code fences, emphasis, safe http/https links) with a **Rendered / Raw** toggle to view the original text.
+- **Use** inserts the selection from either view, or the whole answer, at the composer caret; it never executes or sends anything.
+- The composer AI button shows only the sparkles glyph.
+
+### AI Actions
+- The manager modal is 10% taller (792 px, capped at 90 vh), with the same cards, counter and confirmed custom-action deletion.
+
+### Notes
+- V1 artifacts are **unsigned**: macOS Gatekeeper and Windows SmartScreen may warn. Verify `SHA256SUMS` before installing.
+- No automatic updater; data and configuration are preserved across versions.
+
 ## v1.3.14
 
 Settings and AI Actions layout release, published for Linux (AppImage, `.deb`), macOS (arm64 `.dmg`) and Windows (x64 NSIS installer).

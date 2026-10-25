@@ -50,4 +50,4 @@ Verdict: **OK with notes**, no findings. The reviewer independently verified esc
 - Rendered-selection `Use` is exercised by design and unit-level selection logic, but the automated smoke uses the raw/full-answer path; a real pointer selection in the rendered pane remains a manual check.
 - Real provider behaviour and screen-reader navigation remain manual, as in M24.
 - The answer renderer intentionally supports a conservative Markdown subset (no tables, images or raw HTML); extending it is a separate decision.
-- These post-1.3.14 UI changes are on `main` and would ship with the next release.
+- These M26 UI changes ship in v1.3.15 (v1.3.14 was published before M26).

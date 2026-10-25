@@ -1,6 +1,16 @@
 <!-- gsynchro:v1 id=d96cce88-411a-46c3-bb63-e76b0b4b1fb6 registered=2026-10-23T13:00:27.384Z -->
 # Changelog
 
+## 1.3.15
+### Changed
+- The composer AI trigger shows only the sparkles glyph; the AI Assistant modal is 90% of the window (width and height) with a compact header and 50/50 columns (prompts left, answer right).
+- The AI Actions manager is 10% taller (792 px, 90 vh cap).
+- Answers render as safe Markdown with a Rendered/Raw toggle; Use inserts the rendered or raw selection (or the whole answer) without submitting.
+### Fixed
+- Answer selection is now captured only inside the rendered pane, falling back to the raw textarea selection.
+### Notes
+- Linux AppImage/deb, macOS arm64 dmg and Windows x64 installer are published with SHA256SUMS; artifacts are unsigned.
+
 ## 1.3.14
 ### Changed
 - AI Actions now live in a dedicated modal opened from the header, with the settings dialog narrowed to four tabs and made 20% taller.
