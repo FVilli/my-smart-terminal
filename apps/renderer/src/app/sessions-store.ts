@@ -3,6 +3,7 @@ import type {
   SmartTerminalApi,
   TerminalCreateRequest,
   TerminalDataEvent,
+  TerminalEnvironmentEvent,
   TerminalExitEvent,
 } from '@smart-terminal/contracts';
 import { TERMINAL_MAX_WRITE_BYTES } from '@smart-terminal/contracts';
@@ -42,6 +43,7 @@ export class SessionsStore {
   constructor() {
     this.api.onTerminalData((event) => this.handleData(event));
     this.api.onTerminalExit((event) => this.handleExit(event));
+    this.api.onTerminalEnvironment((event) => this.handleEnvironment(event));
   }
 
   createLocal(): Promise<string | null> {
@@ -76,6 +78,7 @@ export class SessionsStore {
         status: 'running',
         pid: info.pid,
         exitCode: null,
+        ...(info.environment !== undefined ? { environment: info.environment } : {}),
       };
       this.sessionsState.update((list) => [...list, session]);
       this.activeIdState.set(session.id);
@@ -171,6 +174,12 @@ export class SessionsStore {
         this.outputListeners.delete(id);
       }
     };
+  }
+
+  private handleEnvironment(event: TerminalEnvironmentEvent): void {
+    this.sessionsState.update((list) =>
+      list.map((session) => (session.id === event.sessionId ? { ...session, environment: event.environment } : session)),
+    );
   }
 
   private handleData(event: TerminalDataEvent): void {

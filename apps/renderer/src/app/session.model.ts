@@ -1,3 +1,5 @@
+import type { SessionEnvironment } from '@smart-terminal/contracts';
+
 export type SessionKind = 'local' | 'ssh';
 export type SessionStatus = 'starting' | 'running' | 'exited' | 'error';
 
@@ -13,6 +15,8 @@ export interface TerminalSessionView {
   readonly status: SessionStatus;
   readonly pid: number | null;
   readonly exitCode: number | null;
+  /** Detected OS/shell context (absent until known, for example while the SSH probe runs). */
+  readonly environment?: SessionEnvironment;
 }
 
 export type SyncState = 'synced' | 'syncing' | 'offline' | 'error';

@@ -54,7 +54,7 @@ This document describes the current main/preload/renderer contract. The shared n
 | `ai:status` / `ai:correct` | status or `{ text }` | AI status or correction result |
 | `stt:status` / `stt:transcribe` / `stt:save-debug-audio` | status or `{ audio: Uint8Array, mimeType }` | STT status or `{ text, skipped, reason? }` |
 
-Main-to-renderer events are `terminal:data`, `terminal:exit`, `app:role-changed`, `sync:status`, `search:refreshed`, and `window:maximized` (`{ maximized: boolean }`).
+Main-to-renderer events are `terminal:data`, `terminal:exit`, `terminal:environment` (`{ sessionId, environment }`, emitted when an SSH probe fills the session context after creation), `app:role-changed`, `sync:status`, `search:refreshed`, and `window:maximized` (`{ maximized: boolean }`).
 
 ## Preload API
 

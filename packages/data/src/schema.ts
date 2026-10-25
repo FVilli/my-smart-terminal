@@ -55,6 +55,10 @@ export interface SessionMeta {
   cwd_initial: string;
   started_at: string;
   ended_at?: string;
+  os?: 'linux' | 'macos' | 'windows' | 'unknown';
+  shell?: 'bash' | 'zsh' | 'fish' | 'sh' | 'pwsh' | 'powershell' | 'cmd' | 'unknown';
+  env_source?: 'local' | 'ssh-probe' | 'unknown';
+  env_detected_at?: string;
 }
 
 export interface SessionDocument {
@@ -108,7 +112,7 @@ export interface SessionDocuments {
   clipboard: string;
 }
 
-const SESSION_KEYS = ['schema_version', 'session_id', 'machine', 'created_at', 'window_id', 'kind', 'ssh_alias', 'cwd_initial', 'started_at', 'ended_at'];
+const SESSION_KEYS = ['schema_version', 'session_id', 'machine', 'created_at', 'window_id', 'kind', 'ssh_alias', 'cwd_initial', 'started_at', 'ended_at', 'os', 'shell', 'env_source', 'env_detected_at'];
 const LOG_KEYS = ['schema_version', 'session_id', 'machine', 'created_at'];
 const EVENT_ID_PATTERN = /^[A-Za-z0-9_.-]{1,64}$/;
 const SINGLE_LINE_MAX = 4096;
@@ -185,7 +189,7 @@ function validateSessionMeta(meta: SessionMeta): void {
   if ((meta.kind === 'ssh') !== (meta.ssh_alias !== undefined)) {
     throw new SchemaError('SCHEMA_INVALID_FIELD', 'ssh_alias');
   }
-  if (!isIsoTimestamp(meta.created_at) || !isIsoTimestamp(meta.started_at) || (meta.ended_at !== undefined && !isIsoTimestamp(meta.ended_at))) {
+  if (!isIsoTimestamp(meta.created_at) || !isIsoTimestamp(meta.started_at) || (meta.ended_at !== undefined && !isIsoTimestamp(meta.ended_at)) || (meta.env_detected_at !== undefined && !isIsoTimestamp(meta.env_detected_at))) {
     throw new SchemaError('SCHEMA_INVALID_FIELD', 'timestamp');
   }
 }
@@ -205,9 +209,11 @@ export function serializeSessionDocument(meta: SessionMeta, extraFields: Frontma
   }
   data['cwd_initial'] = meta.cwd_initial;
   data['started_at'] = meta.started_at;
-  if (meta.ended_at !== undefined) {
-    data['ended_at'] = meta.ended_at;
-  }
+  if (meta.ended_at !== undefined) data['ended_at'] = meta.ended_at;
+  if (meta.os !== undefined) data['os'] = meta.os;
+  if (meta.shell !== undefined) data['shell'] = meta.shell;
+  if (meta.env_source !== undefined) data['env_source'] = meta.env_source;
+  if (meta.env_detected_at !== undefined) data['env_detected_at'] = meta.env_detected_at;
   for (const [key, value] of Object.entries(extraFields)) {
     if (SESSION_KEYS.includes(key)) {
       throw new SchemaError('SCHEMA_INVALID_FIELD', key);
@@ -226,6 +232,18 @@ export function parseSessionDocument(content: string, options: ParseOptions = {}
   }
   const sshAlias = optionalString(known, 'ssh_alias');
   const endedAt = known['ended_at'] === undefined ? undefined : requireTimestamp(known, 'ended_at');
+  const osValue = known['os'];
+  const shellValue = known['shell'];
+  const sourceValue = known['env_source'];
+  const enumValue = <T extends string>(value: FrontmatterScalar | undefined, values: readonly T[], key: string): T | undefined => {
+    if (value === undefined) return undefined;
+    if (typeof value !== 'string' || !values.includes(value as T)) throw new SchemaError('SCHEMA_INVALID_FIELD', key);
+    return value as T;
+  };
+  const envOs = enumValue(osValue, ['linux', 'macos', 'windows', 'unknown'], 'os');
+  const envShell = enumValue(shellValue, ['bash', 'zsh', 'fish', 'sh', 'pwsh', 'powershell', 'cmd', 'unknown'], 'shell');
+  const envSource = enumValue(sourceValue, ['local', 'ssh-probe', 'unknown'], 'env_source');
+  const envDetectedAt = known['env_detected_at'] === undefined ? undefined : requireTimestamp(known, 'env_detected_at');
   const meta: SessionMeta = {
     schema_version: SCHEMA_VERSION,
     session_id: requireString(known, 'session_id'),
@@ -237,6 +255,10 @@ export function parseSessionDocument(content: string, options: ParseOptions = {}
     cwd_initial: requireString(known, 'cwd_initial'),
     started_at: requireTimestamp(known, 'started_at'),
     ...(endedAt !== undefined ? { ended_at: endedAt } : {}),
+    ...(envOs !== undefined ? { os: envOs } : {}),
+    ...(envShell !== undefined ? { shell: envShell } : {}),
+    ...(envSource !== undefined ? { env_source: envSource } : {}),
+    ...(envDetectedAt !== undefined ? { env_detected_at: envDetectedAt } : {}),
   };
   validateSessionMeta(meta);
   return { meta, extraFields: extra, body };

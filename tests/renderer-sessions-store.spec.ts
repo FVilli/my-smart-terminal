@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TerminalDataEvent, TerminalExitEvent } from '@smart-terminal/contracts';
+import type { TerminalDataEvent, TerminalEnvironmentEvent, TerminalExitEvent } from '@smart-terminal/contracts';
 import { SYNC_LABELS } from '../apps/renderer/src/app/session.model';
 import { SessionsStore } from '../apps/renderer/src/app/sessions-store';
 
@@ -7,6 +7,7 @@ describe('SessionsStore', () => {
   let nextId = 0;
   let emitData: (event: TerminalDataEvent) => void;
   let emitExit: (event: TerminalExitEvent) => void;
+  let emitEnvironment: (event: TerminalEnvironmentEvent) => void;
   const closeTerminal = vi.fn().mockResolvedValue(undefined);
   const createTerminal = vi.fn();
   const writeTerminal = vi.fn();
@@ -46,6 +47,10 @@ describe('SessionsStore', () => {
           emitExit = listener;
           return () => undefined;
         },
+        onTerminalEnvironment: (listener: typeof emitEnvironment) => {
+          emitEnvironment = listener;
+          return () => undefined;
+        },
     });
   });
 
@@ -55,6 +60,19 @@ describe('SessionsStore', () => {
     await store.createLocal();
     expect(store.sessions().map((s) => s.label)).toEqual(['S1', 'S2']);
     expect(store.activeId()).toBe('id-2');
+  });
+
+  it('stores the creation environment and applies late detection events', async () => {
+    createTerminal.mockResolvedValueOnce({
+      sessionId: 'id-1', label: 'S1', kind: 'local', pid: 101, cwd: '/', machine: 'host',
+      sessionDirectory: 'sessions/host/2026-01-01_00.00_S1_local', startedAt: '2026-01-01T00:00:00+00:00',
+      environment: { os: 'linux', shell: 'bash', source: 'local', detectedAt: '2026-01-01T00:00:00.000Z' },
+    });
+    const store = new SessionsStore();
+    await store.createLocal();
+    expect(store.sessions()[0]?.environment).toMatchObject({ os: 'linux', shell: 'bash', source: 'local' });
+    emitEnvironment({ sessionId: 'id-1', environment: { os: 'macos', shell: 'zsh', source: 'ssh-probe', detectedAt: '2026-01-02T00:00:00.000Z' } });
+    expect(store.sessions()[0]?.environment).toMatchObject({ os: 'macos', shell: 'zsh', source: 'ssh-probe' });
   });
 
   it('closes the PTY, removes the tab, and does not reuse labels', async () => {

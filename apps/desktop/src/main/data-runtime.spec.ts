@@ -23,6 +23,22 @@ describe('DataRuntime', () => {
     expect(fallback.lockDir).toBe(path.join(root, 'ud', 'coordinator', 'locks'));
   });
 
+  it('persists the detected environment without touching the session body or unknown fields', async () => {
+    const runtime = new DataRuntime({
+      userDataPath: path.join(root, 'ud'),
+      env: { SMART_TERMINAL_DATA_REPO: path.join(root, 'repo'), SMART_TERMINAL_MACHINE: 'host' },
+    });
+    const { allocation } = await runtime.createSession('win-1', { kind: 'local', cwd: '/tmp' });
+    const original = fs.readFileSync(allocation.sessionFile, 'utf8');
+    fs.writeFileSync(allocation.sessionFile, original.replace('created_at', 'future: 1\ncreated_at'));
+    expect(runtime.updateSessionEnvironment(allocation.sessionId, { os: 'linux', shell: 'bash', source: 'local', detectedAt: '2026-01-01T10:00:00.000Z' })).toBe(true);
+    const parsed = parseSessionDocument(fs.readFileSync(allocation.sessionFile, 'utf8'));
+    expect(parsed.meta).toMatchObject({ os: 'linux', shell: 'bash', env_source: 'local', env_detected_at: '2026-01-01T10:00:00.000Z' });
+    expect(parsed.extraFields).toEqual({ future: 1 });
+    expect(parsed.body).toContain('# Sessione S1');
+    expect(runtime.updateSessionEnvironment('missing', { os: 'unknown', shell: 'unknown', source: 'unknown' })).toBe(false);
+  });
+
   it('creates two sessions, writes counter and files, and ends them atomically', async () => {
     const runtime = new DataRuntime({
       userDataPath: path.join(root, 'ud'),

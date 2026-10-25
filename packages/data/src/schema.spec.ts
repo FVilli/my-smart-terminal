@@ -40,6 +40,13 @@ describe('session.md', () => {
     expect(parseSessionDocument(serializeSessionDocument(ssh)).meta).toEqual(ssh);
   });
 
+  it('roundtrips optional environment and rejects invalid values', () => {
+    const environment: SessionMeta = { ...meta, os: 'linux', shell: 'bash', env_source: 'local', env_detected_at: T };
+    expect(parseSessionDocument(serializeSessionDocument(environment)).meta).toEqual(environment);
+    expect(parseSessionDocument(serializeSessionDocument(meta)).meta).toEqual(meta);
+    expect(() => parseSessionDocument(serializeSessionDocument({ ...meta, os: 'plan9' as SessionMeta['os'] }))).toThrow('SCHEMA_INVALID_FIELD');
+  });
+
   it('is human readable', () => {
     expect(createSessionDocuments(meta).session).toBe(
       [

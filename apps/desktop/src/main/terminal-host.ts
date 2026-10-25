@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import type { WebContents } from 'electron';
-import { IPC_EVENTS, type TerminalSessionInfo } from '@smart-terminal/contracts';
-import { SessionManager, TerminalError, type PtyAdapter } from '@smart-terminal/terminal';
+import { IPC_EVENTS, type SessionEnvironment, type TerminalSessionInfo } from '@smart-terminal/contracts';
+import { SessionManager, TerminalError, detectLocalEnvironment, type PtyAdapter } from '@smart-terminal/terminal';
 import type { DataRuntime } from './data-runtime';
+import { probeSshEnvironment } from './environment-probe';
 import type { TerminalGateway } from './ipc';
 
-type SessionDataRuntime = Pick<DataRuntime, 'createSession' | 'endSession'>;
-type SessionExtras = Pick<TerminalSessionInfo, 'label' | 'machine' | 'sessionDirectory' | 'startedAt'>;
+type SessionDataRuntime = Pick<DataRuntime, 'createSession' | 'endSession' | 'updateSessionEnvironment'>;
+type SessionExtras = Pick<TerminalSessionInfo, 'label' | 'machine' | 'sessionDirectory' | 'startedAt'> & {
+  environment: SessionEnvironment;
+};
 
 interface WindowState {
   windowId: string;
@@ -19,10 +22,25 @@ export class TerminalHost implements TerminalGateway {
   private readonly windows = new Map<number, WindowState>();
   private readonly webContentsById = new Map<number, WebContents>();
 
+  private readonly probeSsh: (alias: string) => Promise<SessionEnvironment>;
+  private readonly localEnvironment: () => Omit<SessionEnvironment, 'source' | 'detectedAt'>;
+  private readonly clock: () => Date;
+
   constructor(
     private readonly adapter: PtyAdapter,
     private readonly dataRuntime: SessionDataRuntime,
-  ) {}
+    options: {
+      /** Test seam for the SSH probe. */
+      probeSsh?: (alias: string) => Promise<SessionEnvironment>;
+      /** Test seam for local detection. */
+      localEnvironment?: () => Omit<SessionEnvironment, 'source' | 'detectedAt'>;
+      clock?: () => Date;
+    } = {},
+  ) {
+    this.probeSsh = options.probeSsh ?? ((alias) => probeSshEnvironment({ alias }));
+    this.localEnvironment = options.localEnvironment ?? (() => detectLocalEnvironment(process.env, process.platform));
+    this.clock = options.clock ?? (() => new Date());
+  }
 
   attach(webContents: WebContents): void {
     const senderId = webContents.id;
@@ -44,13 +62,23 @@ export class TerminalHost implements TerminalGateway {
     const { allocation, machine } = created;
     try {
       const info = state.manager.create(request.kind === 'ssh' ? request : { ...request, cwd }, allocation.sessionId);
+      // Local shells are known at creation; SSH starts as unknown and is filled by the probe below.
+      const environment: SessionEnvironment =
+        request.kind === 'ssh'
+          ? { os: 'unknown', shell: 'unknown', source: 'unknown' }
+          : { ...this.localEnvironment(), source: 'local', detectedAt: this.clock().toISOString() };
       const extras: SessionExtras = {
         label: allocation.label,
         machine,
         sessionDirectory: allocation.relativeDir,
         startedAt: allocation.startedAt,
+        environment,
       };
       state.extras.set(info.sessionId, extras);
+      this.dataRuntime.updateSessionEnvironment(info.sessionId, environment);
+      if (request.kind === 'ssh' && request.sshAlias !== undefined) {
+        void this.detectSshEnvironment(request.sshAlias, senderId, info.sessionId);
+      }
       return { ...info, ...extras };
     } catch (error) {
       this.dataRuntime.endSession(allocation.sessionId);
@@ -115,6 +143,24 @@ export class TerminalHost implements TerminalGateway {
     this.webContentsById.delete(senderId);
   }
 
+  /** Fire-and-forget probe: updates extras + session.md and notifies only if the session still exists. */
+  private async detectSshEnvironment(alias: string, senderId: number, sessionId: string): Promise<void> {
+    const environment = await this.probeSsh(alias);
+    const state = this.windows.get(senderId);
+    const extras = state?.extras.get(sessionId);
+    if (state === undefined || extras === undefined) return;
+    extras.environment = environment;
+    this.dataRuntime.updateSessionEnvironment(sessionId, environment);
+    this.sendTo(senderId, IPC_EVENTS.terminalEnvironment, { sessionId, environment });
+  }
+
+  private sendTo(senderId: number, channel: string, payload: unknown): void {
+    const target = this.webContentsById.get(senderId);
+    if (target !== undefined && !target.isDestroyed()) {
+      target.send(channel, payload);
+    }
+  }
+
   private stateFor(senderId: number): WindowState {
     const existing = this.windows.get(senderId);
     if (existing) {
@@ -122,12 +168,7 @@ export class TerminalHost implements TerminalGateway {
     }
     const manager = new SessionManager({ adapter: this.adapter });
     const state: WindowState = { windowId: randomUUID(), manager, extras: new Map() };
-    const send = (channel: string, payload: unknown): void => {
-      const target = this.webContentsById.get(senderId);
-      if (target !== undefined && !target.isDestroyed()) {
-        target.send(channel, payload);
-      }
-    };
+    const send = (channel: string, payload: unknown): void => this.sendTo(senderId, channel, payload);
     manager.on('data', (event) => send(IPC_EVENTS.terminalData, event));
     manager.on('exit', (event) => {
       state.extras.delete(event.sessionId);

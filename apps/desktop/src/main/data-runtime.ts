@@ -11,6 +11,7 @@ import {
   type AllocatedSession,
   type SessionIdAllocator,
 } from '@smart-terminal/data';
+import type { SessionEnvironment } from '@smart-terminal/contracts';
 import type { AppConfig } from './app-config';
 
 export interface DataRuntimeOptions {
@@ -104,6 +105,29 @@ export class DataRuntime {
     });
     this.sessions.set(allocation.sessionId, allocation);
     return { allocation, machine: this.machine };
+  }
+
+  /**
+   * Merges the detected OS/shell into session.md, keeping body and unknown fields intact.
+   * Best-effort: detection must never fail a session, so errors return `false`.
+   */
+  updateSessionEnvironment(sessionId: string, environment: SessionEnvironment): boolean {
+    const allocation = this.sessions.get(sessionId);
+    if (allocation === undefined) return false;
+    try {
+      const document = parseSessionDocument(fs.readFileSync(allocation.sessionFile, 'utf8'));
+      const meta = {
+        ...document.meta,
+        os: environment.os,
+        shell: environment.shell,
+        env_source: environment.source,
+        ...(environment.detectedAt !== undefined ? { env_detected_at: environment.detectedAt } : {}),
+      };
+      writeFileAtomic(allocation.sessionFile, serializeSessionDocument(meta, document.extraFields, document.body));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Writes `ended_at` to session.md atomically. Idempotent; I/O errors are absorbed and returned as `false`. */

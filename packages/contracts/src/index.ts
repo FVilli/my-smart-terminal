@@ -44,6 +44,7 @@ export const IPC_CHANNELS = {
 export const IPC_EVENTS = {
   terminalData: 'terminal:data',
   terminalExit: 'terminal:exit',
+  terminalEnvironment: 'terminal:environment',
   roleChanged: 'app:role-changed',
   syncStatus: 'sync:status',
   searchRefreshed: 'search:refreshed',
@@ -114,6 +115,26 @@ export interface TerminalCreateRequest {
   rows?: number;
 }
 
+/** Operating system detected for a session's shell. */
+export type SessionOs = 'linux' | 'macos' | 'windows' | 'unknown';
+/** Login shell detected for a session. */
+export type SessionShell = 'bash' | 'zsh' | 'fish' | 'sh' | 'pwsh' | 'powershell' | 'cmd' | 'unknown';
+
+/** OS/shell context persisted with the session (`session.md`) and used by AI actions. */
+export interface SessionEnvironment {
+  os: SessionOs;
+  shell: SessionShell;
+  /** How the values were obtained: local resolution, SSH probe, or not detected. */
+  source: 'local' | 'ssh-probe' | 'unknown';
+  /** ISO 8601; absent when nothing was detected. */
+  detectedAt?: string;
+}
+
+export interface TerminalEnvironmentEvent {
+  sessionId: string;
+  environment: SessionEnvironment;
+}
+
 export interface TerminalSessionInfo {
   /** Matches `label` (`S<n>`, per-machine sequence). */
   sessionId: string;
@@ -128,6 +149,8 @@ export interface TerminalSessionInfo {
   sessionDirectory: string;
   /** ISO 8601 with offset. */
   startedAt: string;
+  /** Detected OS/shell context; absent until detected (for example, pending SSH probe). */
+  environment?: SessionEnvironment;
 }
 
 export interface TerminalWriteRequest {
@@ -502,6 +525,8 @@ export interface SmartTerminalApi {
   sttSaveDebugAudio(request: SttSaveDebugAudioRequest): Promise<SttSaveDebugAudioResult>;
   onTerminalData(listener: (event: TerminalDataEvent) => void): Unsubscribe;
   onTerminalExit(listener: (event: TerminalExitEvent) => void): Unsubscribe;
+  /** Late environment detection (for example, the SSH probe) for an existing session. */
+  onTerminalEnvironment(listener: (event: TerminalEnvironmentEvent) => void): Unsubscribe;
   onRoleChanged(listener: (event: RoleChangedEvent) => void): Unsubscribe;
   onSyncStatus(listener: (event: SyncStatusEvent) => void): Unsubscribe;
   onSearchRefreshed(listener: (event: SearchRefreshedEvent) => void): Unsubscribe;
