@@ -153,6 +153,37 @@
   .field-sm::placeholder {
     @apply text-muted;
   }
+
+  /* Design-system form anatomy: label, control, help/error share one rhythm. */
+  .form-field {
+    @apply flex min-w-0 flex-col gap-1.5;
+  }
+  .form-label {
+    @apply text-[13px] font-medium leading-[1.35] text-fg;
+  }
+  .form-help {
+    @apply text-[11px] font-normal leading-[1.35] text-muted;
+  }
+  .form-error {
+    @apply text-[11px] font-normal leading-[1.35] text-danger;
+  }
+  .form-stack {
+    @apply flex flex-col gap-3;
+  }
+  .field-counter {
+    @apply block text-right text-[10px] font-normal leading-[1.2] text-muted;
+  }
+
+  /* Design-system panel anatomy (modals and full-height editors). */
+  .panel-header {
+    @apply flex flex-none flex-wrap items-center gap-x-4 gap-y-1 border-b border-line p-3;
+  }
+  .panel-title {
+    @apply text-base font-semibold;
+  }
+  .panel-footer {
+    @apply flex flex-none items-center justify-end gap-2 border-t border-line p-3;
+  }
 }
 
 /* Base reset lives in the base layer so utilities and component styles can

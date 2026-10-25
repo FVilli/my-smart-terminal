@@ -8,14 +8,14 @@ created: 2026-10-23
 
 # STT setup guide
 
-STT can use the AI provider configured in **AI**, a separately configured OpenAI-compatible provider, a local command, or be disabled. Audio is held in memory only: recordings are never written to the data repository or userData.
+STT can use the AI provider configured in **AI**, a separately configured OpenAI-compatible provider, or be disabled. Existing local configurations may remain selectable, but Local command is not offered as a new option. Audio is held in memory only: recordings are never written to the data repository or userData.
 
 ## Configure
 
 Open **Settings** with the gear, select the **STT** tab, and configure:
 
 - **Speech to Text provider:** `Use the same AI provider (OpenAI-compatible)` (the only option).
-- **Model:** choose an explicit audio model, or **Server default (do not send model)** to omit the `model` field and let the provider choose. **Refresh models** queries the provider's `/v1/models` endpoint and filters entries whose `audio_workflows` contains `transcribe`; static fallback options include Parakeet, Qwen3 ASR 0.6B and Qwen3 ASR 1.7B.
+- **Model:** choose an explicit audio model, or **Server default (do not send model)** to omit the `model` field and let the provider choose. **Refresh models** queries the provider's `/v1/models` endpoint and keeps transcription workflow models when workflow metadata is available; if the provider exposes no workflow metadata, audio-id models are used as a fallback. The STT list is limited to audio/transcription models; static fallback options include Parakeet, Qwen3 ASR 0.6B and Qwen3 ASR 1.7B.
 - **Language:** `EN (English)` or `IT (Italiano)`.
 
 The base URL and token are taken from the AI tab, so configure and test AI first. Use an `openai` or `openai-compatible` AI provider. AI settings, including the token, remain in the main process/keychain and are not copied into Markdown or logs.

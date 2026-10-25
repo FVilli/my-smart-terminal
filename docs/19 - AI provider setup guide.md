@@ -27,7 +27,7 @@ AI actions are optional. In the reviewable modal, select an action and edit both
 
 Settings → AI field order is **AI Provider**, **Base URL**, **Token**, **Model**, **Test AI**. Legacy **OpenAI** and **Anthropic** values appear only when already saved.
 
-The base URL must be `http(s)`, without credentials or query parameters. The model name is provider-specific. The model selector can refresh/discover chat models; **Provider default** omits a model, while **Custom** allows a manually entered model when discovery is unavailable or incomplete. Claude Platform and DeepSeek Platform presets auto-fill their base URLs.
+The base URL must be `http(s)`, without credentials or query parameters. The model name is provider-specific. The model selector can refresh/discover chat models; audio/transcription models are excluded and **Provider default** omits a model. There is no Custom entry. A saved model may remain visible if it is no longer returned by discovery. Claude Platform and DeepSeek Platform presets auto-fill their base URLs.
 
 ## Self-hosted OpenAI-compatible / Unsloth
 

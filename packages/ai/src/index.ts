@@ -88,7 +88,7 @@ export async function correctText(requestData: CorrectionRequest): Promise<Corre
 }
 
 export { completeText, ProviderHttpError, type CompletionOptions, type CompletionResult } from './completion';
-export { listAiModels, type ListAiModelsOptions } from './models';
+export { isSpeechToTextModelId, listAiModels, type ListAiModelsOptions } from './models';
 export * from './actions';
 export * from './action-templates';
 export * from './placeholders';

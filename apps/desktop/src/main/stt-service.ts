@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { AI_PROVIDER_INFO, type SttModelInfo, type SttModelsRequest, type SttSaveDebugAudioRequest, type SttSaveDebugAudioResult, type SttStatus, type SttTranscribeRequest, type SttTranscribeResult } from '@smart-terminal/contracts';
-import { isAudioMimeType, isValidSttAudio, transcribeAudio, type SttProcessRunner } from '@smart-terminal/ai';
+import { isAudioMimeType, isSpeechToTextModelId, isValidSttAudio, transcribeAudio, type SttProcessRunner } from '@smart-terminal/ai';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
 
@@ -65,7 +65,9 @@ export class SttService {
       const item = entry as { id?: unknown; audio_workflows?: unknown; loaded?: unknown; is_loaded?: unknown; status?: unknown };
       if (typeof item.id !== 'string') return [];
       const workflows = Array.isArray(item.audio_workflows) ? item.audio_workflows : [];
-      if (!workflows.some((workflow) => workflow === 'transcribe')) return [];
+      if (workflows.length > 0 && !workflows.some((workflow) => workflow === 'transcribe')) return [];
+      // Providers without workflow metadata (OpenAI-compatible): keep only audio/transcription ids.
+      if (workflows.length === 0 && !isSpeechToTextModelId(item.id)) return [];
       const loaded = item.loaded === true || item.is_loaded === true || item.status === 'loaded';
       return [{ id: item.id, loaded }];
     });

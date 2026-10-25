@@ -68,23 +68,23 @@ type Step = 1 | 2 | 3 | 4;
             @switch (step()) {
               @case (1) {
                 <div data-testid="onboarding-step-1">
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Machine name
+                  <label class="form-field mt-3">Machine name
                     <input class="field-sm" data-testid="onboarding-machine" [value]="config().machineName" (input)="patch({ machineName: value($event) })" />
                   </label>
-                  @if (errors()['machineName']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-machine">{{ message }}</p> }
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Data repository (absolute path)
+                  @if (errors()['machineName']; as message) { <p class="form-error mt-1" data-testid="onboarding-error-machine">{{ message }}</p> }
+                  <label class="form-field mt-3">Data repository (absolute path)
                     <input class="field-sm" data-testid="onboarding-repo" [value]="config().dataRepoPath" (input)="patch({ dataRepoPath: value($event) })" />
                   </label>
-                  @if (errors()['dataRepoPath']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-repo">{{ message }}</p> }
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Git remote (optional)
+                  @if (errors()['dataRepoPath']; as message) { <p class="form-error mt-1" data-testid="onboarding-error-repo">{{ message }}</p> }
+                  <label class="form-field mt-3">Git remote (optional)
                     <input class="field-sm" data-testid="onboarding-remote" [value]="config().dataRepoRemote ?? ''" (input)="patch({ dataRepoRemote: value($event) })" />
                   </label>
-                  @if (errors()['dataRepoRemote']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-remote">{{ message }}</p> }
+                  @if (errors()['dataRepoRemote']; as message) { <p class="form-error mt-1" data-testid="onboarding-error-remote">{{ message }}</p> }
                   <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
                     <button type="button" [class]="dialogButtonClass" data-testid="onboarding-test-remote" [disabled]="busy() || testingRemote()" (click)="testRemoteRepository()">
                       {{ testingRemote() ? 'Testing…' : 'Test repository' }}
                     </button>
-                    <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Verifies a real commit and push by registering this installation.</span>
+                    <span class="form-help flex-1 min-w-[180px]">Verifies a real commit and push by registering this installation.</span>
                   </div>
                   @if (remoteResult(); as result) {
                     <p class="remote-result mt-2 mb-0 text-xs leading-[1.45]" [class.text-accent]="result.ok" [class.text-danger]="!result.ok" data-testid="onboarding-remote-result" role="status">
@@ -103,7 +103,7 @@ type Step = 1 | 2 | 3 | 4;
               }
               @case (2) {
                 <div data-testid="onboarding-step-2">
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">AI provider
+                  <label class="form-field mt-3">AI provider
                     <select class="field-sm" data-testid="onboarding-ai-provider" [value]="config().aiProvider" (change)="selectAiProvider($event)">
                       @for (provider of aiProviderOptions(); track provider) {
                         <option [value]="provider" [selected]="provider === config().aiProvider">{{ aiProviderLabel(provider) }}</option>
@@ -111,45 +111,41 @@ type Step = 1 | 2 | 3 | 4;
                     </select>
                   </label>
                   @if (config().aiProvider !== 'none') {
-                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Base URL (optional)
-                      <span class="hint text-xs leading-[normal] text-muted">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
+                    <label class="form-field mt-3">Base URL (optional)
+                      <span class="form-help">For self-hosted servers use the API prefix, e.g. https://your-server/v1</span>
                       <input class="field-sm" data-testid="onboarding-ai-url" [value]="config().aiBaseUrl ?? ''" (input)="patch({ aiBaseUrl: value($event) })" />
                     </label>
-                    @if (errors()['aiBaseUrl']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-ai-url">{{ message }}</p> }
-                    <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Token (required for cloud/self-hosted; keychain only)
-                      <span class="hint text-xs leading-[normal] text-muted">Stored in the system keychain only.</span>
+                    @if (errors()['aiBaseUrl']; as message) { <p class="form-error mt-1" data-testid="onboarding-error-ai-url">{{ message }}</p> }
+                    <label class="form-field mt-3">Token (required for cloud/self-hosted; keychain only)
+                      <span class="form-help">Stored in the system keychain only.</span>
                       <input class="field-sm" type="password" autocomplete="off" data-testid="onboarding-ai-token" [attr.placeholder]="storedToken() ? '••••••••••••' : 'Token'" [attr.aria-describedby]="storedToken() ? 'onboarding-ai-token-stored' : null" [value]="aiToken()" (input)="aiToken.set(value($event))" />
                     </label>
                     @if (storedToken()) { <p id="onboarding-ai-token-stored" class="hint text-xs" data-testid="onboarding-ai-token-stored">Token stored in the keychain — type to replace.</p> }
                     @if (!state()?.secureStorage) {
                       <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
-                    <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
-                      <span>Model (optional)</span>
+                    <div class="form-field mt-3">
+                      <label class="form-label" for="ai-model-select">Model (optional)</label>
                       <div class="flex items-stretch gap-2">
-                        <label class="min-w-0 flex-1">
-                          <select class="field-sm w-full" aria-label="AI model" data-testid="onboarding-ai-model" (change)="selectAiModel($event)">
+                        <div class="min-w-0 flex-1">
+                          <select id="ai-model-select" class="field-sm w-full" data-testid="onboarding-ai-model" (change)="selectAiModel($event)">
                             <option value="" [selected]="config().aiModel === undefined || config().aiModel === ''">Provider default</option>
                             @for (model of discoveredAiModels(); track model.id) { <option [value]="model.id" [selected]="model.id === config().aiModel">{{ model.id }}</option> }
                             @if (aiModelSavedButUndiscovered()) { <option [value]="config().aiModel ?? ''" selected>{{ config().aiModel }}</option> }
-                            <option value="__custom__" [selected]="aiModelValue() === '__custom__'">Custom…</option>
                           </select>
-                        </label>
+                        </div>
                         <button type="button" class="refresh-models field-sm w-[34px] flex-none cursor-pointer p-0 text-fg disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center enabled:hover:border-accent enabled:hover:text-accent" data-testid="onboarding-ai-refresh-models" [attr.aria-label]="aiModelsLoading() ? 'Loading models' : 'Refresh models'" [attr.title]="aiModelsLoading() ? 'Loading models…' : 'Refresh models'" [disabled]="aiModelsLoading() || busy()" (click)="loadAiModels()">
                           <svg class="h-4 w-4" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
                       </div>
-                      @if (aiModelValue() === '__custom__') {
-                        <input class="field-sm" aria-label="Custom AI model" data-testid="onboarding-ai-model-custom" [value]="config().aiModel ?? ''" (input)="patchAiModel($event)" />
-                      }
-                      <span class="hint text-xs leading-[normal] text-muted">Leave blank to use the provider default; refresh to discover models. Custom names may contain / and :.</span>
-                      @if (aiModelsError(); as modelsError) { <p class="hint text-xs leading-[normal] text-muted" data-testid="onboarding-ai-models-error">{{ modelsError }}</p> }
+                      <span class="form-help">Leave blank to use the provider default; refresh to discover chat models. Audio/transcription models are hidden.</span>
+                      @if (aiModelsError(); as modelsError) { <p class="form-help" data-testid="onboarding-ai-models-error">{{ modelsError }}</p> }
                     </div>
                     <div class="test-row mt-2.5 flex flex-wrap items-center gap-2.5">
                       <button type="button" [class]="dialogButtonClass" data-testid="onboarding-test-ai" [disabled]="busy() || testingAi()" (click)="testAiProvider()">
                         {{ testingAi() ? 'Testing…' : 'Test AI' }}
                       </button>
-                      <span class="hint text-xs leading-[normal] text-muted flex-1 min-w-[180px]">Sends a minimal request to verify provider, model and token.</span>
+                      <span class="form-help flex-1 min-w-[180px]">Sends a minimal request to verify provider, model and token.</span>
                     </div>
                     @if (aiTestResult(); as result) {
                       <p class="remote-result mt-2 mb-0 text-xs leading-[1.45]" [class.text-accent]="result.ok" [class.text-danger]="!result.ok" data-testid="onboarding-ai-result" role="status">
@@ -165,7 +161,7 @@ type Step = 1 | 2 | 3 | 4;
               }
               @case (3) {
                 <div data-testid="onboarding-step-3">
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Speech to Text provider
+                  <label class="form-field mt-3">Speech to Text provider
                     <select class="field-sm" data-testid="onboarding-stt-provider" [value]="sttProviderValue()" (change)="selectSttProvider($event)">
                       <option value="shared">Use the same AI provider (OpenAI-compatible)</option>
                       <option value="specific">Use Specific Provider (OpenAI-compatible)</option>
@@ -177,7 +173,7 @@ type Step = 1 | 2 | 3 | 4;
                     <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-ai-unavailable">Configure OpenAI, DeepSeek or OpenAI-compatible in the AI tab first.</p>
                   }
                   @if (sttProviderValue() === 'shared') {
-                    <p class="hint text-xs leading-[normal] text-muted">Reuses the AI provider, base URL and token from the AI tab.</p>
+                    <p class="form-help">Reuses the AI provider, base URL and token from the AI tab.</p>
                   }
                   @if (sttProviderValue() === 'specific') {
                     <app-provider-fields
@@ -198,7 +194,7 @@ type Step = 1 | 2 | 3 | 4;
                       <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-keychain-warning">Keychain unavailable: the token will only be kept in memory.</p>
                     }
                   }
-                  <div class="model-row mt-2.5 flex flex-col gap-1 text-[13px]">
+                  <div class="form-field mt-3">
                     <span>Model</span>
                     <div class="flex items-stretch gap-2">
                     <label class="min-w-0 flex-1">
@@ -214,8 +210,8 @@ type Step = 1 | 2 | 3 | 4;
                   @if (sttModelWarning(); as modelWarning) {
                     <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-stt-model-warning">{{ modelWarning }}</p>
                   }
-                  @if (sttModelsError(); as modelsError) { <p class="hint text-xs leading-[normal] text-muted" data-testid="onboarding-stt-models-error">{{ modelsError }}</p> }
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Language
+                  @if (sttModelsError(); as modelsError) { <p class="form-help" data-testid="onboarding-stt-models-error">{{ modelsError }}</p> }
+                  <label class="form-field mt-3">Language
                     <select class="field-sm" data-testid="onboarding-stt-language" [value]="sttLanguageValue()" (change)="patch({ sttLanguage: sttLanguage($event) })">
                       <option value="en">EN (English)</option>
                       <option value="it">IT (Italiano)</option>
@@ -244,21 +240,21 @@ type Step = 1 | 2 | 3 | 4;
               }
               @case (4) {
                 <div data-testid="settings-appearance">
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Theme
+                  <label class="form-field mt-3">Theme
                     <select class="field-sm" data-testid="settings-terminal-theme" [value]="config().terminalTheme ?? 'dark'" (change)="setTheme($event)">
                       <option value="dark">Dark</option><option value="light">Light</option>
                     </select>
                   </label>
-                  <label class="mt-2.5 mb-0.5 flex flex-col gap-1 text-[13px]">Terminal monospace font
+                  <label class="form-field mt-3">Terminal monospace font
                     <select class="field-sm" data-testid="settings-terminal-font" [value]="config().terminalFont ?? 'jetbrains'" (change)="patch({ terminalFont: terminalFont($event) })">
                       @for (font of terminalFonts; track font.id) { <option [value]="font.id">{{ font.label }}</option> }
                     </select>
                   </label>
-                  <p class="hint text-xs leading-[normal] text-muted">Fonts must be installed on your system. If a font is missing, the next font in the stack is used.</p>
+                  <p class="form-help">Fonts must be installed on your system. If a font is missing, the next font in the stack is used.</p>
                 </div>
               }
             }
-            @if (errors()['config']; as message) { <p class="error mt-1 mb-0 text-xs leading-[normal] text-danger" data-testid="onboarding-error-config">{{ message }}</p> }
+            @if (errors()['config']; as message) { <p class="form-error mt-1" data-testid="onboarding-error-config">{{ message }}</p> }
             @for (warning of warnings(); track warning) {
               <p class="warning mt-2 mb-0 text-xs leading-[normal] text-warning" data-testid="onboarding-warning">{{ warning }}</p>
             }
@@ -494,9 +490,7 @@ export class OnboardingWizard {
   protected readonly aiModelsError = signal<string | null>(null);
 
   protected aiModelValue(): string {
-    const model = this.config().aiModel;
-    if (model === undefined || model === '') return '';
-    return this.discoveredAiModels().some((entry) => entry.id === model) ? model : '__custom__';
+    return this.config().aiModel ?? '';
   }
 
   protected aiModelSavedButUndiscovered(): boolean {
@@ -505,16 +499,6 @@ export class OnboardingWizard {
   }
 
   protected selectAiModel(event: Event): void {
-    const value = this.value(event);
-    if (value === '__custom__') {
-      this.discoveredAiModels.update((models) => models);
-      if (this.config().aiModel === undefined) this.patch({ aiModel: '' });
-      return;
-    }
-    this.patch({ aiModel: value });
-  }
-
-  protected patchAiModel(event: Event): void {
     this.patch({ aiModel: this.value(event) });
   }
 

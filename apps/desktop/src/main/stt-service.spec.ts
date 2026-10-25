@@ -107,6 +107,14 @@ describe('SttService', () => {
     ]);
   });
 
+  it('keeps only audio ids when the provider exposes no workflow metadata', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ data: [
+      { id: 'whisper-1' }, { id: 'gpt-4o-transcribe' }, { id: 'gpt-4o' }, { id: 'tts-1' }, { id: 'text-embedding-3-small' },
+    ] }), { status: 200 }));
+    const service = new SttService({ ...stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'openai', sttCommand: undefined }), 'cloud-token'), fetch: fetcher as typeof fetch });
+    await expect(service.models()).resolves.toEqual([{ id: 'whisper-1', loaded: false }, { id: 'gpt-4o-transcribe', loaded: false }]);
+  });
+
   it('rejects shared STT for unsupported AI providers', async () => {
     const service = new SttService(stubStores(config({ sttProvider: 'cloud', sttUseAiProvider: true, aiProvider: 'anthropic', sttCommand: undefined }), 'cloud-token') as never);
     expect(service.status()).toMatchObject({ configured: false, warning: expect.stringContaining('OpenAI-compatible') });
