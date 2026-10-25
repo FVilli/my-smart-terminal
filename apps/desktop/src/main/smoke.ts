@@ -527,7 +527,9 @@ const AI_SCRIPT = `(async () => {
     result.modalOpened = await waitFor(() => !!modal(), 4000);
     const action = document.querySelector('[data-testid="ai-action-fix-message"]');
     action.click();
-    result.composedPrompt = await waitFor(() => document.querySelector('[data-testid="ai-prompt"]')?.value.includes('<user_body>'), 4000);
+    const systemPrompt = () => document.querySelector('[data-testid="ai-system-prompt"]');
+    const userPrompt = () => document.querySelector('[data-testid="ai-user-prompt"]');
+    result.composedPrompt = await waitFor(() => !!systemPrompt()?.value && !!userPrompt()?.value, 4000) && userPrompt().value.includes('This is a sentance with a typo');
     document.querySelector('[data-testid="ai-send"]').click();
     result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 8000);
     result.useEnabled = document.querySelector('[data-testid="ai-use"]')?.disabled === false;
@@ -548,7 +550,7 @@ const AI_SCRIPT = `(async () => {
     await sleep(100);
     aiButton().click(); await waitFor(() => !!modal(), 3000);
     document.querySelector('[data-testid="ai-action-fix-message"]').click();
-    await waitFor(() => (document.querySelector('[data-testid="ai-prompt"]')?.value ?? '').includes('password: hunter2'), 3000);
+    await waitFor(() => (document.querySelector('[data-testid="ai-user-prompt"]')?.value ?? '').includes('password: hunter2'), 3000);
     document.querySelector('[data-testid="ai-send"]').click();
     result.sensitiveBlocked = await waitFor(() => (document.querySelector('[data-testid="ai-answer"]')?.value ?? '').includes('sensitive content'), 4000);
     document.querySelector('[data-testid="ai-cancel"]').click();

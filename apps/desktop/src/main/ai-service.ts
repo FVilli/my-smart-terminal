@@ -1,5 +1,6 @@
 import type {
-  AiActionId,
+
+  AiActionRequest,
   AiActionResult,
   AiComposeRequest,
   AiComposeResult,
@@ -9,13 +10,15 @@ import type {
   SetupTestAiRequest,
   SetupTestAiResult,
 } from '@smart-terminal/contracts';
-import { buildActionBody, correctText, isShellCommand, runAiAction } from '@smart-terminal/ai';
+import { DEFAULT_AI_ACTIONS, composeAction, correctText, isShellCommand, runAiAction } from '@smart-terminal/ai';
+import type { AiActionsStore } from './ai-actions-store';
 import { isSensitiveText } from '@smart-terminal/data';
 import type { AppConfigStore } from './app-config';
 import type { SecretStore } from './secret-store';
 
 export interface AiServiceOptions {
   configStore: Pick<AppConfigStore, 'load'>;
+  aiActions: Pick<AiActionsStore, 'list'>;
   secrets: Pick<SecretStore, 'isSecure' | 'has' | 'get'>;
   fetch?: typeof fetch;
   timeoutMs?: number;
@@ -28,7 +31,7 @@ export interface AiServiceOptions {
 const TEST_CORRECTION = (text: string): string => text.replace(/\bsentance\b/g, 'sentence');
 
 /** Deterministic answers for smoke tests only (SMART_TERMINAL_AI_TEST_MODE=1). */
-const TEST_ACTIONS: Record<AiActionId, string> = {
+const TEST_ACTIONS: Record<string, string> = {
   'suggest-command': 'echo ok',
   'explain-command': 'Prints "ok" to the terminal.',
   'assess-risk': 'Risk: low\nWhy: prints text only.\nReversible: yes\nPrivileges: none\nSafer alternative: none',
@@ -116,11 +119,24 @@ export class AiService {
 
   /** Renders the editable prompt body; no network and no token access. */
   compose(request: AiComposeRequest): AiComposeResult {
-    return { prompt: buildActionBody(request) };
+    const definition = this.options.aiActions.list().actions.find((item) => item.id === request.actionId) ?? DEFAULT_AI_ACTIONS.find((item) => item.id === request.actionId);
+    if (definition === undefined) throw new Error('AI_ACTION_UNKNOWN');
+    const environment = request.environment;
+    return composeAction(definition, {
+      action: definition.title,
+      intent: definition.description,
+      description: definition.description,
+      composer: request.composerText,
+      console: request.consoleText,
+      terminalInfo: request.terminalInfo,
+      os: environment?.os ?? 'unknown',
+      shell: environment?.shell ?? 'unknown',
+      envSource: environment?.source ?? 'unknown',
+    });
   }
 
   /** Runs one modal action; provider bodies and tokens never leave this process. */
-  async action(request: { action: AiActionId; prompt: string }): Promise<AiActionResult> {
+  async action(request: AiActionRequest): Promise<AiActionResult> {
     const started = Date.now();
     const elapsed = (): number => Date.now() - started;
     const config = this.currentConfig();
@@ -129,19 +145,20 @@ export class AiService {
     }
     // Authoritative secret gate: blocks the provider call before any network access, and before
     // test mode, so the UI path can be exercised with the same rule.
-    if (isSensitiveText(request.prompt)) {
+    if (isSensitiveText(request.system) || isSensitiveText(request.user)) {
       return { text: '', skipped: true, reason: 'sensitive', elapsedMs: elapsed() };
     }
     if (this.testMode) {
-      return { text: TEST_ACTIONS[request.action], skipped: false, elapsedMs: elapsed() };
+      return { text: TEST_ACTIONS[request.actionId] ?? 'Test answer.', skipped: false, elapsedMs: elapsed() }; 
     }
     const token = this.options.secrets.get(`ai:${config.aiProvider}`);
     if (token === undefined) {
       return { text: '', skipped: true, reason: 'missing-token', elapsedMs: elapsed() };
     }
     return runAiAction({
-      action: request.action,
-      prompt: request.prompt,
+      actionId: request.actionId,
+      system: request.system,
+      user: request.user,
       provider: config.aiProvider,
       token,
       ...(config.aiBaseUrl !== undefined ? { baseUrl: config.aiBaseUrl } : {}),

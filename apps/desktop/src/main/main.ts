@@ -343,12 +343,13 @@ void app.whenReady().then(async () => {
     }
     app.on('before-quit', () => dataRuntime.endSession(created.allocation.sessionId));
   }
+  const aiActions = new AiActionsStore({ configPath: path.join(userDataPath, 'config', 'ai-actions.json') });
   const ai = new AiService({
+    aiActions,
     configStore,
     secrets,
     testMode: process.env['SMART_TERMINAL_AI_TEST_MODE'] === '1',
   });
-  const aiActions = new AiActionsStore({ configPath: path.join(userDataPath, 'config', 'ai-actions.json') });
   const stt = new SttService({
     configStore,
     secrets,

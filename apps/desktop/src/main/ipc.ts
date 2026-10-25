@@ -5,9 +5,9 @@
 import { isIsoTimestamp, isValidMachine } from '@smart-terminal/data';
 import {
   AI_ACTION_DESCRIPTION_MAX,
-  AI_ACTION_IDS,
   AI_ACTION_TITLE_MAX,
   AI_ACTION_MAX_PROMPT_BYTES,
+  AI_RENDERED_PROMPT_MAX_BYTES,
   AI_TEMPLATE_MAX_BYTES,
   AI_CORRECTION_MAX_TEXT_BYTES,
   CLIPBOARD_WRITE_MAX_BYTES,
@@ -355,24 +355,23 @@ const isAiEnvironment = (value: unknown): boolean =>
   AI_SHELL_VALUES.includes(value['shell']) &&
   (value['source'] === undefined || value['source'] === 'local' || value['source'] === 'ssh-probe' || value['source'] === 'unknown');
 
-const isAiActionId = (value: unknown): boolean => typeof value === 'string' && (AI_ACTION_IDS as readonly string[]).includes(value);
-
 export const validateAiCompose = singleRequest<AiComposeRequest>(
   (v) =>
-    hasExactKeys(v, ['action', 'input'], ['environment']) &&
-    isAiActionId(v['action']) &&
-    typeof v['input'] === 'string' &&
-    Buffer.byteLength(v['input'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES &&
+    hasExactKeys(v, ['actionId', 'composerText'], ['consoleText', 'terminalInfo', 'environment']) &&
+    typeof v['actionId'] === 'string' && v['actionId'].length > 0 && v['actionId'].length <= 64 &&
+    typeof v['composerText'] === 'string' && Buffer.byteLength(v['composerText'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES &&
+    (v['consoleText'] === undefined || (typeof v['consoleText'] === 'string' && Buffer.byteLength(v['consoleText'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES)) &&
+    (v['terminalInfo'] === undefined || (typeof v['terminalInfo'] === 'string' && v['terminalInfo'].length <= 512)) &&
     (v['environment'] === undefined || isAiEnvironment(v['environment'])),
 );
 
 export const validateAiAction = singleRequest<AiActionRequest>(
   (v) =>
-    hasExactKeys(v, ['action', 'prompt']) &&
-    isAiActionId(v['action']) &&
-    typeof v['prompt'] === 'string' &&
-    v['prompt'].trim().length > 0 &&
-    Buffer.byteLength(v['prompt'], 'utf8') <= AI_ACTION_MAX_PROMPT_BYTES,
+    hasExactKeys(v, ['actionId', 'system', 'user']) &&
+    typeof v['actionId'] === 'string' && v['actionId'].length > 0 && v['actionId'].length <= 64 &&
+    typeof v['system'] === 'string' && v['system'].trim().length > 0 && Buffer.byteLength(v['system'], 'utf8') <= AI_RENDERED_PROMPT_MAX_BYTES &&
+    typeof v['user'] === 'string' && v['user'].trim().length > 0 && Buffer.byteLength(v['user'], 'utf8') <= AI_RENDERED_PROMPT_MAX_BYTES &&
+    Buffer.byteLength(v['system'], 'utf8') + Buffer.byteLength(v['user'], 'utf8') <= AI_RENDERED_PROMPT_MAX_BYTES,
 );
 
 export const validateAiCorrect = singleRequest<AiCorrectRequest>(

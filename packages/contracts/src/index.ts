@@ -449,22 +449,18 @@ export interface AiEnvironment {
 }
 
 export interface AiComposeRequest {
-  action: AiActionId;
-  /** Current draft or free-form goal/command the action starts from. */
-  input: string;
+  actionId: string;
+  composerText: string;
+  /** Visible terminal output for {{console}} (already bounded by the renderer). */
+  consoleText?: string;
+  /** `label · kind · os · shell` context prepared by the renderer for {{terminalInfo}}. */
+  terminalInfo?: string;
   environment?: AiEnvironment;
 }
 
-export interface AiComposeResult {
-  /** Editable prompt body; the immutable system instruction stays in main. */
-  prompt: string;
-}
+export interface AiComposeResult { system: string; user: string; }
 
-export interface AiActionRequest {
-  action: AiActionId;
-  /** Prompt body, possibly edited by the user (bounded by AI_ACTION_MAX_PROMPT_BYTES). */
-  prompt: string;
-}
+export interface AiActionRequest { actionId: string; system: string; user: string; }
 
 /** Why an action produced no usable text. */
 export type AiActionSkipReason = CorrectionReason | 'sensitive';
