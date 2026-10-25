@@ -115,7 +115,11 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             input.dispatchEvent(new Event('input', { bubbles: true }));
             await sleep(300);
             click('ai-correction');
-            await waitFor(() => q('message-center') && q('message-center').textContent.includes('review'), 8000);
+            await waitFor(() => q('ai-modal'));
+            click('ai-action-fix-message');
+            await waitFor(() => (q('ai-prompt')?.value ?? '').includes('<user_body>'));
+            click('ai-send');
+            await waitFor(() => (q('ai-answer')?.value ?? '').length > 0, 8000);
           }
           if (${JSON.stringify(scenario)} === 'history') {
             await waitFor(() => q('sidebar-tab-history'));
@@ -142,7 +146,7 @@ export function runCapture(window: BrowserWindow, outputPath: string): void {
             checks['sshMenuItemsStyled'] = Array.from(document.querySelectorAll('[data-testid="session-new-local"], [data-testid="session-new-ssh"]'))
               .every((el) => getComputedStyle(el).backgroundColor === 'rgba(0, 0, 0, 0)');
           }
-          if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = !!q('message-center') && q('message-center').textContent.includes('review');
+          if (${JSON.stringify(scenario)} === 'ai-review') checks['aiReviewVisible'] = (q('ai-answer')?.value ?? '').length > 0;
           if (${JSON.stringify(scenario)} === 'history') checks['historyEntries'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0;
           if (${JSON.stringify(scenario)} === 'clipboard') checks['clipboardRecorded'] = document.querySelectorAll('[data-testid="sidebar-entry"]').length > 0 && !!q('clipboard-status') && q('clipboard-status').textContent.includes('Clipboard capture on');
           await sleep(800);

@@ -187,7 +187,7 @@ Pre-migration evidence observed here (only the allowed commands were run):
 | T06 | Dead `.terminal-status--error` removed; docs/06 and docs/15 updated; zoom and packaging verified | `test:layout`, zoom 50/100/200, capture harness, smokes, `package:deb` + `test:deb`, lint/tsc/vitest all green |
 
 Residual caveats:
-- Documentation screenshots in `docs/assets/screenshots` predate M20 and were not regenerated; the milestone evidence lives in `docs/assets/m20-baseline` plus the harness output.
+- Documentation screenshots in `docs/assets/screenshots` predated M20 at audit time; M22 refreshed the harness set (`09-ai-actions.png`, updated `04-ai-review.png`). The M20 evidence still lives in `docs/assets/m20-baseline` plus the harness output.
 - Component CSS that remains is intentional: window drag regions, state rules that depend on Angular class bindings, mic pulse keyframes, fixed-height settings dialog, STT glyphs/table, xterm host/status. No palette literal lives outside `styles.css` and `TERMINAL_THEME`.
 
 Independent review (M20-T06, second pass with the committed diff and exported evidence): verdict **acceptable**; the only finding was the documented ±1 px rounding of the tab bar/composer host at 50% zoom (`39`/`138` px vs `38`/`137`), which is inside the stated fractional-zoom tolerance and not a geometry regression. No blockers, no dead rules, no palette literals outside `styles.css` and `TERMINAL_THEME`, DOM/test hooks and disabled/focus semantics preserved.

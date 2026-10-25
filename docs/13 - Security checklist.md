@@ -47,6 +47,8 @@ Verification performed on M06-T02. Each item states its status, implementation, 
 - [x] History only from explicit editor submissions; no keystrokes/TUI; best-effort secret filter; opt-out.
 - [x] Clipboard opt-in, pause/clear, hash + dedupe, 32 KiB limit, best-effort secret filter.
 - [x] AI: explicit click only, shell detection, timeout/fallback, no automatic execution.
+- [x] AI actions: prompts containing secrets are blocked in main before any provider call; system instructions are immutable; prompt/answer are never persisted or logged; failures are sanitized and non-blocking.
+- [x] Session environment: SSH probes run outside the PTY with BatchMode, a short timeout, alias validation and an `unknown` fallback.
 - [x] STT: push-to-talk, permissions, audio in memory only, no temporary files, absolute local command without shell; base URL, response format, and language are constrained.
 - [x] Current smoke coverage: `npm run test:ipc-smoke`, `npm run test:ai-setup-smoke`, `npm run test:stt-setup-smoke`, `npm run test:stt-smoke`, and `npm run test:settings-smoke`.
 

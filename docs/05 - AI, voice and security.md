@@ -36,3 +36,13 @@ Tokens in the OS keychain, SSH through the OpenSSH client/agent and `~/.ssh/conf
 
 ## Errors
 Unavailable AI/STT do not interrupt the terminal or local writing.
+
+
+## AI actions (M22)
+The composer `AI` button opens one modal with five explicit actions: suggest a command, explain a command, assess risk, fix a message for an interactive agent, and rewrite a dictated message. Each action pre-fills an editable prompt that includes the session's detected OS/shell; the fixed system instruction and artifact contract stay in the main process and cannot be overridden by editing the body.
+
+- `ai:compose` renders the prompt body without network access; `ai:action` wraps the edited body in the immutable contract and makes one provider request (15 s timeout, temperature 0, no streaming).
+- The answer is read-only and selectable. `Use` inserts the selection (or the whole answer) at the composer caret and closes the modal; it never submits or executes. `Cancel` discards prompt and answer; `Close` keeps the prompt for reopening. Nothing is written to Markdown, history or logs.
+- Before any provider call, main runs the secret filter over the prompt: a match returns a structured `sensitive` skip, blocks the network request, and the modal explains the block without echoing the value. Provider errors, timeouts, empty answers and unconfigured providers are non-blocking and sanitized.
+- Risk assessment is explicitly advisory: it is heuristic, not a security control, and the UI says so.
+- Session environment (`os`, `shell`, `env_source`, `env_detected_at`) is recorded when the session is created: local sessions are exact; SSH sessions use one non-interactive probe outside the PTY and fall back to `unknown` without affecting the session.

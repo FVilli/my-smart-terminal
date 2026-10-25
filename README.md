@@ -38,7 +38,7 @@ Real screenshots from the English build (1440×872 content area, Xvfb capture):
 
 | SSH picker | AI review |
 | --- | --- |
-| <img src="docs/assets/screenshots/03-ssh-menu.png" alt="SSH alias picker" width="420" /> | <img src="docs/assets/screenshots/04-ai-review.png" alt="AI correction review" width="420" /> |
+| <img src="docs/assets/screenshots/03-ssh-menu.png" alt="SSH alias picker" width="420" /> | <img src="docs/assets/screenshots/04-ai-review.png" alt="AI actions modal" width="420" /> |
 
 ## Why it is different
 

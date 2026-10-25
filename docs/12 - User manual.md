@@ -55,7 +55,9 @@ The shell header is a 35 px full-window bar with a transparent icon and dynamic 
 
 Each tab has an independent draft. **Enter** deliberately sends the text to the PTY; **Shift+Enter** inserts a newline. The draft is cleared only after a successful submission. The xterm terminal remains directly usable: keys and TUI prompts are not intercepted by the editor.
 
-**AI correction** is enabled with an explicit click and corrects only likely typos in the draft. It skips text recognized as shell commands and preserves code, paths, URLs, flags, and meaning. Always review the result: it is never executed or sent automatically.
+![AI actions modal with the five actions, editable prompt and answer](assets/screenshots/09-ai-actions.png)
+
+**AI actions** are enabled with an explicit click on the composer `AI` button, which opens a modal with five choices: suggest a command, explain a command, assess risk, fix a message for an agent, or rewrite a dictated message. The prompt is pre-filled with the session's operating system and shell and can be edited before **Send**. The answer appears below and is selectable: **Use** inserts the selected text (or the whole answer) at the caret in the draft, **Cancel** closes and discards, **Close** closes and keeps the prompt for reopening. Nothing is executed, sent or saved automatically, and prompts containing secrets are blocked before leaving the app. Always review the result before submitting it to the shell.
 
 ### Microphone
 

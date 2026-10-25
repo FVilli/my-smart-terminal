@@ -153,3 +153,13 @@ Persisted per session in `session.md` as additive optional fields of `schema_ver
 4. Environment stored in `session.md` as additive optional fields, no schema bump.
 5. SSH detection is best-effort with `unknown` fallback and a manual retry; it never runs on the interactive PTY.
 6. V1 is request/response only (no streaming), 15 s timeout, temperature 0.
+
+
+## Implementation status (verified)
+
+- T02: `session.md` additive fields, local detection from the resolved shell, non-interactive SSH probe (BatchMode, 3 s connect / 5 s hard timeout) with `unknown` fallback, `terminal:environment` event and renderer update.
+- T03: `ai:compose` / `ai:action`, immutable system contracts in `packages/ai`, provider completion shared with the legacy correction path, strict IPC validation (16 KiB, exact keys, action ids, environment enums).
+- T04: modal with session/provider context, five actions, editable prompt, Ctrl/Cmd+Enter, focus trap/Escape/focus return, read-only selectable answer, Cancel/Use/Close, unconfigured warning with settings shortcut.
+- T05: `insertAtSelection` shared helper; `Use` inserts selection or full answer at the caret, restores focus and never submits; Cancel discards, Close keeps the prompt.
+- T06: secret filter blocks the provider call; sensitive, timeout, provider-error, empty and unconfigured outcomes are structured and sanitized; late answers after closing are ignored; risk action shows the advisory notice.
+- Evidence: `npm run test:layout` unchanged at 1440×900 and 1024×700; `ai-actions` capture scenario (`docs/assets/screenshots/09-ai-actions.png`); AI smoke covers modal, compose, answer, Use insertion/focus, Cancel/Close, sensitive block and no auto-send.

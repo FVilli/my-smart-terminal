@@ -133,7 +133,7 @@ A missing remote is not an application failure. For a missing or wrong remote, c
 
 Type a sentence containing a typo in the assisted draft and click the **AI** button. Smart Terminal corrects likely typos only. Text recognized as a shell command is skipped, and code, paths, URLs, flags, and meaning are preserved. Review the changed draft before pressing **Enter**: AI never executes or submits the result automatically. Provider errors or timeouts leave the terminal and original draft usable.
 
-![AI correction review with an editable corrected draft](assets/screenshots/04-ai-review.png)
+![AI actions modal with a reviewable answer](assets/screenshots/04-ai-review.png)
 
 *The assisted draft contains “This is a sentence with a typo”, and the status says “AI correction applied: review before sending.”*
 
