@@ -537,7 +537,9 @@ const AI_SCRIPT = `(async () => {
     result.consoleInSystemPrompt = await waitFor(() => (systemPrompt()?.value ?? '').includes('AI_CONSOLE_MARKER'), 4000);
     result.composedPrompt = await waitFor(() => !!systemPrompt()?.value && !!userPrompt()?.value, 4000) && userPrompt().value.includes('This is a sentance with a typo');
     document.querySelector('[data-testid="ai-send"]').click();
-    result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 8000);
+    result.answer = await waitFor(() => document.querySelector('[data-testid="ai-answer-rendered"]')?.textContent?.includes('Fixed message.') ?? false, 8000);
+    document.querySelector('[data-testid="ai-answer-view-raw"]').click();
+    result.rawAnswer = await waitFor(() => document.querySelector('[data-testid="ai-answer"]')?.value === 'Fixed message.', 2000);
     result.useEnabled = document.querySelector('[data-testid="ai-use"]')?.disabled === false;
     document.querySelector('[data-testid="ai-use"]').click();
     result.useInsertsAnswer = await waitFor(() => textarea().value.includes('Fixed message.'), 4000);
@@ -560,6 +562,8 @@ const AI_SCRIPT = `(async () => {
     sensitiveAction.dispatchEvent(new Event('change', { bubbles: true }));
     await waitFor(() => (document.querySelector('[data-testid="ai-user-prompt"]')?.value ?? '').includes('password: hunter2'), 3000);
     document.querySelector('[data-testid="ai-send"]').click();
+    await waitFor(() => document.querySelector('[data-testid="ai-answer-rendered"]')?.textContent?.includes('sensitive content') ?? false, 4000);
+    document.querySelector('[data-testid="ai-answer-view-raw"]').click();
     result.sensitiveBlocked = await waitFor(() => (document.querySelector('[data-testid="ai-answer"]')?.value ?? '').includes('sensitive content'), 4000);
     document.querySelector('[data-testid="ai-cancel"]').click();
     result.sensitiveDraftUnchanged = await waitFor(() => !modal() && textarea().value === 'password: hunter2', 3000);
