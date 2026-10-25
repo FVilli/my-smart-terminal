@@ -694,6 +694,11 @@ const SETTINGS_SCRIPT = `(async () => {
   result.noProgress = !q('onboarding-progress');
   const settingsHeight = q('onboarding-overlay')?.querySelector('.dialog')?.getBoundingClientRect().height ?? 0;
   result.githubHelpPresent = !!q('settings-github-help');
+  click('settings-tab-repository');
+  click('settings-github-help');
+  result.helpFallbackCopied = await waitFor(() => (document.querySelector('[data-testid="message-center"]')?.textContent ?? '').includes('copied to the clipboard'));
+  const helpFallback = await window.smartTerminal.helpOpen('repository');
+  result.helpFallbackUrl = !helpFallback.opened && helpFallback.url.startsWith('https://github.com/FVilli/my-smart-terminal/blob/main/docs/');
   result.footerOrder = !!q('onboarding-cancel') && !!q('onboarding-save') && (q('onboarding-cancel').compareDocumentPosition(q('onboarding-save')) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
   result.tabs = ['repository','ai','stt','appearance','ai-actions'].every((tab) => !!q('settings-tab-' + tab));
   click('settings-tab-repository'); result.repository = await waitFor(() => !!q('onboarding-machine'));

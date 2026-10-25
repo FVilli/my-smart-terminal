@@ -24,7 +24,7 @@ const baseEnv = { ...process.env };
 for (const key of Object.keys(baseEnv)) if (key.startsWith('SMART_TERMINAL_') && key !== 'SMART_TERMINAL_XVFB_BIN') delete baseEnv[key];
 const run = spawnSync(process.execPath, ['scripts/run-electron.mjs', 'apps/desktop'], {
   stdio: 'inherit',
-  env: { ...baseEnv, SMART_TERMINAL_USER_DATA: userData, SMART_TERMINAL_DATA_REPO: repo, SMART_TERMINAL_SETTINGS_SMOKE: '1' },
+  env: { ...baseEnv, SMART_TERMINAL_USER_DATA: userData, SMART_TERMINAL_DATA_REPO: repo, SMART_TERMINAL_SETTINGS_SMOKE: '1', SMART_TERMINAL_HELP_FORCE_FAILURE: '1' },
 });
 fs.rmSync(root, { recursive: true, force: true });
 process.exit(run.status === 0 ? 0 : 1);

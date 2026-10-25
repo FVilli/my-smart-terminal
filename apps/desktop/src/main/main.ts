@@ -19,7 +19,7 @@ import { AiActionsStore } from './ai-actions-store';
 import { SttService } from './stt-service';
 import { SecretStore } from './secret-store';
 import { InstallationStore } from './installation-store';
-import { HELP_URLS } from './help-topics';
+import { createHelpService } from './help-service';
 import { DataRuntime } from './data-runtime';
 import { ClipboardGatewayAdapter } from './clipboard-gateway';
 import { electronClipboardSource } from './electron-clipboard';
@@ -372,7 +372,7 @@ void app.whenReady().then(async () => {
       onboarding,
       ai,
       aiActions,
-      help: { open: async (topic) => { await shell.openExternal(HELP_URLS[topic]); } },
+      help: createHelpService({ openExternal: process.env['SMART_TERMINAL_HELP_FORCE_FAILURE'] === '1' ? async () => { throw new Error('forced'); } : (url) => shell.openExternal(url) }),
       stt,
       window: { control: (senderId, action) => {
         const target = BrowserWindow.getAllWindows().find((candidate) => candidate.webContents.id === senderId);

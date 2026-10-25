@@ -479,7 +479,12 @@ export class OnboardingWizard {
   }
 
   protected openHelp(topic: HelpTopic): void {
-    void this.api.helpOpen(topic).catch(() => this.messages.show('critical', 'Could not open the GitHub guide. Check your default browser and try again.'));
+    void this.api.helpOpen(topic).then(async (result) => {
+      if (!result.opened) {
+        await this.api.clipboardWrite({ text: result.url });
+        this.messages.show('info', 'Could not open a browser: the guide link was copied to the clipboard.');
+      }
+    }).catch(() => this.messages.show('critical', 'Could not open the guide. Please try again.'));
   }
 
   protected helpTopic(): HelpTopic {

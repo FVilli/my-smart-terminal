@@ -343,6 +343,8 @@ export interface OnboardingValidateRequest {
 export const HELP_TOPICS = ['repository', 'ai', 'stt', 'troubleshooting'] as const;
 export type HelpTopic = (typeof HELP_TOPICS)[number];
 
+export interface HelpOpenResult { opened: boolean; url: string }
+
 export interface SetupTestAiRequest {
   config: OnboardingConfig;
   /** Token currently entered in the wizard; if omitted, the stored token is used. */
@@ -602,7 +604,7 @@ export interface SmartTerminalApi {
   onboardingSkip(): Promise<OnboardingSaveResult>;
   setupTestRemote(config: OnboardingConfig): Promise<RemoteSetupResult>;
   setupTestAi(request: SetupTestAiRequest): Promise<SetupTestAiResult>;
-  helpOpen(topic: HelpTopic): Promise<void>;
+  helpOpen(topic: HelpTopic): Promise<HelpOpenResult>;
   secretsStatus(): Promise<SecretsStatus>;
   /** Revokes (deletes) the token for the key. */
   secretsLogout(request: SecretsLogoutRequest): Promise<SecretsStatus>;

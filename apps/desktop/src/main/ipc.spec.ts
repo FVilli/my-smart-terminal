@@ -56,7 +56,7 @@ const services: IpcServices = {
   },
   app: { relaunch: vi.fn() },
   window: { control: vi.fn() },
-  help: { open: vi.fn(() => Promise.resolve()) },
+  help: { open: vi.fn(() => Promise.resolve({ opened: true, url: 'https://github.com/FVilli/my-smart-terminal/blob/main/docs/test.md' })) },
   ai: {
     status: vi.fn(() => ({ configured: true, provider: 'openai' as const, hasToken: true, secureStorage: true })),
     correct: vi.fn(() => ({ original: 'a', corrected: 'a', changed: false, skipped: true, reason: 'shell' as const })),

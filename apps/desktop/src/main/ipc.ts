@@ -56,6 +56,7 @@ import {
   type SearchRemoveResult,
   type SearchQueryResult,
   type HelpTopic,
+  type HelpOpenResult,
   type SetupTestAiRequest,
   type SetupTestAiResult,
   type SttStatus,
@@ -208,7 +209,7 @@ export interface AppController {
 }
 
 export interface HelpGateway {
-  open(topic: HelpTopic): Promise<void>;
+  open(topic: HelpTopic): Promise<HelpOpenResult>;
 }
 
 export interface WindowGateway {
@@ -384,7 +385,7 @@ export const validateAiCorrect = singleRequest<AiCorrectRequest>(
     !/[\u0000-\u001f\u007f]/.test(v['text']),
 );
 
-export const validateHelpTopic = singleRequest<HelpTopic>(
+export const validateHelpTopic = singleRequest<{ topic: HelpTopic }>(
   (v) => hasExactKeys(v, ['topic']) && (v['topic'] === 'repository' || v['topic'] === 'ai' || v['topic'] === 'stt' || v['topic'] === 'troubleshooting'),
 );
 
@@ -498,7 +499,7 @@ export interface IpcChannelMap {
   [IPC_CHANNELS.aiActionsReset]: ChannelDefinition<[AiActionsResetRequest], AiActionsState>;
   [IPC_CHANNELS.aiActionsDelete]: ChannelDefinition<[AiActionsDeleteRequest], AiActionsState>;
   [IPC_CHANNELS.setupTestAi]: ChannelDefinition<[SetupTestAiRequest], SetupTestAiResult>;
-  [IPC_CHANNELS.helpOpen]: ChannelDefinition<[HelpTopic], void>;
+  [IPC_CHANNELS.helpOpen]: ChannelDefinition<[{ topic: HelpTopic }], HelpOpenResult>;
   [IPC_CHANNELS.sttStatus]: ChannelDefinition<[], SttStatus>;
   [IPC_CHANNELS.sttModels]: ChannelDefinition<[], SttModelInfo[]>;
   [IPC_CHANNELS.sttTranscribe]: ChannelDefinition<[SttTranscribeRequest], SttTranscribeResult>;
@@ -525,7 +526,7 @@ function buildAppChannels(env: RuntimeEnvironment, services: IpcServices): Pick<
     },
     [IPC_CHANNELS.helpOpen]: {
       validate: validateHelpTopic,
-      handle: (_sender, topic) => services.help.open(topic),
+      handle: (_sender, { topic }) => services.help.open(topic),
     },
   };
 }
