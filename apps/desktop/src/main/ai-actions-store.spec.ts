@@ -79,6 +79,16 @@ describe('AiActionsStore', () => {
     expect(corrupt.actions).toHaveLength(DEFAULT_AI_ACTIONS.length);
   });
 
+  it('keeps the previous state when persistence fails', () => {
+    const blockedParent = path.join(root, 'blocked');
+    fs.writeFileSync(blockedParent, 'not a directory');
+    const store = new AiActionsStore({ configPath: path.join(blockedParent, 'config', 'ai-actions.json') });
+    const before = store.list();
+    expect(() => store.save({ action: custom() })).toThrow(expect.objectContaining({ code: 'WRITE_FAILED' }));
+    expect(store.list()).toEqual(before);
+    expect(store.list().actions.some((action) => action.id === 'custom-review')).toBe(false);
+  });
+
   it('exposes typed errors', () => {
     expect(new AiActionsError('INVALID_ACTION').code).toBe('INVALID_ACTION');
   });

@@ -109,16 +109,17 @@ export class AiActionsStore {
   }
 
   private commit(state: AiActionsState): AiActionsState {
-    this.state = state;
     try {
       fs.mkdirSync(path.dirname(this.options.configPath), { recursive: true });
       const tmp = `${this.options.configPath}.tmp`;
       fs.writeFileSync(tmp, `${JSON.stringify({ schema_version: SCHEMA_VERSION, actions: state.actions }, null, 2)}\n`, { mode: 0o600 });
       fs.renameSync(tmp, this.options.configPath);
-      return this.list();
     } catch {
+      // Persist before publishing: a failed write must leave the previous state authoritative.
       throw new AiActionsError('WRITE_FAILED');
     }
+    this.state = state;
+    return this.list();
   }
 
   private load(): AiActionsState {
